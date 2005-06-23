@@ -3,7 +3,6 @@
 
 #include <linux/percpu.h>
 #include <linux/hashtable.h>
-
 #ifdef CONFIG_BLOCK
 
 struct io_cq;

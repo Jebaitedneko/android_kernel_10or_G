@@ -488,6 +488,14 @@ config TCP_CONG_CUBIC
 	This is version 2.0 of BIC-TCP which uses a cubic growth function
 	among other techniques.
 	See http://www.csc.ncsu.edu/faculty/rhee/export/bitcp/cubic-paper.pdf
+	control. It is based on end-to-end bandwidth estimation to set
+	congestion window and slow start threshold after a congestion
+	episode. Using this estimation, TCP Westwood+ adaptively sets a
+	slow start threshold and a congestion window which takes into
+	account the bandwidth used  at the time congestion is experienced.
+	TCP Westwood+ significantly increases fairness wrt TCP Reno in
+	wired networks and throughput over wireless links.
+
 
 config TCP_CONG_WESTWOOD
 	tristate "TCP Westwood+"
