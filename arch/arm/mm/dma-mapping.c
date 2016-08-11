@@ -28,6 +28,7 @@
 #include <linux/vmalloc.h>
 #include <linux/sizes.h>
 #include <linux/cma.h>
+#include <linux/msm_dma_iommu_mapping.h>
 
 #include <asm/memory.h>
 #include <asm/highmem.h>
