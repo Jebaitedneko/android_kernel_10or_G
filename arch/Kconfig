@@ -419,6 +419,12 @@ config LLVM_POLLY
 	  maximum cache locality. This requires an LLVM toolchain explicitly
 	  compiled with Polly support.
 
+config THIN_ARCHIVES
+	bool
+	help
+	  Select this if the architecture wants to use thin archives
+	  instead of ld -r to create the built-in.o files.
+
 config HAVE_ARCH_WITHIN_STACK_FRAMES
 	bool
 	help
