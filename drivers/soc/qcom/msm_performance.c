@@ -26,7 +26,7 @@
 #include <linux/input.h>
 #include <linux/kthread.h>
 
-static int touchboost = 1;
+static int touchboost = 0;
 
 #ifndef CONFIG_MSM_PERFORMANCE_CPUFREQ_LIMITS_VOTING_ONLY
 static unsigned int use_input_evts_with_hi_slvt_detect;
@@ -510,6 +510,9 @@ static int set_cpu_max_freq(const char *buf, const struct kernel_param *kp)
 
 	if (touchboost == 0)
 		cp = reset;
+
+	if (!touchboost)
+		return 0;
 
 	while ((cp = strpbrk(cp + 1, " :")))
 		ntokens++;
