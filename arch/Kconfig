@@ -420,7 +420,7 @@ config LLVM_POLLY
 	  compiled with Polly support.
 
 config THIN_ARCHIVES
-	bool
+	def_bool y
 	help
 	  Select this if the architecture wants to use thin archives
 	  instead of ld -r to create the built-in.o files.
