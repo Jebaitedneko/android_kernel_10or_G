@@ -906,6 +906,13 @@ config SERIAL_NUM
 	help
 	  Provide a interface for reading CPU serial number
 
+config EXT_ANC
+	bool "Enable External ANC"
+	depends on MSM_QDSP6_APRV2 || MSM_QDSP6_APRV3
+	help
+	 This option enables support for anti-noise cnacellation
+	 on Sensor DSP.
+
 source "drivers/soc/qcom/memshare/Kconfig"
 
 endif # ARCH_MSM
