@@ -362,6 +362,13 @@ config ARCH_MSM8994_V1_TLBI_WA
 
 endmenu
 
+config MSM8953_PRODUCT
+	bool "MSM8953 Product"
+	default n
+	help
+	  Say Y here if MSM8953
+	  If unsure, say N.
+
 menu "Bus support"
 
 config ARM_AMBA
