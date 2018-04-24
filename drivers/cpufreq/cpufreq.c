@@ -637,14 +637,16 @@ static int cpufreq_parse_governor(char *str_governor, unsigned int *policy,
 			 * This kernel (and nearly every other Android kernel)
 			 * has the performance governor as default for boot
 			 * performance which is then changed to another,
-			 * usually interactive. So, instead of just exiting if
+			 * usually schedutil. So, instead of just exiting if
 			 * the requested governor wasn't found, let's try
-			 * falling back to interactive before falling out.
+			 * falling back to schedutil before falling out.
 			 */
 			if (ret == 0)
 				t = __find_governor(str_governor);
+#ifdef CONFIG_CPU_FREQ_GOV_SCHEDUTIL
 			else
-				t = __find_governor("interactive");
+				t = __find_governor("schedutil");
+#endif
 		}
 
 		if (t != NULL) {
