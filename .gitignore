@@ -35,7 +35,7 @@
 modules.builtin
 Module.symvers
 *.dwo
-
+*.rej
 #
 # Top-level generic files
 #
@@ -56,6 +56,8 @@ Module.symvers
 # out directory 
 #
 out/
+
+patch-*
 
 #
 # git files that we don't want to ignore even it they are dot-files
