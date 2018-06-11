@@ -38,15 +38,8 @@
 #define POWER_SUSPEND_PANEL	2	// Use display panel state as hook
 #define POWER_SUSPEND_HYBRID	3	// Use display panel state and autosleep as hook
 
-enum {
-	POWER_SUSPEND_LEVEL_BLANK_SCREEN = 50,
-	POWER_SUSPEND_LEVEL_STOP_DRAWING = 100,
-	POWER_SUSPEND_LEVEL_DISABLE_FB = 150,
-};
-
 struct power_suspend {
 	struct list_head link;
-	int level;
 	void (*suspend)(struct power_suspend *h);
 	void (*resume)(struct power_suspend *h);
 };
@@ -56,6 +49,8 @@ void unregister_power_suspend(struct power_suspend *handler);
 
 void set_power_suspend_state_autosleep_hook(int new_state);
 void set_power_suspend_state_panel_hook(int new_state);
+
+extern bool power_suspended;
 
 #endif
 
