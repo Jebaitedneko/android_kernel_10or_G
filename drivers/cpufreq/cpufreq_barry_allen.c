@@ -38,7 +38,7 @@
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/cpufreq_barry_allen.h>
-
+u64 get_cpu_idle_time(unsigned int cpu, u64 *wall, int io_busy);
 static int active_count;
 
 static bool ba_locked = false;
@@ -133,9 +133,7 @@ static bool boosted;
 #define DEFAULT_TIMER_SLACK (4 * DEFAULT_TIMER_RATE)
 static int timer_slack_val = DEFAULT_TIMER_SLACK;
 
-// Stock S5+ = 2457600
-// Stock Note4 = 2649600
-#define TOP_STOCK_FREQ 2496000
+#define TOP_STOCK_FREQ 2649600
 
 static bool io_is_busy;
 
@@ -161,7 +159,7 @@ struct cpufreq_governor cpufreq_gov_barry_allen = {
 	.max_transition_latency = 10000000,
 	.owner = THIS_MODULE,
 };
-u64 get_cpu_idle_time(unsigned int cpu, u64 *wall, int io_busy);
+
 static void cpufreq_barry_allen_timer_resched(
 	struct cpufreq_barry_allen_cpuinfo *pcpu)
 {
@@ -1352,8 +1350,7 @@ static int cpufreq_governor_barry_allen(struct cpufreq_policy *policy,
 			mutex_unlock(&gov_lock);
 			return 0;
 		}
-
-		rc = sysfs_create_group(get_governor_parent_kobj(policy),
+		rc = sysfs_create_group(cpufreq_global_kobject,
 				&barry_allen_attr_group);
 		if (rc) {
 			mutex_unlock(&gov_lock);
@@ -1386,7 +1383,7 @@ static int cpufreq_governor_barry_allen(struct cpufreq_policy *policy,
 		cpufreq_unregister_notifier(
 			&cpufreq_notifier_block, CPUFREQ_TRANSITION_NOTIFIER);
 		idle_notifier_unregister(&cpufreq_barry_allen_idle_nb);
-		sysfs_remove_group(get_governor_parent_kobj(policy),
+		sysfs_remove_group(cpufreq_global_kobject,
 				&barry_allen_attr_group);
 		mutex_unlock(&gov_lock);
 

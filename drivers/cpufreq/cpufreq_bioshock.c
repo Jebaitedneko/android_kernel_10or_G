@@ -16,7 +16,6 @@
 
 #include <asm/cputime.h>
 #include <linux/kthread.h>
-#include <linux/tick.h>
 #include <linux/time.h>
 #include <linux/timer.h>
 #include <linux/cpumask.h>
@@ -29,18 +28,21 @@
 #include <linux/kernel_stat.h>
 #include <linux/mutex.h>
 #include <linux/hrtimer.h>
+#include <linux/tick.h>
 #include <linux/ktime.h>
 #include <linux/sched.h>
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/slab.h>
-
+#ifdef CONFIG_HAS_EARLYSUSPEND
+#include <linux/earlysuspend.h>
+#endif
 /*
  * dbs is used in this file as a shortform for demandbased switching
  * It helps to keep variable names smaller, simpler
  */
 
-#define DEF_FREQUENCY_UP_THRESHOLD		(85)
+#define DEF_FREQUENCY_UP_THRESHOLD		(70)
 #define DEF_FREQUENCY_DOWN_THRESHOLD		(30)
 
 /*
@@ -54,6 +56,8 @@
  * All times here are in uS.
  */
 #define MIN_SAMPLING_RATE_RATIO			(2)
+
+u64 get_cpu_idle_time(unsigned int cpu, u64 *wall, int io_busy);
 
 static unsigned int min_sampling_rate;
 
@@ -91,44 +95,6 @@ static unsigned int dbs_enable;	/* number of CPUs using this policy */
  */
 static DEFINE_MUTEX(dbs_mutex);
 
-static inline cputime64_t get_cpu_idle_time_jiffy(unsigned int cpu,
-						  cputime64_t *wall)
-{
-	u64 idle_time;
-	u64 cur_wall_time;
-	u64 busy_time;
-
-	cur_wall_time = jiffies64_to_cputime64(get_jiffies_64());
-
-	busy_time  = kcpustat_cpu(cpu).cpustat[CPUTIME_USER];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_SYSTEM];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_IRQ];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_SOFTIRQ];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_STEAL];
-	busy_time += kcpustat_cpu(cpu).cpustat[CPUTIME_NICE];
-
-	idle_time = cur_wall_time - busy_time;
-	if (wall)
-		*wall = jiffies_to_usecs(cur_wall_time);
-
-	return jiffies_to_usecs(idle_time);
-}
-
-static inline cputime64_t get_cpu_idle_time(
-	unsigned int cpu,
-	cputime64_t *wall,
-	bool io_is_busy)
-{
-	u64 idle_time = get_cpu_idle_time_us(cpu, wall);
-
-	if (idle_time == -1ULL)
-		idle_time = get_cpu_idle_time_jiffy(cpu, wall);
-	else if (!io_is_busy)
-		idle_time += get_cpu_iowait_time_us(cpu, wall);
-
-	return idle_time;
-}
-
 static struct dbs_tuners {
 	unsigned int sampling_rate;
 	unsigned int sampling_down_factor;
@@ -140,7 +106,7 @@ static struct dbs_tuners {
 	.up_threshold = DEF_FREQUENCY_UP_THRESHOLD,
 	.down_threshold = DEF_FREQUENCY_DOWN_THRESHOLD,
 	.sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR,
-	.ignore_nice = 1,
+	.ignore_nice = 0,
 	.freq_step = 5,
 };
 
@@ -624,3 +590,5 @@ MODULE_LICENSE("GPL");
 
 fs_initcall(cpufreq_gov_dbs_init);
 module_exit(cpufreq_gov_dbs_exit);
+
+

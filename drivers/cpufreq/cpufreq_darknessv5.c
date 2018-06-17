@@ -1,5 +1,5 @@
 /*
- *  drivers/cpufreq/cpufreq_darkness.c
+ *  drivers/cpufreq/cpufreq_darknessv5.c
  *
  *  Copyright (C)  2011 Samsung Electronics co. ltd
  *    ByungChang Cha <bc.cha@samsung.com>
@@ -33,20 +33,20 @@
  * It helps to keep variable names smaller, simpler
  */
 
-static void do_darkness_timer(struct work_struct *work);
-static int cpufreq_governor_darkness(struct cpufreq_policy *policy,
+static void do_darknessv5_timer(struct work_struct *work);
+static int cpufreq_governor_darknessv5(struct cpufreq_policy *policy,
 				unsigned int event);
 
-#ifndef CONFIG_CPU_FREQ_DEFAULT_GOV_DARKNESS
+#ifndef CONFIG_CPU_FREQ_DEFAULT_GOV_darknessv5
 static
 #endif
-struct cpufreq_governor cpufreq_gov_darkness = {
-	.name                   = "darkness",
-	.governor               = cpufreq_governor_darkness,
+struct cpufreq_governor cpufreq_gov_darknessv5 = {
+	.name                   = "darknessv5",
+	.governor               = cpufreq_governor_darknessv5,
 	.owner                  = THIS_MODULE,
 };
 
-struct cpufreq_darkness_cpuinfo {
+struct cpufreq_darknessv5_cpuinfo {
 	cputime64_t prev_cpu_wall;
 	cputime64_t prev_cpu_idle;
 	struct cpufreq_frequency_table *freq_table;
@@ -63,36 +63,36 @@ struct cpufreq_darkness_cpuinfo {
 };
 /*
  * mutex that serializes governor limit change with
- * do_darkness_timer invocation. We do not want do_darkness_timer to run
+ * do_darknessv5_timer invocation. We do not want do_darknessv5_timer to run
  * when user is changing the governor or limits.
  */
-static DEFINE_PER_CPU(struct cpufreq_darkness_cpuinfo, od_darkness_cpuinfo);
+static DEFINE_PER_CPU(struct cpufreq_darknessv5_cpuinfo, od_darknessv5_cpuinfo);
 
-static unsigned int darkness_enable;	/* number of CPUs using this policy */
+static unsigned int darknessv5_enable;	/* number of CPUs using this policy */
 /*
- * darkness_mutex protects darkness_enable in governor start/stop.
+ * darknessv5_mutex protects darknessv5_enable in governor start/stop.
  */
-static DEFINE_MUTEX(darkness_mutex);
+static DEFINE_MUTEX(darknessv5_mutex);
 
 /*static atomic_t min_freq_limit[NR_CPUS];
 static atomic_t max_freq_limit[NR_CPUS];*/
 
-/* darkness tuners */
-static struct darkness_tuners {
+/* darknessv5 tuners */
+static struct darknessv5_tuners {
 	atomic_t sampling_rate;
-} darkness_tuners_ins = {
+} darknessv5_tuners_ins = {
 	.sampling_rate = ATOMIC_INIT(70000),
 };
 
 
 /************************** sysfs interface ************************/
 
-/* cpufreq_darkness Governor Tunables */
+/* cpufreq_darknessv5 Governor Tunables */
 #define show_one(file_name, object)					\
 static ssize_t show_##file_name						\
 (struct kobject *kobj, struct attribute *attr, char *buf)		\
 {									\
-	return sprintf(buf, "%d\n", atomic_read(&darkness_tuners_ins.object));		\
+	return sprintf(buf, "%d\n", atomic_read(&darknessv5_tuners_ins.object));		\
 }
 show_one(sampling_rate, sampling_rate);
 
@@ -115,7 +115,7 @@ static ssize_t show_cpucore_table(struct kobject *kobj,
  * @new_rate: new sampling rate
  *
  * If new rate is smaller than the old, simply updaing
- * darkness_tuners_ins.sampling_rate might not be appropriate. For example,
+ * darknessv5_tuners_ins.sampling_rate might not be appropriate. For example,
  * if the original sampling_rate was 1 second and the requested new sampling
  * rate is 10 ms because the user needs immediate reaction from ondemand
  * governor, but not sure if higher frequency will be required or not,
@@ -127,43 +127,43 @@ static void update_sampling_rate(unsigned int new_rate)
 {
 	int cpu;
 
-	atomic_set(&darkness_tuners_ins.sampling_rate,new_rate);
+	atomic_set(&darknessv5_tuners_ins.sampling_rate,new_rate);
 
 	for_each_online_cpu(cpu) {
 		struct cpufreq_policy *policy;
-		struct cpufreq_darkness_cpuinfo *darkness_cpuinfo;
+		struct cpufreq_darknessv5_cpuinfo *darknessv5_cpuinfo;
 		unsigned long next_sampling, appointed_at;
 
 		policy = cpufreq_cpu_get(cpu);
 		if (!policy)
 			continue;
-		darkness_cpuinfo = &per_cpu(od_darkness_cpuinfo, policy->cpu);
+		darknessv5_cpuinfo = &per_cpu(od_darknessv5_cpuinfo, policy->cpu);
 		cpufreq_cpu_put(policy);
 
-		mutex_lock(&darkness_cpuinfo->timer_mutex);
+		mutex_lock(&darknessv5_cpuinfo->timer_mutex);
 
-		if (!delayed_work_pending(&darkness_cpuinfo->work)) {
-			mutex_unlock(&darkness_cpuinfo->timer_mutex);
+		if (!delayed_work_pending(&darknessv5_cpuinfo->work)) {
+			mutex_unlock(&darknessv5_cpuinfo->timer_mutex);
 			continue;
 		}
 
 		next_sampling  = jiffies + usecs_to_jiffies(new_rate);
-		appointed_at = darkness_cpuinfo->work.timer.expires;
+		appointed_at = darknessv5_cpuinfo->work.timer.expires;
 
 
 		if (time_before(next_sampling, appointed_at)) {
 
-			mutex_unlock(&darkness_cpuinfo->timer_mutex);
-			cancel_delayed_work_sync(&darkness_cpuinfo->work);
-			mutex_lock(&darkness_cpuinfo->timer_mutex);
+			mutex_unlock(&darknessv5_cpuinfo->timer_mutex);
+			cancel_delayed_work_sync(&darknessv5_cpuinfo->work);
+			mutex_lock(&darknessv5_cpuinfo->timer_mutex);
 
 			#ifdef CONFIG_CPU_EXYNOS4210
-				mod_delayed_work_on(darkness_cpuinfo->cpu, system_wq, &darkness_cpuinfo->work, usecs_to_jiffies(new_rate));
+				mod_delayed_work_on(darknessv5_cpuinfo->cpu, system_wq, &darknessv5_cpuinfo->work, usecs_to_jiffies(new_rate));
 			#else
-				queue_delayed_work_on(darkness_cpuinfo->cpu, system_wq, &darkness_cpuinfo->work, usecs_to_jiffies(new_rate));
+				queue_delayed_work_on(darknessv5_cpuinfo->cpu, system_wq, &darknessv5_cpuinfo->work, usecs_to_jiffies(new_rate));
 			#endif
 		}
-		mutex_unlock(&darkness_cpuinfo->timer_mutex);
+		mutex_unlock(&darknessv5_cpuinfo->timer_mutex);
 	}
 }
 
@@ -180,7 +180,7 @@ static ssize_t store_sampling_rate(struct kobject *a, struct attribute *b,
 
 	input = max(input,10000);
 
-	if (input == atomic_read(&darkness_tuners_ins.sampling_rate))
+	if (input == atomic_read(&darknessv5_tuners_ins.sampling_rate))
 		return count;
 
 	update_sampling_rate(input);
@@ -191,20 +191,20 @@ static ssize_t store_sampling_rate(struct kobject *a, struct attribute *b,
 define_one_global_rw(sampling_rate);
 define_one_global_ro(cpucore_table);
 
-static struct attribute *darkness_attributes[] = {
+static struct attribute *darknessv5_attributes[] = {
 	&sampling_rate.attr,
 	&cpucore_table.attr,
 	NULL
 };
 
-static struct attribute_group darkness_attr_group = {
-	.attrs = darkness_attributes,
-	.name = "darkness",
+static struct attribute_group darknessv5_attr_group = {
+	.attrs = darknessv5_attributes,
+	.name = "darknessv5",
 };
 
 /************************** sysfs end ************************/
 
-static void darkness_check_cpu(struct cpufreq_darkness_cpuinfo *this_darkness_cpuinfo)
+static void darknessv5_check_cpu(struct cpufreq_darknessv5_cpuinfo *this_darknessv5_cpuinfo)
 {
 	struct cpufreq_policy *cpu_policy;
 	unsigned int min_freq;
@@ -216,19 +216,19 @@ static void darkness_check_cpu(struct cpufreq_darkness_cpuinfo *this_darkness_cp
 	int cur_load = -1;
 	unsigned int cpu;
 
-	cpu = this_darkness_cpuinfo->cpu;
-	cpu_policy = this_darkness_cpuinfo->cur_policy;
+	cpu = this_darknessv5_cpuinfo->cpu;
+	cpu_policy = this_darknessv5_cpuinfo->cur_policy;
 
 	cur_idle_time = get_cpu_idle_time_us(cpu, NULL);
 	cur_idle_time += get_cpu_iowait_time_us(cpu, &cur_wall_time);
 
 	wall_time = (unsigned int)
-			(cur_wall_time - this_darkness_cpuinfo->prev_cpu_wall);
-	this_darkness_cpuinfo->prev_cpu_wall = cur_wall_time;
+			(cur_wall_time - this_darknessv5_cpuinfo->prev_cpu_wall);
+	this_darknessv5_cpuinfo->prev_cpu_wall = cur_wall_time;
 
 	idle_time = (unsigned int)
-			(cur_idle_time - this_darkness_cpuinfo->prev_cpu_idle);
-	this_darkness_cpuinfo->prev_cpu_idle = cur_idle_time;
+			(cur_idle_time - this_darknessv5_cpuinfo->prev_cpu_idle);
+	this_darknessv5_cpuinfo->prev_cpu_idle = cur_idle_time;
 
 	/*min_freq = atomic_read(&min_freq_limit[cpu]);
 	max_freq = atomic_read(&max_freq_limit[cpu]);*/
@@ -248,13 +248,13 @@ static void darkness_check_cpu(struct cpufreq_darkness_cpuinfo *this_darkness_cp
 		max_freq = cpu_policy->max;
 		/* CPUs Online Scale Frequency*/
 		next_freq = max(min(cur_load * (max_freq / 100), max_freq), min_freq);
-		cpufreq_frequency_table_target(cpu_policy, this_darkness_cpuinfo->freq_table, next_freq,
+		cpufreq_frequency_table_target(cpu_policy, this_darknessv5_cpuinfo->freq_table, next_freq,
 			CPUFREQ_RELATION_H, &index);
-		if (this_darkness_cpuinfo->freq_table[index].frequency != cpu_policy->cur) {
-			cpufreq_frequency_table_target(cpu_policy, this_darkness_cpuinfo->freq_table, next_freq,
+		if (this_darknessv5_cpuinfo->freq_table[index].frequency != cpu_policy->cur) {
+			cpufreq_frequency_table_target(cpu_policy, this_darknessv5_cpuinfo->freq_table, next_freq,
 				CPUFREQ_RELATION_L, &index);
 		}
-		next_freq = this_darkness_cpuinfo->freq_table[index].frequency;
+		next_freq = this_darknessv5_cpuinfo->freq_table[index].frequency;
 		if (next_freq != cpu_policy->cur && cpu_online(cpu)) {
 			__cpufreq_driver_target(cpu_policy, next_freq, CPUFREQ_RELATION_L);
 		}
@@ -262,66 +262,66 @@ static void darkness_check_cpu(struct cpufreq_darkness_cpuinfo *this_darkness_cp
 
 }
 
-static void do_darkness_timer(struct work_struct *work)
+static void do_darknessv5_timer(struct work_struct *work)
 {
-	struct cpufreq_darkness_cpuinfo *darkness_cpuinfo;
+	struct cpufreq_darknessv5_cpuinfo *darknessv5_cpuinfo;
 	int delay;
 	unsigned int cpu;
 
-	darkness_cpuinfo =	container_of(work, struct cpufreq_darkness_cpuinfo, work.work);
-	cpu = darkness_cpuinfo->cpu;
+	darknessv5_cpuinfo =	container_of(work, struct cpufreq_darknessv5_cpuinfo, work.work);
+	cpu = darknessv5_cpuinfo->cpu;
 
-	mutex_lock(&darkness_cpuinfo->timer_mutex);
-	darkness_check_cpu(darkness_cpuinfo);
+	mutex_lock(&darknessv5_cpuinfo->timer_mutex);
+	darknessv5_check_cpu(darknessv5_cpuinfo);
 	/* We want all CPUs to do sampling nearly on
 	 * same jiffy
 	 */
-	delay = usecs_to_jiffies(atomic_read(&darkness_tuners_ins.sampling_rate));
+	delay = usecs_to_jiffies(atomic_read(&darknessv5_tuners_ins.sampling_rate));
 	if (num_online_cpus() > 1) {
 		delay -= jiffies % delay;
 	}
 
-	queue_delayed_work_on(cpu, system_wq, &darkness_cpuinfo->work, delay);
-	mutex_unlock(&darkness_cpuinfo->timer_mutex);
+	queue_delayed_work_on(cpu, system_wq, &darknessv5_cpuinfo->work, delay);
+	mutex_unlock(&darknessv5_cpuinfo->timer_mutex);
 }
 
-static int cpufreq_governor_darkness(struct cpufreq_policy *policy,
+static int cpufreq_governor_darknessv5(struct cpufreq_policy *policy,
 				unsigned int event)
 {
 	unsigned int cpu;
-	struct cpufreq_darkness_cpuinfo *this_darkness_cpuinfo;
+	struct cpufreq_darknessv5_cpuinfo *this_darknessv5_cpuinfo;
 	int rc, delay;
 
 	cpu = policy->cpu;
-	this_darkness_cpuinfo = &per_cpu(od_darkness_cpuinfo, cpu);
+	this_darknessv5_cpuinfo = &per_cpu(od_darknessv5_cpuinfo, cpu);
 
 	switch (event) {
 	case CPUFREQ_GOV_START:
 		if (!policy->cur)
 			return -EINVAL;
 
-		mutex_lock(&darkness_mutex);
+		mutex_lock(&darknessv5_mutex);
 
-		this_darkness_cpuinfo->cur_policy = policy;
+		this_darknessv5_cpuinfo->cur_policy = policy;
 
-		this_darkness_cpuinfo->prev_cpu_idle = get_cpu_idle_time_us(cpu, NULL);
-		this_darkness_cpuinfo->prev_cpu_idle += get_cpu_iowait_time_us(cpu, &this_darkness_cpuinfo->prev_cpu_wall);
+		this_darknessv5_cpuinfo->prev_cpu_idle = get_cpu_idle_time_us(cpu, NULL);
+		this_darknessv5_cpuinfo->prev_cpu_idle += get_cpu_iowait_time_us(cpu, &this_darknessv5_cpuinfo->prev_cpu_wall);
 
-		this_darkness_cpuinfo->freq_table = cpufreq_frequency_get_table(cpu);
-		this_darkness_cpuinfo->cpu = cpu;
+		this_darknessv5_cpuinfo->freq_table = cpufreq_frequency_get_table(cpu);
+		this_darknessv5_cpuinfo->cpu = cpu;
 
-		mutex_init(&this_darkness_cpuinfo->timer_mutex);
+		mutex_init(&this_darknessv5_cpuinfo->timer_mutex);
 
-		darkness_enable++;
+		darknessv5_enable++;
 		/*
 		 * Start the timerschedule work, when this governor
 		 * is used for first time
 		 */
-		if (darkness_enable == 1) {
+		if (darknessv5_enable == 1) {
 			rc = sysfs_create_group(cpufreq_global_kobject,
-						&darkness_attr_group);
+						&darknessv5_attr_group);
 			if (rc) {
-				mutex_unlock(&darkness_mutex);
+				mutex_unlock(&darknessv5_mutex);
 				return rc;
 			}
 		}
@@ -332,66 +332,66 @@ static int cpufreq_governor_darkness(struct cpufreq_policy *policy,
 		if (atomic_read(&max_freq_limit[cpu]) == 0)
 			atomic_set(&max_freq_limit[cpu], policy->max);*/
 
-		mutex_unlock(&darkness_mutex);
+		mutex_unlock(&darknessv5_mutex);
 
-		delay=usecs_to_jiffies(atomic_read(&darkness_tuners_ins.sampling_rate));
+		delay=usecs_to_jiffies(atomic_read(&darknessv5_tuners_ins.sampling_rate));
 		if (num_online_cpus() > 1) {
 			delay -= jiffies % delay;
 		}
 
-		this_darkness_cpuinfo->enable = 1;
-		INIT_DEFERRABLE_WORK(&this_darkness_cpuinfo->work, do_darkness_timer);
-		queue_delayed_work_on(this_darkness_cpuinfo->cpu, system_wq, &this_darkness_cpuinfo->work, delay);
+		this_darknessv5_cpuinfo->enable = 1;
+		INIT_DEFERRABLE_WORK(&this_darknessv5_cpuinfo->work, do_darknessv5_timer);
+		queue_delayed_work_on(this_darknessv5_cpuinfo->cpu, system_wq, &this_darknessv5_cpuinfo->work, delay);
 
 		break;
 
 	case CPUFREQ_GOV_STOP:
-		this_darkness_cpuinfo->enable = 0;
-		cancel_delayed_work_sync(&this_darkness_cpuinfo->work);
+		this_darknessv5_cpuinfo->enable = 0;
+		cancel_delayed_work_sync(&this_darknessv5_cpuinfo->work);
 
-		mutex_lock(&darkness_mutex);
-		darkness_enable--;
-		mutex_destroy(&this_darkness_cpuinfo->timer_mutex);
+		mutex_lock(&darknessv5_mutex);
+		darknessv5_enable--;
+		mutex_destroy(&this_darknessv5_cpuinfo->timer_mutex);
 
-		if (!darkness_enable)
+		if (!darknessv5_enable)
 			sysfs_remove_group(cpufreq_global_kobject,
-					   &darkness_attr_group);
-		mutex_unlock(&darkness_mutex);
+					   &darknessv5_attr_group);
+		mutex_unlock(&darknessv5_mutex);
 
 		break;
 
 	case CPUFREQ_GOV_LIMITS:
-		mutex_lock(&this_darkness_cpuinfo->timer_mutex);
-		if (policy->max < this_darkness_cpuinfo->cur_policy->cur)
-			__cpufreq_driver_target(this_darkness_cpuinfo->cur_policy,
+		mutex_lock(&this_darknessv5_cpuinfo->timer_mutex);
+		if (policy->max < this_darknessv5_cpuinfo->cur_policy->cur)
+			__cpufreq_driver_target(this_darknessv5_cpuinfo->cur_policy,
 				policy->max, CPUFREQ_RELATION_H);
-		else if (policy->min > this_darkness_cpuinfo->cur_policy->cur)
-			__cpufreq_driver_target(this_darkness_cpuinfo->cur_policy,
+		else if (policy->min > this_darknessv5_cpuinfo->cur_policy->cur)
+			__cpufreq_driver_target(this_darknessv5_cpuinfo->cur_policy,
 				policy->min, CPUFREQ_RELATION_L);
-		mutex_unlock(&this_darkness_cpuinfo->timer_mutex);
+		mutex_unlock(&this_darknessv5_cpuinfo->timer_mutex);
 
 		break;
 	}
 	return 0;
 }
 
-static int __init cpufreq_gov_darkness_init(void)
+static int __init cpufreq_gov_darknessv5_init(void)
 {
-	return cpufreq_register_governor(&cpufreq_gov_darkness);
+	return cpufreq_register_governor(&cpufreq_gov_darknessv5);
 }
 
-static void __exit cpufreq_gov_darkness_exit(void)
+static void __exit cpufreq_gov_darknessv5_exit(void)
 {
-	cpufreq_unregister_governor(&cpufreq_gov_darkness);
+	cpufreq_unregister_governor(&cpufreq_gov_darknessv5);
 }
 
 MODULE_AUTHOR("Alucard24@XDA");
-MODULE_DESCRIPTION("'cpufreq_darkness' - A dynamic cpufreq governor");
+MODULE_DESCRIPTION("'cpufreq_darknessv5' - A dynamic cpufreq governor");
 MODULE_LICENSE("GPL");
 
-#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_DARKNESS
-fs_initcall(cpufreq_gov_darkness_init);
+#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_darknessv5
+fs_initcall(cpufreq_gov_darknessv5_init);
 #else
-module_init(cpufreq_gov_darkness_init);
+module_init(cpufreq_gov_darknessv5_init);
 #endif
-module_exit(cpufreq_gov_darkness_exit);
+module_exit(cpufreq_gov_darknessv5_exit);
