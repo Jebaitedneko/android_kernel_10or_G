@@ -37,7 +37,7 @@ Module.symvers
 *.dwo
 *.rej
 output/
-
+*.c_backup
 #
 # Top-level generic files
 #
