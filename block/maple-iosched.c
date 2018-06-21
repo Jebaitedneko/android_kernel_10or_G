@@ -31,7 +31,7 @@ static const int async_write_expire = 500;	/* ditto for write async, these limit
 static const int fifo_batch = 16;		/* # of sequential requests treated as one by the above parameters. */
 static const int writes_starved = 4;		/* max times reads can starve a write */
 static const int sleep_latency_multiple = 10;	/* multple for expire time when device is asleep */
-
+bool state_suspended2;
 /* Elevator data */
 struct maple_data {
 	/* Request queues */
@@ -78,7 +78,7 @@ maple_add_request(struct request_queue *q, struct request *rq)
 	struct maple_data *mdata = maple_get_data(q);
 	const int sync = rq_is_sync(rq);
 	const int dir = rq_data_dir(rq);
-	//const bool display_off = state_suspended;
+	//const bool display_off = state_suspended2;
 
 	/*
 	 * Add request to the proper fifo list and set its
@@ -87,10 +87,10 @@ maple_add_request(struct request_queue *q, struct request *rq)
 
    	/* increase expiration when device is asleep */
    	unsigned int fifo_expire_suspended = mdata->fifo_expire[sync][dir] * sleep_latency_multiple;
-   	if (state_suspended && mdata->fifo_expire[sync][dir]) {
+   	if (state_suspended2 && mdata->fifo_expire[sync][dir]) {
    		rq->fifo_time = jiffies + mdata->fifo_expire[sync][dir];
    		list_add_tail(&rq->queuelist, &mdata->fifo_list[sync][dir]);
-   	} else if (!state_suspended && fifo_expire_suspended) {
+   	} else if (!state_suspended2 && fifo_expire_suspended) {
    		rq->fifo_time = jiffies + fifo_expire_suspended;
    		list_add_tail(&rq->queuelist, &mdata->fifo_list[sync][dir]);
    	}
@@ -206,7 +206,7 @@ maple_dispatch_requests(struct request_queue *q, int force)
 	struct maple_data *mdata = maple_get_data(q);
 	struct request *rq = NULL;
 	int data_dir = READ;
-  //const bool display_off = state_suspended;
+  //const bool display_off = state_suspended2;
 
 	/*
 	 * Retrieve any expired request after a batch of
@@ -218,9 +218,9 @@ maple_dispatch_requests(struct request_queue *q, int force)
 	/* Retrieve request */
 	if (!rq) {
 		/* Treat writes fairly while suspended, otherwise allow them to be starved */
-		if (state_suspended && mdata->starved >= mdata->writes_starved)
+		if (state_suspended2 && mdata->starved >= mdata->writes_starved)
 			data_dir = WRITE;
-		else if (!state_suspended && mdata->starved >= 1)
+		else if (!state_suspended2 && mdata->starved >= 1)
 			data_dir = WRITE;
 
 		rq = maple_choose_request(mdata, data_dir);

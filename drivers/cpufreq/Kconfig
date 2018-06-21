@@ -139,14 +139,14 @@ config CPU_FREQ_DEFAULT_GOV_INTELLIACTIVE
 	  loading your cpufreq low-level hardware driver, using the
 	  'impulse' governor for latency-sensitive workloads.
 
-config CPU_FREQ_DEFAULT_GOV_ELECTRON
-	bool "electron"
-	select CPU_FREQ_GOV_ELECTRON
+config CPU_FREQ_DEFAULT_GOV_ELECTRON_ADVANCE
+	bool "electron_advance"
+	select CPU_FREQ_GOV_ELECTRON_ADVANCE
 	help
-	  Use the CPUFreq governor 'electron' as default. This allows
+	  Use the CPUFreq governor 'electron_advance' as default. This allows
 	  you to get a full dynamic cpu frequency capable system by simply
 	  loading your cpufreq low-level hardware driver, using the
-	  'electron' governor for latency-sensitive workloads.
+	  'electron_advance' governor for latency-sensitive workloads.
 
 config CPU_FREQ_DEFAULT_GOV_INTERACTIVE_PRO
 	bool "interactive_pro"
@@ -297,6 +297,8 @@ config CPU_FREQ_DEFAULT_GOV_NIGHTMARE
 	bool "nightmare"
 	select CPU_FREQ_GOV_NIGHTMARE
 	help
+
+
 
 
 endchoice
@@ -567,6 +569,7 @@ config CPU_FREQ_GOV_DARKNESSV5
 	tristate "'darknessv5' cpufreq governor"
 depends on CPU_FREQ
 
+
 config CPU_BOOST
 	tristate "Event base short term CPU freq boost"
 	depends on CPU_FREQ
@@ -586,11 +589,11 @@ config CPU_FREQ_GOV_IMPULSE
 
 	  If in doubt, say N.
 
-config CPU_FREQ_GOV_ELECTRON
-	tristate "'electron' cpufreq governor"
+config CPU_FREQ_GOV_ELECTRON_ADVANCE
+	tristate "'electron_advance' cpufreq governor"
 	depends on CPU_FREQ
 	help
-	  'electron' - another tuned interactive with extra options
+	  'electron_advance' - another tuned interactive with extra options
 
 config CPU_WAKE_BOOST
 	bool "CPU wake boost"

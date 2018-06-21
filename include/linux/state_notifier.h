@@ -25,7 +25,7 @@ struct state_event {
 	void *data;
 };
 
- bool state_suspended;
+// bool state_suspended;
  void state_suspend(void);
  void state_resume(void);
 int state_register_client(struct notifier_block *nb);
