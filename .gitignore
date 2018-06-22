@@ -38,6 +38,7 @@ Module.symvers
 *.rej
 output/
 *.c_backup
+*_back*
 #
 # Top-level generic files
 #

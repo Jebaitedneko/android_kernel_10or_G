@@ -889,19 +889,16 @@
                  qcom,speed0-bin-v0-cl = <0x0 0x0>,
                                         <0x192D5000 0x1>,					
 					<0x1DC13000 0x2>,
-                                        <0x22551000 0x3>,
-                                        <0x26e8f000 0x4>, 					
-                                        <0x3dc01b00 0x5>,
-                                        <0x53819040 0x6>,
-					<0x64ac1840 0x7>,
-                                       	<0x6b86db00 0x8>,
-					<0x74b4b580 0x9>,
-					<0x7829b800 0xa>,
-					<0x80266580 0xb>,
-					<0x839b6800 0xc>,
-					<0x89173700 0xd>,
-					<0x8c122780 0xe>,
-					<0x8f0d1800 0xf>;
+                                        <0x22551000 0x3>,					
+                                        <0x3dc01b00 0x4>,
+					<0x64ac1840 0x5>,
+                                       	<0x6b86db00 0x6>,
+					<0x74b4b580 0x7>,
+					<0x7829b800 0x8>,
+					<0x80266580 0x9>,
+					<0x839b6800 0xa>,
+					<0x89173700 0xb>,
+					<0x8f0d1800 0xd>;
                  qcom,speed0-bin-v0-cci = <0x0 0x0>,
 					<0x9896800 0x1>,
 					<0xf906000 0x2>,
@@ -916,21 +913,18 @@
 					<0x36990d00 0xb>,
 					<0x37917340 0xc>;
 		qcom,speed2-bin-v0-cl = <0x0 0x0>,
-                                         <0x192D5000 0x1>,
+                                        <0x192D5000 0x1>,                                        
                                         <0x1DC13000 0x2>,
                                         <0x22551000 0x3>,
-                                        <0x26e8f000 0x4>,
-                                        <0x3dc01b00 0x5>,
-                                        <0x53819040 0x6>,
-                                        <0x64ac1840 0x7>,
-                                        <0x6b86db00 0x8>,
-                                        <0x74b4b580 0x9>,
-                                        <0x7829b800 0xa>,
-                                        <0x80266580 0xb>,
-                                        <0x839b6800 0xc>,
-                                        <0x89173700 0xd>,
-                                        <0x8c122780 0xe>,
-                                        <0x8f0d1800 0xf>;
+                                        <0x3dc01b00 0x4>,
+                                        <0x64ac1840 0x5>,
+                                        <0x6b86db00 0x6>,
+                                        <0x74b4b580 0x7>,
+                                        <0x7829b800 0x8>,
+                                        <0x80266580 0x9>,
+                                        <0x839b6800 0xa>,
+                                        <0x89173700 0xb>,
+                                        <0x8f0d1800 0xd>;
                 qcom,speed2-bin-v0-cci = <0x0 0x0>,
 					<0x9896800 0x1>,
 					<0xf906000 0x2>,
@@ -945,21 +939,18 @@
 					<0x36990d00 0xb>,
 					<0x37917340 0xc>;
 		qcom,speed7-bin-v0-cl = <0x0 0x0>,
-                                          <0x192D5000 0x1>,
+                                        <0x192D5000 0x1>,                                        
                                         <0x1DC13000 0x2>,
                                         <0x22551000 0x3>,
-                                        <0x26e8f000 0x4>,
-                                        <0x3dc01b00 0x5>,
-                                        <0x53819040 0x6>,
-                                        <0x64ac1840 0x7>,
-                                        <0x6b86db00 0x8>,
-                                        <0x74b4b580 0x9>,
-                                        <0x7829b800 0xa>,
-                                        <0x80266580 0xb>,
-                                        <0x839b6800 0xc>,
-                                        <0x89173700 0xd>,
-                                        <0x8c122780 0xe>,
-                                        <0x8f0d1800 0xf>;
+                                        <0x3dc01b00 0x4>,
+                                        <0x64ac1840 0x5>,
+                                        <0x6b86db00 0x6>,
+                                        <0x74b4b580 0x7>,
+                                        <0x7829b800 0x8>,
+                                        <0x80266580 0x9>,
+                                        <0x839b6800 0xa>,
+                                        <0x89173700 0xb>,
+                                        <0x8f0d1800 0xd>;
                 qcom,speed7-bin-v0-cci =  <0x0 0x0>,
 					<0x9896800 0x1>,
 					<0xf906000 0x2>,
@@ -974,21 +965,18 @@
 					<0x36990d00 0xb>,
 					<0x37917340 0xc>;
 		qcom,speed6-bin-v0-cl = <0x0 0x0>,
-                                         <0x192D5000 0x1>,
+                                        <0x192D5000 0x1>,                                        
                                         <0x1DC13000 0x2>,
                                         <0x22551000 0x3>,
-                                        <0x26e8f000 0x4>,
-                                        <0x3dc01b00 0x5>,
-                                        <0x53819040 0x6>,
-                                        <0x64ac1840 0x7>,
-                                        <0x6b86db00 0x8>,
-                                        <0x74b4b580 0x9>,
-                                        <0x7829b800 0xa>,
-                                        <0x80266580 0xb>,
-                                        <0x839b6800 0xc>,
-                                        <0x89173700 0xd>,
-                                        <0x8c122780 0xe>,
-                                        <0x8f0d1800 0xf>;
+                                        <0x3dc01b00 0x4>,
+                                        <0x64ac1840 0x5>,
+                                        <0x6b86db00 0x6>,
+                                        <0x74b4b580 0x7>,
+                                        <0x7829b800 0x8>,
+                                        <0x80266580 0x9>,
+                                        <0x839b6800 0xa>,
+                                        <0x89173700 0xb>,
+                                        <0x8f0d1800 0xd>;
                 qcom,speed6-bin-v0-cci =  <0x0 0x0>,
 					<0x9896800 0x1>,
 					<0xf906000 0x2>,
@@ -1027,7 +1015,7 @@
 			 <&clock_cpu clk_a53_pwr_clk>,
 			 <&clock_cpu clk_a53_pwr_clk>,
 			 <&clock_cpu clk_a53_pwr_clk>;
-                qcom,cpufreq-table = < 0x67200 0x79E00 0x8CA00 0x9f600 0xfd200 0x1560a8  0x19c5a8 0x1b86e0 0x1de070 0x1ec300 0x20ce70 0x21b100 0x231860 0x23dbb0 0x249f00 >;
+                qcom,cpufreq-table = < 0x67200 0x79E00 0x8CA00 0xfd200 0x19c5a8 0x1b86e0 0x1de070 0x1ec300 0x20ce70 0x21b100 0x231860 0x249f00 >;
          };
 
 	cpubw: qcom,cpubw {
@@ -1080,7 +1068,7 @@
 	devfreq-cpufreq {
 		cpubw-cpufreq {
 		target-dev = <&cpubw>;
-                cpu-to-dev-map = < 0x67200 0x64b 0x79E00 0x64b 0x8CA00 0x64b 0x9f600 0x64b 0xfd200 0xc95 0x1560a8 0x16e3 0x19c5a8 0x192d 0x1b8a00 0x1bc0 0x1de200 0x1bc0 0x1ec300 0x1bc0 0x21b100 0x1bc0 0x231860 0x1bc0 0x23dbb0 0x1bc0 0x249f00 0x1bc0  >;
+                cpu-to-dev-map = < 0x67200 0x64b 0x79E00 0xc95 0x8CA00 0xc95  0xfd200 0xc95 0x19c5a8 0x192d 0x1b8a00 0x1bc0 0x1de200 0x1bc0 0x1ec300 0x1bc0 0x21b100 0x1bc0 0x231860 0x1bc0 0x249f00 0x1bc0  >;
                  };
 		mincpubw-cpufreq {
 			target-dev = <&mincpubw>;
