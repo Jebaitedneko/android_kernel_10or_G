@@ -1121,7 +1121,7 @@ static int __init devfreq_init(void)
 
 	devfreq_wq =
 	    alloc_workqueue("devfreq_wq",
-			    WQ_HIGHPRI | WQ_UNBOUND | WQ_FREEZABLE |
+			    WQ_HIGHPRI | WQ_UNBOUND | WQ_FREEZABLE | WQ_POWER_EFFICIENT |
 			    WQ_MEM_RECLAIM, 0);
 	if (!devfreq_wq) {
 		class_destroy(devfreq_class);
