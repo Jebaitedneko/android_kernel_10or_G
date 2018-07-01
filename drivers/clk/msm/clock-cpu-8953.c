@@ -495,9 +495,9 @@ ssize_t cpu_clock_get_vdd(char *buf)
 		if (uv < 0)
 			return 0;
 
-		count += sprintf(buf + count, "Big_%lumhz: %d mV\n",
-					a53_bc_clk.c.fmax[i] / 1000000,
-					uv / 1000);
+                count += sprintf(buf + count, "A53_%lumhz: %d mV\n",
+					a53_clk.c.fmax[i] / 1000000,
+                                        uv / 1000);
 	}
 
 	/* Little Cluster (4 - 7) */
@@ -507,10 +507,10 @@ ssize_t cpu_clock_get_vdd(char *buf)
 					a53_lc_clk.c.vdd_class->vdd_uv[i]);
 		if (uv < 0)
 			return 0;
+                count += sprintf(buf + count, "A72_%lumhz: %d mV\n",
+					a72_clk.c.fmax[i] / 1000000,
+                                        uv / 1000);
 
-		count += sprintf(buf + count, "Little_%lumhz: %d mV\n",
-					a53_lc_clk.c.fmax[i] / 1000000,
-					uv / 1000);
 	}
 
 	return count;
@@ -765,19 +765,13 @@ static void populate_opp_table(struct platform_device *pdev)
 	print_opp_table(a53_pwr_cpu, a53_perf_cpu);
 }
 
-
 #ifdef CONFIG_VOLTAGE_CONTROL
-static struct cpu_clk_8953 perfcl_clk;
-static struct cpu_clk_8953 pwrcl_clk;
+extern int cpr_regulator_get_corner_voltage(struct regulator *regulator,
+		int corner);
+extern int cpr_regulator_set_corner_voltage(struct regulator *regulator,
+		int corner, int volt);
 
-extern int cpr_regulator_get_ceiling_voltage(struct regulator *regulator,int cori);
-extern int cpr_regulator_get_floor_voltage(struct regulator *regulator,int cori);
-extern int cpr_regulator_get_last_voltage(struct regulator *regulator,int cori);
-extern int cpr_regulator_set_ceiling_voltage(struct regulator *regulator,int cori, int volt);
-extern int cpr_regulator_set_floor_voltage(struct regulator *regulator,int cori, int volt);
-extern int cpr_regulator_set_last_voltage(struct regulator *regulator,int cori, int volt);
-		
-ssize_t get_Voltages(char *buf)
+ssize_t cpu_clock_get_vdd(char *buf)
 {
 	ssize_t count = 0;
 	int i, uv;
@@ -785,65 +779,32 @@ ssize_t get_Voltages(char *buf)
 	if (!buf)
 		return 0;
 
-	//Ceiling
-	for (i = 1; i < pwrcl_clk.c.num_fmax; i++) {
-		uv = cpr_regulator_get_ceiling_voltage(
-					pwrcl_clk.c.vdd_class->regulator[0],
-					pwrcl_clk.c.vdd_class->vdd_uv[i]);
-		if (uv < 0) return 0;
-		count += sprintf(buf + count, "pwrcl_Vmax:%lumhz: %d mV\n",
-					pwrcl_clk.c.fmax[i] / 1000000,
-					uv / 1000);
-	//Floor
-		uv = cpr_regulator_get_floor_voltage(
-					pwrcl_clk.c.vdd_class->regulator[0],
-					pwrcl_clk.c.vdd_class->vdd_uv[i]);
-		if (uv < 0) return 0;
-		count += sprintf(buf + count, "pwrcl_Vmin:%lumhz: %d mV\n",
-					pwrcl_clk.c.fmax[i] / 1000000,
-					uv / 1000);
-	//current
-		uv = cpr_regulator_get_last_voltage(
-					pwrcl_clk.c.vdd_class->regulator[0],
-					pwrcl_clk.c.vdd_class->vdd_uv[i]);
-		if (uv < 0) return 0;
-		count += sprintf(buf + count, "pwrcl_Vcur:%lumhz: %d mV\n",
-					pwrcl_clk.c.fmax[i] / 1000000,
+	for (i = 1; i < a53_clk.c.num_fmax; i++) {
+		uv = cpr_regulator_get_corner_voltage(
+					a53_clk.c.vdd_class->regulator[0],
+					a53_clk.c.vdd_class->vdd_uv[i]);
+		if (uv < 0)
+			return 0;
+		count += sprintf(buf + count, "%lumhz: %d mV\n",
+					a53_clk.c.fmax[i] / 1000000,
 					uv / 1000);
 	}
-	//Big ceiling
-	for (i = 1; i < perfcl_clk.c.num_fmax; i++) {
-		uv = cpr_regulator_get_ceiling_voltage(
-					perfcl_clk.c.vdd_class->regulator[0],
-					perfcl_clk.c.vdd_class->vdd_uv[i]);
+
+	for (i = 1; i < a72_clk.c.num_fmax; i++) {
+		uv = cpr_regulator_get_corner_voltage(
+					a72_clk.c.vdd_class->regulator[0],
+					a72_clk.c.vdd_class->vdd_uv[i]);
 		if (uv < 0)
 			return 0;
-		count += sprintf(buf + count, "perfcl_Vmax:%lumhz: %d mV\n",
-					perfcl_clk.c.fmax[i] / 1000000,
-					uv / 1000);
-	//floor
-		uv = cpr_regulator_get_floor_voltage(
-					perfcl_clk.c.vdd_class->regulator[0],
-					perfcl_clk.c.vdd_class->vdd_uv[i]);
-		if (uv < 0)
-			return 0;
-		count += sprintf(buf + count, "perfcl_Vmin:%lumhz: %d mV\n",
-					perfcl_clk.c.fmax[i] / 1000000,
-					uv / 1000);
-	//current
-		uv = cpr_regulator_get_last_voltage(
-					perfcl_clk.c.vdd_class->regulator[0],
-					perfcl_clk.c.vdd_class->vdd_uv[i]);
-		if (uv < 0)
-			return 0;
-		count += sprintf(buf + count, "perfcl_Vcur:%lumhz: %d mV\n",
-					perfcl_clk.c.fmax[i] / 1000000,
+		count += sprintf(buf + count, "%lumhz: %d mV\n",
+					a72_clk.c.fmax[i] / 1000000,
 					uv / 1000);
 	}
 
 	return count;
 }
-ssize_t set_Voltages(const char *buf, size_t count)
+
+ssize_t cpu_clock_set_vdd(const char *buf, size_t count)
 {
 	int i, mv, ret;
 	char line[32];
@@ -851,43 +812,14 @@ ssize_t set_Voltages(const char *buf, size_t count)
 	if (!buf)
 		return -EINVAL;
 
-	for (i = 1; i < pwrcl_clk.c.num_fmax; i++) 
-	{
+	for (i = 1; i < a53_clk.c.num_fmax; i++) {
 		ret = sscanf(buf, "%d", &mv);
 		if (ret != 1)
 			return -EINVAL;
 
-		ret = cpr_regulator_set_ceiling_voltage(
-					pwrcl_clk.c.vdd_class->regulator[0],
-					pwrcl_clk.c.vdd_class->vdd_uv[i],
-					mv * 1000);
-        if (ret < 0)
-			return ret;
-
-        ret = sscanf(buf, "%s", line);
-		buf += strlen(line) + 1;
-	//floor
-		ret = sscanf(buf, "%d", &mv);
-		if (ret != 1)
-			return -EINVAL;
-
-		ret = cpr_regulator_set_floor_voltage(
-					pwrcl_clk.c.vdd_class->regulator[0],
-					pwrcl_clk.c.vdd_class->vdd_uv[i],
-					mv * 1000);
-        if (ret < 0)
-			return ret;
-
-        ret = sscanf(buf, "%s", line);
-		buf += strlen(line) + 1;
-	//current
-		ret = sscanf(buf, "%d", &mv);
-		if (ret != 1)
-			return -EINVAL;
-
-		ret = cpr_regulator_set_last_voltage(
-					pwrcl_clk.c.vdd_class->regulator[0],
-					pwrcl_clk.c.vdd_class->vdd_uv[i],
+		ret = cpr_regulator_set_corner_voltage(
+					a53_clk.c.vdd_class->regulator[0],
+					a53_clk.c.vdd_class->vdd_uv[i],
 					mv * 1000);
         if (ret < 0)
 			return ret;
@@ -895,43 +827,15 @@ ssize_t set_Voltages(const char *buf, size_t count)
         ret = sscanf(buf, "%s", line);
 		buf += strlen(line) + 1;
 	}
-	for (i = 1; i < perfcl_clk.c.num_fmax; i++) 
-	{
+
+	for (i = 1; i < a72_clk.c.num_fmax; i++) {
 		ret = sscanf(buf, "%d", &mv);
 		if (ret != 1)
 			return -EINVAL;
 
-		ret = cpr_regulator_set_ceiling_voltage(
-					perfcl_clk.c.vdd_class->regulator[0],
-					perfcl_clk.c.vdd_class->vdd_uv[i],
-					mv * 1000);
-        if (ret < 0)
-			return ret;
-
-        ret = sscanf(buf, "%s", line);
-		buf += strlen(line) + 1;
-		
-		ret = sscanf(buf, "%d", &mv);
-		if (ret != 1)
-			return -EINVAL;
-
-		ret = cpr_regulator_set_floor_voltage(
-					perfcl_clk.c.vdd_class->regulator[0],
-					perfcl_clk.c.vdd_class->vdd_uv[i],
-					mv * 1000);
-        if (ret < 0)
-			return ret;
-
-        ret = sscanf(buf, "%s", line);
-		buf += strlen(line) + 1;
-
-		ret = sscanf(buf, "%d", &mv);
-		if (ret != 1)
-			return -EINVAL;
-
-		ret = cpr_regulator_set_last_voltage(
-					perfcl_clk.c.vdd_class->regulator[0],
-					perfcl_clk.c.vdd_class->vdd_uv[i],
+		ret = cpr_regulator_set_corner_voltage(
+					a72_clk.c.vdd_class->regulator[0],
+					a72_clk.c.vdd_class->vdd_uv[i],
 					mv * 1000);
         if (ret < 0)
 			return ret;
