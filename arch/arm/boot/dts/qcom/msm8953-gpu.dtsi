@@ -152,7 +152,7 @@
 			/* TURBO */
 			qcom,gpu-pwrlevel@0 {
 				reg = <0>;
-				qcom,gpu-freq = <0x38EC24C0>;
+				qcom,gpu-freq = <0x3B8B87C0>;
 				qcom,bus-freq = <10>;
 				qcom,bus-min = <10>;
 				qcom,bus-max = <10>;
@@ -214,7 +214,7 @@
 
 			qcom,gpu-pwrlevel@7 {
 				reg = <0x7>;
-				qcom,gpu-freq = <0x7ed6b40>;
+				qcom,gpu-freq = <0x5F5E100>;
 				qcom,bus-freq = <0x2>;
 				qcom,bus-min = <0x1>;
 				qcom,bus-max = <0x4>;
