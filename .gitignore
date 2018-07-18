@@ -43,6 +43,8 @@ AnyKernel2/
 GCC/
 build.sh
 linux-x86/
+GCC7/
+clang/
 #
 # Top-level generic files
 #
