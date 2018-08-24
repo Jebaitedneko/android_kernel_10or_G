@@ -1277,7 +1277,7 @@ extern int snd_hax_reg_access(unsigned int);
 extern unsigned int snd_hax_cache_read(unsigned int);
 extern void snd_hax_cache_write(unsigned int, unsigned int);
 #endif
-int snd_ctrl_enabled1=1;
+
 #ifndef CONFIG_SOUND_CONTROL_HAX_3_GPL 
 static
 #endif
@@ -1310,7 +1310,7 @@ unsigned int value)
 
             } else
                #ifdef CONFIG_SOUND_CONTROL_HAX_3_GPL
-		if (!snd_ctrl_enabled1)
+		if (!snd_ctrl_enabled)
 			return __msm8x16_wcd_reg_write(codec, reg, (u8)value);
 
 		if (!snd_hax_reg_access(reg)) {
