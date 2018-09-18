@@ -188,20 +188,21 @@ static struct page **get_pages(struct drm_gem_object *obj)
 	return msm_obj->pages;
 }
 
+
 static void put_pages(struct drm_gem_object *obj)
 {
-	struct msm_gem_object *msm_obj = to_msm_bo(obj);
+        struct msm_gem_object *msm_obj = to_msm_bo(obj);
+        if (msm_obj->pages) {
+                if (use_pages(obj))
+                        msm_drm_free_buf(obj);
+                else {
+                        drm_mm_remove_node(msm_obj->vram_node);
+                        drm_free_large(msm_obj->pages);
+                }
 
-	if (msm_obj->pages) {
-		if (use_pages(obj))
-			msm_drm_free_buf(obj);
-		else {
-			drm_mm_remove_node(msm_obj->vram_node);
-			drm_free_large(msm_obj->pages);
-		}
-
-		msm_obj->pages = NULL;
-	}
+                msm_obj->pages = NULL;
+        }
+        
 }
 
 struct page **msm_gem_get_pages(struct drm_gem_object *obj)
