@@ -796,6 +796,7 @@ static struct spi_driver bg_spi_driver = {
 	},
 	.probe = bg_spi_probe,
 	.remove = bg_spi_remove,
+	.shutdown = bg_spi_shutdown,
 };
 
 module_spi_driver(bg_spi_driver);

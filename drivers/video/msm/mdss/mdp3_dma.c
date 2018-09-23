@@ -706,6 +706,15 @@ retry_dma_done:
 	if (dma->ccs_config.ccs_dirty)
 		mdp3_ccs_update(dma, true);
 	mutex_unlock(&dma->pp_lock);
+
+	if (dma->output_config.out_sel == MDP3_DMA_OUTPUT_SEL_DSI_VIDEO) {
+		tpg_cfg = MDP3_REG_READ(MDP3_REG_DSI_VIDEO_TEST_CTL);
+		if (tpg_cfg & BIT(31)) {
+			tpg_cfg &= ~BIT(31);
+			MDP3_REG_WRITE(MDP3_REG_DSI_VIDEO_TEST_CTL, tpg_cfg);
+		}
+	}
+
 	spin_lock_irqsave(&dma->dma_lock, flag);
 	MDP3_REG_WRITE(MDP3_REG_DMA_P_IBUF_ADDR, (u32)(buf +
 			dma->roi.y * dma->source_config.stride +
@@ -1210,6 +1219,7 @@ int dsi_video_config(struct mdp3_intf *intf, struct mdp3_intf_cfg *cfg)
 
 	v->underflow_color |= 0x80000000;
 	MDP3_REG_WRITE(MDP3_REG_DSI_VIDEO_UNDERFLOW_CTL, v->underflow_color);
+	MDP3_REG_WRITE(MDP3_REG_DSI_VIDEO_TEST_CTL, 0x70000000);
 
 	return 0;
 }

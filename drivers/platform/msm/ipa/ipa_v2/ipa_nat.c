@@ -339,6 +339,9 @@ int ipa2_nat_init_cmd(struct ipa_ioc_v4_nat_init *init)
 		IPAERR_RL("Detected overflow\n");
 		return -EPERM;
 	}
+
+	mutex_lock(&ipa_ctx->nat_mem.lock);
+
 	/* Check Table Entry offset is not
 	   beyond allocated size */
 	tmp = init->ipv4_rules_offset +
@@ -348,6 +351,7 @@ int ipa2_nat_init_cmd(struct ipa_ioc_v4_nat_init *init)
 		IPAERR_RL("offset:%d entrys:%d size:%zu mem_size:%zu\n",
 			init->ipv4_rules_offset, (init->table_entries + 1),
 			tmp, ipa_ctx->nat_mem.size);
+		mutex_unlock(&ipa_ctx->nat_mem.lock);
 		return -EPERM;
 	}
 
@@ -355,6 +359,7 @@ int ipa2_nat_init_cmd(struct ipa_ioc_v4_nat_init *init)
 	if (init->expn_rules_offset >
 		UINT_MAX - (TBL_ENTRY_SIZE * init->expn_table_entries)) {
 		IPAERR_RL("Detected overflow\n");
+		mutex_unlock(&ipa_ctx->nat_mem.lock);
 		return -EPERM;
 	}
 	/* Check Expn Table Entry offset is not
@@ -366,6 +371,7 @@ int ipa2_nat_init_cmd(struct ipa_ioc_v4_nat_init *init)
 		IPAERR_RL("offset:%d entrys:%d size:%zu mem_size:%zu\n",
 			init->expn_rules_offset, init->expn_table_entries,
 			tmp, ipa_ctx->nat_mem.size);
+		mutex_unlock(&ipa_ctx->nat_mem.lock);
 		return -EPERM;
 	}
 
@@ -373,6 +379,7 @@ int ipa2_nat_init_cmd(struct ipa_ioc_v4_nat_init *init)
 	if (init->index_offset >
 		UINT_MAX - (INDX_TBL_ENTRY_SIZE * (init->table_entries + 1))) {
 		IPAERR_RL("Detected overflow\n");
+		mutex_unlock(&ipa_ctx->nat_mem.lock);
 		return -EPERM;
 	}
 	/* Check Indx Table Entry offset is not
@@ -384,6 +391,7 @@ int ipa2_nat_init_cmd(struct ipa_ioc_v4_nat_init *init)
 		IPAERR_RL("offset:%d entrys:%d size:%zu mem_size:%zu\n",
 			init->index_offset, (init->table_entries + 1),
 			tmp, ipa_ctx->nat_mem.size);
+		mutex_unlock(&ipa_ctx->nat_mem.lock);
 		return -EPERM;
 	}
 
@@ -391,6 +399,7 @@ int ipa2_nat_init_cmd(struct ipa_ioc_v4_nat_init *init)
 	if (init->index_expn_offset >
 		(UINT_MAX - (INDX_TBL_ENTRY_SIZE * init->expn_table_entries))) {
 		IPAERR_RL("Detected overflow\n");
+		mutex_unlock(&ipa_ctx->nat_mem.lock);
 		return -EPERM;
 	}
 	/* Check Expn Table entry offset is not
@@ -402,6 +411,7 @@ int ipa2_nat_init_cmd(struct ipa_ioc_v4_nat_init *init)
 		IPAERR_RL("offset:%d entrys:%d size:%zu mem_size:%zu\n",
 			init->index_expn_offset, init->expn_table_entries,
 			tmp, ipa_ctx->nat_mem.size);
+		mutex_unlock(&ipa_ctx->nat_mem.lock);
 		return -EPERM;
 	}
 
@@ -550,6 +560,7 @@ free_mem:
 free_nop:
 	kfree(reg_write_nop);
 bail:
+	mutex_unlock(&ipa_ctx->nat_mem.lock);
 	return result;
 }
 
