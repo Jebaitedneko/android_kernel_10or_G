@@ -46,7 +46,7 @@ obj-$(CONFIG_CPU_FREQ_GOV_RAGINGMOLASSES)      += cpufreq_ragingmolasses.o
 obj-$(CONFIG_CPU_FREQ_GOV_CULTIVATION)   += cpufreq_cultivation.o
 obj-$(CONFIG_CPU_FREQ_GOV_ZZMOOVE)      += cpufreq_zzmoove.o
 obj-$(CONFIG_CPU_FREQ_GOV_IRONACTIVE)	+= cpufreq_ironactive.o
-
+obj-$(CONFIG_CPU_FREQ_GOV_ONDEMANDX)	+= cpufreq_ondemandx.o
 
 
 obj-$(CONFIG_CPU_BOOST)			+= cpu-boost.o
