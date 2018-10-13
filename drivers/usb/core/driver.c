@@ -542,9 +542,21 @@ int usb_driver_claim_interface(struct usb_driver *driver,
 		retval = device_bind_driver(dev);
 
 	/* Attempt to re-enable USB3 LPM, if the disable was successful. */
-	if (!lpm_disable_error)
-		usb_unlocked_enable_lpm(udev);
 
+	if (retval) {
+		dev->driver = NULL;
+		usb_set_intfdata(iface, NULL);
+		iface->needs_remote_wakeup = 0;
+		iface->condition = USB_INTERFACE_UNBOUND;
+
+		/*
+		 * Unbound interfaces are always runtime-PM-disabled
+		 * and runtime-PM-suspended
+		 */
+		if (driver->supports_autosuspend)
+			pm_runtime_disable(dev);
+		pm_runtime_set_suspended(dev);
+               }
 	return retval;
 }
 EXPORT_SYMBOL_GPL(usb_driver_claim_interface);
@@ -870,6 +882,7 @@ int usb_register_device_driver(struct usb_device_driver *new_udriver,
 		struct module *owner)
 {
 	int retval = 0;
+	//int lpm_disable_error = -ENODEV;
 
 	if (usb_disabled())
 		return -ENODEV;
