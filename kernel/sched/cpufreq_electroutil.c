@@ -35,6 +35,8 @@ unsigned long boosted_cpu_util(int cpu);
 #define DEFAULT_UP_RATE_LIMIT_US 1000
 #define DEFAULT_DOWN_RATE_LIMIT_US 20000
 
+#define DEFAULT_SUSPEND_MAX_FREQ_SILVER	1113600
+#define DEFAULT_SUSPEND_MAX_FREQ_GOLD	300000
 struct eugov_tunables {
 	struct gov_attr_set attr_set;
 	unsigned int up_rate_limit_us;
@@ -878,9 +880,8 @@ static int eugov_init(struct cpufreq_policy *policy)
 	}
 
 	tunables->iowait_boost_enable = policy->iowait_boost_enable;
-
-	tunables->silver_suspend_max_freq = DEFAULT_SUSPEND_MAX_FREQ;
-	tunables->gold_suspend_max_freq = DEFAULT_SUSPEND_MAX_FREQ;
+	tunables->silver_suspend_max_freq = DEFAULT_SUSPEND_MAX_FREQ_SILVER;
+	tunables->gold_suspend_max_freq = DEFAULT_SUSPEND_MAX_FREQ_GOLD;
 	tunables->suspend_capacity_factor = DEFAULT_SUSPEND_CAPACITY_FACTOR;
 
 	policy->governor_data = eg_policy;
