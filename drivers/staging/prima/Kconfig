@@ -58,3 +58,5 @@ config QCOM_TDLS
 	default n
 
 endif # PRIMA_WLAN || PRONTO_WLAN
+
+
