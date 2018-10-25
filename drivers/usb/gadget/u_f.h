@@ -16,8 +16,6 @@
 #ifndef __U_F_H__
 #define __U_F_H__
 
-#include <linux/usb/gadget.h>
-
 /* Variable Length Array Macros **********************************************/
 #define vla_group(groupname) size_t groupname##__next = 0
 #define vla_group_size(groupname) groupname##__next

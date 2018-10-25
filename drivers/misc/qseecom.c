@@ -8648,11 +8648,11 @@ static int qseecom_remove(struct platform_device *pdev)
 			goto exit_irqrestore;
 
 		/* Break the loop if client handle is NULL */
-		if (!kclient->handle)
-			goto exit_free_kclient;
-
-		if (list_empty(&kclient->list))
-			goto exit_free_kc_handle;
+		if (!kclient->handle) {
+			list_del(&kclient->list);
+			kzfree(kclient);
+			break;
+		}
 
 		list_del(&kclient->list);
 		mutex_lock(&app_access_lock);
@@ -8665,10 +8665,6 @@ static int qseecom_remove(struct platform_device *pdev)
 		}
 	}
 
-exit_free_kc_handle:
-	kzfree(kclient->handle);
-exit_free_kclient:
-	kzfree(kclient);
 exit_irqrestore:
 	spin_unlock_irqrestore(&qseecom.registered_kclient_list_lock, flags);
 
