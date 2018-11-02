@@ -128,7 +128,7 @@ int msm_audio_ion_alloc(const char *name, struct ion_client **client,
 		return -EPROBE_DEFER;
 	}
 	if (!name || !client || !handle || !paddr || !vaddr
-		|| !bufsz || !pa_len) {
+		|| !pa_len) {
 		pr_err("%s: Invalid params\n", __func__);
 		return -EINVAL;
 	}
