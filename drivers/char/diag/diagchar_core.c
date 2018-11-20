@@ -433,7 +433,7 @@ static void diag_close_logging_process(const int pid)
 		return;
 
 	if (diag_mask_clear_param)
-		diag_clear_masks(pid);
+		diag_clear_masks(session_info);
 
 
 	session_peripheral_mask = session_info->peripheral_mask;
@@ -490,9 +490,6 @@ static int diag_remove_client_entry(struct file *file)
 	/* Delete the pkt response table entry for the exiting process */
 	diag_cmd_remove_reg_by_pid(current->tgid);
 
-	mutex_lock(&driver->diag_maskclear_mutex);
-	driver->mask_clear = 1;
-	mutex_unlock(&driver->diag_maskclear_mutex);
 
 	mutex_lock(&driver->diagchar_mutex);
 	driver->ref_count--;
@@ -1625,7 +1622,7 @@ static void diag_switch_logging_clear_mask(
 		return;
 	}
 	if ((new_mode == DIAG_USB_MODE) && diag_mask_clear_param)
-		diag_clear_masks(pid);
+		diag_clear_masks(session_info);
 
 }
 
