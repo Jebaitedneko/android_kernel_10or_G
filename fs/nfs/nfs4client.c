@@ -891,10 +891,10 @@ EXPORT_SYMBOL_GPL(nfs4_set_ds_client);
 
 /*
  * Session has been established, and the client marked ready.
- * Set the mount rsize and wsize with negotiated fore channel
- * attributes which will be bound checked in nfs_server_set_fsinfo.
+ * Limit the mount rsize, wsize and dtsize using negotiated fore
+ * channel attributes.
  */
-static void nfs4_session_set_rwsize(struct nfs_server *server)
+static void nfs4_session_limit_rwsize(struct nfs_server *server)
 {
 #ifdef CONFIG_NFS_V4_1
 	struct nfs4_session *sess;
@@ -956,11 +956,11 @@ static int nfs4_server_common_setup(struct nfs_server *server,
 			(unsigned long long) server->fsid.minor);
 	nfs_display_fhandle(mntfh, "Pseudo-fs root FH");
 
-	nfs4_session_set_rwsize(server);
-
 	error = nfs_probe_fsinfo(server, mntfh, fattr);
 	if (error < 0)
 		goto out;
+
+	nfs4_session_limit_rwsize(server);
 
 	if (server->namelen == 0 || server->namelen > NFS4_MAXNAMLEN)
 		server->namelen = NFS4_MAXNAMLEN;
