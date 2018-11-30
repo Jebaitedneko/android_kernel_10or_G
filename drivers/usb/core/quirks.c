@@ -176,6 +176,11 @@ static const struct usb_device_id usb_quirk_list[] = {
 	{ USB_DEVICE(0x1908, 0x1315), .driver_info =
 			USB_QUIRK_HONOR_BNUMINTERFACES },
 
+	/* Raydium Touchscreen */
+	{ USB_DEVICE(0x2386, 0x3114), .driver_info = USB_QUIRK_NO_LPM },
+
+	{ USB_DEVICE(0x2386, 0x3119), .driver_info = USB_QUIRK_NO_LPM },
+
 	/* DJI CineSSD */
 	{ USB_DEVICE(0x2ca3, 0x0031), .driver_info = USB_QUIRK_NO_LPM },
 
@@ -184,6 +189,9 @@ static const struct usb_device_id usb_quirk_list[] = {
 
 	/* USB3503 */
 	{ USB_DEVICE(0x0424, 0x3503), .driver_info = USB_QUIRK_RESET_RESUME },
+
+	/* Corsair K70 LUX RGB */
+       { USB_DEVICE(0x1b1c, 0x1b33), .driver_info = USB_QUIRK_DELAY_INIT },
 
 	/* ASUS Base Station(T100) */
 	{ USB_DEVICE(0x0b05, 0x17e0), .driver_info =
