@@ -53,7 +53,7 @@
 #include <trace/events/ufs.h>
 
 #ifdef CONFIG_DEBUG_FS
-
+#define RESPONSE_UPIU_SENSE_DATA_LENGTH	18
 static int ufshcd_tag_req_type(struct request *rq)
 {
 	int rq_type = TS_WRITE;
