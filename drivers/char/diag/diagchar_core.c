@@ -435,9 +435,6 @@ static void diag_close_logging_process(const int pid)
 	if (diag_mask_clear_param)
 		diag_clear_masks(session_info);
 
-	mutex_lock(&driver->diag_maskclear_mutex);
-	driver->mask_clear = 1;
-	mutex_unlock(&driver->diag_maskclear_mutex);
 
 	session_peripheral_mask = session_info->peripheral_mask;
 	diag_md_session_close(session_info);
@@ -493,6 +490,7 @@ static int diag_remove_client_entry(struct file *file)
 	/* Delete the pkt response table entry for the exiting process */
 	diag_cmd_remove_reg_by_pid(current->tgid);
 
+
 	mutex_lock(&driver->diagchar_mutex);
 	driver->ref_count--;
 	if (driver->ref_count == 0)
@@ -518,9 +516,6 @@ static int diagchar_close(struct inode *inode, struct file *file)
 	DIAG_LOG(DIAG_DEBUG_USERSPACE, "diag: process exit %s\n",
 		current->comm);
 	ret = diag_remove_client_entry(file);
-	mutex_lock(&driver->diag_maskclear_mutex);
-	driver->mask_clear = 0;
-	mutex_unlock(&driver->diag_maskclear_mutex);
 	return ret;
 }
 
@@ -1586,6 +1581,51 @@ static uint32_t diag_translate_mask(uint32_t peripheral_mask)
 	return ret;
 }
 
+static void diag_switch_logging_clear_mask(
+		struct diag_logging_mode_param_t *param, int pid)
+{
+	int new_mode;
+	struct diag_md_session_t *session_info = NULL;
+
+	mutex_lock(&driver->md_session_lock);
+	session_info = diag_md_session_get_pid(pid);
+	if (!session_info) {
+		DIAG_LOG(DIAG_DEBUG_USERSPACE, "Invalid pid: %d\n", pid);
+		mutex_unlock(&driver->md_session_lock);
+		return;
+	}
+	mutex_unlock(&driver->md_session_lock);
+
+	if (!param)
+		return;
+
+	if (!param->peripheral_mask) {
+		DIAG_LOG(DIAG_DEBUG_USERSPACE,
+			"asking for mode switch with no peripheral mask set\n");
+		return;
+	}
+
+	switch (param->req_mode) {
+	case CALLBACK_MODE:
+	case UART_MODE:
+	case SOCKET_MODE:
+	case MEMORY_DEVICE_MODE:
+		new_mode = DIAG_MEMORY_DEVICE_MODE;
+		break;
+	case USB_MODE:
+		new_mode = DIAG_USB_MODE;
+		break;
+	default:
+		DIAG_LOG(DIAG_DEBUG_USERSPACE,
+			"Request to switch to invalid mode: %d\n",
+			param->req_mode);
+		return;
+	}
+	if ((new_mode == DIAG_USB_MODE) && diag_mask_clear_param)
+		diag_clear_masks(session_info);
+
+}
+
 static int diag_switch_logging(struct diag_logging_mode_param_t *param)
 {
 	int new_mode;
@@ -2155,6 +2195,7 @@ long diagchar_compat_ioctl(struct file *filp,
 		if (copy_from_user((void *)&mode_param, (void __user *)ioarg,
 				   sizeof(mode_param)))
 			return -EFAULT;
+		diag_switch_logging_clear_mask(&mode_param, current->tgid);
 		mutex_lock(&driver->diagchar_mutex);
 		result = diag_switch_logging(&mode_param);
 		mutex_unlock(&driver->diagchar_mutex);
@@ -2280,6 +2321,7 @@ long diagchar_ioctl(struct file *filp,
 		if (copy_from_user((void *)&mode_param, (void __user *)ioarg,
 				   sizeof(mode_param)))
 			return -EFAULT;
+		diag_switch_logging_clear_mask(&mode_param, current->tgid);
 		mutex_lock(&driver->diagchar_mutex);
 		result = diag_switch_logging(&mode_param);
 		mutex_unlock(&driver->diagchar_mutex);
@@ -3501,7 +3543,6 @@ static int __init diagchar_init(void)
 	non_hdlc_data.len = 0;
 	mutex_init(&driver->hdlc_disable_mutex);
 	mutex_init(&driver->diagchar_mutex);
-	mutex_init(&driver->diag_maskclear_mutex);
 	mutex_init(&driver->diag_notifier_mutex);
 	mutex_init(&driver->diag_file_mutex);
 	mutex_init(&driver->delayed_rsp_mutex);
