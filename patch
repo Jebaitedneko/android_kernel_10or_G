@@ -1,0 +1,274 @@
+From 9baff37a8d3e6eabdd6ff6363fab878e5f862619 Mon Sep 17 00:00:00 2001
+From: Animesh Kishore <animeshk@codeaurora.org>
+Date: Fri, 31 Aug 2018 15:20:10 +0530
+Subject: msm: mdss: Signal pending release fences on blank
+
+During fb blank, post ctl off, if there are any
+pending release fences, signal them.
+
+Change-Id: I50b8cec3db9b595dc123c395e4ef83176d7990a5
+Signed-off-by: Animesh Kishore <animeshk@codeaurora.org>
+---
+ drivers/video/msm/mdss/mdss_fb.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/video/msm/mdss/mdss_fb.c b/drivers/video/msm/mdss/mdss_fb.c
+index b2ddf4a..c6aaae0 100644
+--- a/drivers/video/msm/mdss/mdss_fb.c
++++ b/drivers/video/msm/mdss/mdss_fb.c
+@@ -1863,7 +1863,7 @@ static int mdss_fb_blank_blank(struct msm_fb_data_type *mfd,
+ 	ret = mfd->mdp.off_fnc(mfd);
+ 	if (ret)
+ 		mfd->panel_power_state = cur_power_state;
+-	else if (mdss_panel_is_power_off(req_power_state))
++	else if (!mdss_panel_is_power_on_interactive(req_power_state))
+ 		mdss_fb_release_fences(mfd);
+ 	mfd->op_enable = true;
+ 	complete(&mfd->power_off_comp);
+-- 
+cgit v1.1
+
+
+From 7b6f25ac8d29f4622af3b5a690fcebfcb73a7106 Mon Sep 17 00:00:00 2001
+From: puneet <puneet@codeaurora.org>
+Date: Tue, 6 Nov 2018 14:32:16 +0530
+Subject: drivers: input: sensors: fix latency issue with smi130 irq handler
+
+CPU is taking 2ms+ time to come out of deep state of lpm mode to
+serve the irq. Due to latency of SMI130 IRQ handler, there is drift
+b/w the timestamp of data samples. To avoid this changed cpu state
+to idle state with timer till IRQ ger served.
+
+Change-Id: Ic00a2c23d3a9c2ff4c3da6dbfd29bce4305af6ce
+Signed-off-by: puneet <puneet@codeaurora.org>
+---
+ drivers/input/sensors/smi130/smi130_acc.c         | 76 +++++++++++++++++++----
+ drivers/input/sensors/smi130/smi130_gyro_driver.c | 17 +++--
+ 2 files changed, 71 insertions(+), 22 deletions(-)
+
+diff --git a/drivers/input/sensors/smi130/smi130_acc.c b/drivers/input/sensors/smi130/smi130_acc.c
+index 9e5388a2..f0a6f08 100644
+--- a/drivers/input/sensors/smi130/smi130_acc.c
++++ b/drivers/input/sensors/smi130/smi130_acc.c
+@@ -133,7 +133,7 @@
+ #include <linux/delay.h>
+ #include <asm/irq.h>
+ #include <linux/math64.h>
+-
++#include <linux/cpu.h>
+ #ifdef CONFIG_HAS_EARLYSUSPEND
+ #include <linux/earlysuspend.h>
+ #endif
+@@ -159,7 +159,7 @@
+ 
+ #define SENSOR_NAME                 "smi130_acc"
+ #define SMI130_ACC_USE_BASIC_I2C_FUNC        1
+-
++#define SMI130_HRTIMER 1
+ #define MSC_TIME                6
+ #define ABSMIN                      -512
+ #define ABSMAX                      512
+@@ -1573,7 +1573,6 @@ struct smi130_acc_data {
+ 	struct mutex enable_mutex;
+ 	struct mutex mode_mutex;
+ 	struct delayed_work work;
+-	struct work_struct irq_work;
+ #ifdef CONFIG_HAS_EARLYSUSPEND
+ 	struct early_suspend early_suspend;
+ #endif
+@@ -1610,8 +1609,57 @@ struct smi130_acc_data {
+ 	struct input_dev *accbuf_dev;
+ 	int report_evt_cnt;
+ #endif
++#ifdef SMI130_HRTIMER
++	struct hrtimer smi130_hrtimer;
++#endif
+ };
+ 
++#ifdef SMI130_HRTIMER
++static void smi130_set_cpu_idle_state(bool value)
++{
++	cpu_idle_poll_ctrl(value);
++}
++static enum hrtimer_restart smi130_timer_function(struct hrtimer *timer)
++{
++	smi130_set_cpu_idle_state(true);
++
++	return HRTIMER_NORESTART;
++}
++static void smi130_hrtimer_reset(struct smi130_acc_data *data)
++{
++	hrtimer_cancel(&data->smi130_hrtimer);
++	/*forward HRTIMER just before 1ms of irq arrival*/
++	hrtimer_forward(&data->smi130_hrtimer, ktime_get(),
++			ns_to_ktime(data->time_odr - 1000000));
++	hrtimer_restart(&data->smi130_hrtimer);
++}
++static void smi130_hrtimer_init(struct smi130_acc_data *data)
++{
++	hrtimer_init(&data->smi130_hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
++	data->smi130_hrtimer.function = smi130_timer_function;
++}
++static void smi130_hrtimer_cleanup(struct smi130_acc_data *data)
++{
++	hrtimer_cancel(&data->smi130_hrtimer);
++}
++#else
++static void smi130_set_cpu_idle_state(bool value)
++{
++}
++static void smi130_hrtimer_reset(struct smi130_acc_data *data)
++{
++
++}
++static void smi130_hrtimer_init(struct smi130_acc_data *data)
++{
++
++}
++static void smi130_hrtimer_remove(struct smi130_acc_data *data)
++{
++
++}
++#endif
++
+ #ifdef CONFIG_HAS_EARLYSUSPEND
+ static void smi130_acc_early_suspend(struct early_suspend *h);
+ static void smi130_acc_late_resume(struct early_suspend *h);
+@@ -6982,6 +7030,8 @@ static int smi130_acc_early_buff_init(struct i2c_client *client,
+ 
+ 	client_data->acc_buffer_smi130_samples = true;
+ 
++	smi130_set_cpu_idle_state(true);
++
+ 	smi130_acc_set_mode(client, SMI_ACC2X2_MODE_NORMAL, 1);
+ 	smi130_acc_set_bandwidth(client, SMI_ACC2X2_BW_62_50HZ);
+ 	smi130_acc_set_range(client, SMI_ACC2X2_RANGE_2G);
+@@ -7021,10 +7071,9 @@ static void smi130_acc_input_cleanup(struct smi130_acc_data *client_data)
+ }
+ #endif
+ 
+-static void smi130_acc_irq_work_func(struct work_struct *work)
++static irqreturn_t smi130_acc_irq_work_func(int irq, void *handle)
+ {
+-	struct smi130_acc_data *smi130_acc = container_of((struct work_struct *)work,
+-			struct smi130_acc_data, irq_work);
++	struct smi130_acc_data *smi130_acc = handle;
+ #ifdef CONFIG_DOUBLE_TAP
+ 	struct i2c_client *client = smi130_acc->smi130_acc_client;
+ #endif
+@@ -7069,8 +7118,10 @@ static void smi130_acc_irq_work_func(struct work_struct *work)
+ 		mutex_unlock(&smi130_acc->value_mutex);
+ 	}
+ 	store_acc_boot_sample(smi130_acc, acc.x, acc.y, acc.z, ts);
+-#endif
+ 
++	smi130_set_cpu_idle_state(false);
++	return IRQ_HANDLED;
++#endif
+ 	smi130_acc_get_interruptstatus1(smi130_acc->smi130_acc_client, &status);
+ 	PDEBUG("smi130_acc_irq_work_func, status = 0x%x\n", status);
+ 
+@@ -7223,10 +7274,9 @@ static irqreturn_t smi130_acc_irq_handler(int irq, void *handle)
+ 	if (data->smi130_acc_client == NULL)
+ 		return IRQ_HANDLED;
+ 	data->timestamp = smi130_acc_get_alarm_timestamp();
++	smi130_hrtimer_reset(data);
+ 
+-	schedule_work(&data->irq_work);
+-
+-	return IRQ_HANDLED;
++	return IRQ_WAKE_THREAD;
+ }
+ #endif /* defined(SMI_ACC2X2_ENABLE_INT1)||defined(SMI_ACC2X2_ENABLE_INT2) */
+ 
+@@ -7340,7 +7390,6 @@ static int smi130_acc_probe(struct i2c_client *client,
+ 	if (err)
+ 		PERR("could not request irq\n");
+ 
+-	INIT_WORK(&data->irq_work, smi130_acc_irq_work_func);
+ #endif
+ 
+ #ifndef CONFIG_SMI_ACC_ENABLE_NEWDATA_INT
+@@ -7535,9 +7584,11 @@ static int smi130_acc_probe(struct i2c_client *client,
+ 		return -EINVAL;
+ 	data->IRQ = client->irq;
+ 	PDEBUG("data->IRQ = %d", data->IRQ);
+-	err = request_irq(data->IRQ, smi130_acc_irq_handler, IRQF_TRIGGER_RISING,
++	err = request_threaded_irq(data->IRQ, smi130_acc_irq_handler,
++			smi130_acc_irq_work_func, IRQF_TRIGGER_RISING,
+ 			"smi130_acc", data);
+ 
++	smi130_hrtimer_init(data);
+ 	err = smi130_acc_early_buff_init(client, data);
+ 	if (!err)
+ 		goto exit;
+@@ -7653,6 +7704,7 @@ static int smi130_acc_remove(struct i2c_client *client)
+ 	if (NULL == data)
+ 		return 0;
+ 
++	smi130_hrtimer_cleanup(data);
+ 	smi130_acc_input_cleanup(data);
+ 	smi130_acc_set_enable(&client->dev, 0);
+ #ifdef CONFIG_HAS_EARLYSUSPEND
+diff --git a/drivers/input/sensors/smi130/smi130_gyro_driver.c b/drivers/input/sensors/smi130/smi130_gyro_driver.c
+index f1fb91d..74055ee 100644
+--- a/drivers/input/sensors/smi130/smi130_gyro_driver.c
++++ b/drivers/input/sensors/smi130/smi130_gyro_driver.c
+@@ -290,7 +290,6 @@ struct smi_gyro_client_data {
+ 	ktime_t work_delay_kt;
+ 	uint8_t gpio_pin;
+ 	int16_t IRQ;
+-	struct work_struct irq_work;
+ #ifdef CONFIG_ENABLE_SMI_ACC_GYRO_BUFFERING
+ 	bool read_gyro_boot_sample;
+ 	int gyro_bufsample_cnt;
+@@ -1852,10 +1851,9 @@ static void smi130_gyro_input_cleanup(struct smi_gyro_client_data *client_data)
+ 
+ 
+ #if defined(SMI130_GYRO_ENABLE_INT1) || defined(SMI130_GYRO_ENABLE_INT2)
+-static void smi130_gyro_irq_work_func(struct work_struct *work)
++static irqreturn_t smi130_gyro_irq_work_func(int irq, void *handle)
+ {
+-	struct smi_gyro_client_data *client_data = container_of(work,
+-		struct smi_gyro_client_data, irq_work);
++	struct smi_gyro_client_data *client_data = handle;
+ 	struct smi130_gyro_data_t gyro_data;
+ 	struct timespec ts;
+ 	ts = ns_to_timespec(client_data->timestamp);
+@@ -1876,14 +1874,14 @@ static void smi130_gyro_irq_work_func(struct work_struct *work)
+ 	input_sync(client_data->input);
+ 	store_gyro_boot_sample(client_data, gyro_data.datax,
+ 			gyro_data.datay, gyro_data.dataz, ts);
++	return IRQ_HANDLED;
+ }
+ 
+ static irqreturn_t smi_gyro_irq_handler(int irq, void *handle)
+ {
+ 	struct smi_gyro_client_data *client_data = handle;
+ 	client_data->timestamp= smi130_gyro_get_alarm_timestamp();
+-	schedule_work(&client_data->irq_work);
+-	return IRQ_HANDLED;
++	return IRQ_WAKE_THREAD;
+ }
+ #endif
+ static int smi_gyro_probe(struct i2c_client *client, const struct i2c_device_id *id)
+@@ -2055,13 +2053,12 @@ static int smi_gyro_probe(struct i2c_client *client, const struct i2c_device_id
+ 			PDEBUG("request failed\n");
+ 		}
+ 		client_data->IRQ = gpio_to_irq(client_data->gpio_pin);
+-		err = request_irq(client_data->IRQ, smi_gyro_irq_handler,
+-				IRQF_TRIGGER_RISING,
+-				SENSOR_NAME, client_data);
++		err = request_threaded_irq(client_data->IRQ,
++				smi_gyro_irq_handler, smi130_gyro_irq_work_func,
++				IRQF_TRIGGER_RISING, SENSOR_NAME, client_data);
+ 		if (err < 0)
+ 			PDEBUG("request handle failed\n");
+ 	}
+-	INIT_WORK(&client_data->irq_work, smi130_gyro_irq_work_func);
+ #endif
+ 
+ 	err = smi130_gyro_early_buff_init(client_data);
+-- 
+cgit v1.1
+

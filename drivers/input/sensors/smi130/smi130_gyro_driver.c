@@ -280,6 +280,7 @@ struct smi_gyro_client_data {
 	ktime_t work_delay_kt;
 	uint8_t gpio_pin;
 	int16_t IRQ;
+	struct work_struct irq_work;
 };
 
 static struct i2c_client *smi_gyro_client;
@@ -1576,15 +1577,16 @@ static void smi_gyro_input_destroy(struct smi_gyro_client_data *client_data)
 }
 
 #if defined(SMI130_GYRO_ENABLE_INT1) || defined(SMI130_GYRO_ENABLE_INT2)
-static irqreturn_t smi130_gyro_irq_work_func(int irq, void *handle)
+/*static void smi130_gyro_irq_work_func(struct work_struct *work)
 {
-	struct smi_gyro_client_data *client_data = handle;
+	struct smi_gyro_client_data *client_data = container_of(work,
+		struct smi_gyro_client_data, irq_work);
 	struct smi130_gyro_data_t gyro_data;
 	struct timespec ts;
 	ts = ns_to_timespec(client_data->timestamp);
 
 	SMI_GYRO_CALL_API(get_dataXYZ)(&gyro_data);
-	/*remapping for SMI130_GYRO sensor*/
+	remapping for SMI130_GYRO sensor
 	smi130_gyro_remap_sensor_data(&gyro_data, client_data);
 	input_event(client_data->input, EV_MSC, MSC_TIME,
 		ts.tv_sec);
@@ -1598,13 +1600,13 @@ static irqreturn_t smi130_gyro_irq_work_func(int irq, void *handle)
 		MSC_SCAN, gyro_data.dataz);
 	input_sync(client_data->input);
 
-}
+}*/
 
 static irqreturn_t smi_gyro_irq_handler(int irq, void *handle)
 {
 	struct smi_gyro_client_data *client_data = handle;
 	client_data->timestamp= smi130_gyro_get_alarm_timestamp();
-	return IRQ_WAKE_THREAD;
+	 return IRQ_WAKE_THREAD;
 }
 #endif
 static int smi_gyro_probe(struct i2c_client *client, const struct i2c_device_id *id)
@@ -1776,9 +1778,9 @@ static int smi_gyro_probe(struct i2c_client *client, const struct i2c_device_id 
 			PDEBUG("request failed\n");
 		}
 		client_data->IRQ = gpio_to_irq(client_data->gpio_pin);
-		err = request_threaded_irq(client_data->IRQ,
-				smi_gyro_irq_handler, smi130_gyro_irq_work_func,
-				IRQF_TRIGGER_RISING, SENSOR_NAME, client_data);
+		err = request_irq(client_data->IRQ, smi_gyro_irq_handler,
+				IRQF_TRIGGER_RISING,
+				SENSOR_NAME, client_data);
 		if (err < 0)
 			PDEBUG("request handle failed\n");
 	}
