@@ -280,7 +280,6 @@ struct smi_gyro_client_data {
 	ktime_t work_delay_kt;
 	uint8_t gpio_pin;
 	int16_t IRQ;
-	struct work_struct irq_work;
 };
 
 static struct i2c_client *smi_gyro_client;
@@ -1577,10 +1576,9 @@ static void smi_gyro_input_destroy(struct smi_gyro_client_data *client_data)
 }
 
 #if defined(SMI130_GYRO_ENABLE_INT1) || defined(SMI130_GYRO_ENABLE_INT2)
-static void smi130_gyro_irq_work_func(struct work_struct *work)
+static irqreturn_t smi130_gyro_irq_work_func(int irq, void *handle)
 {
-	struct smi_gyro_client_data *client_data = container_of(work,
-		struct smi_gyro_client_data, irq_work);
+	struct smi_gyro_client_data *client_data = handle;
 	struct smi130_gyro_data_t gyro_data;
 	struct timespec ts;
 	ts = ns_to_timespec(client_data->timestamp);
@@ -1606,8 +1604,7 @@ static irqreturn_t smi_gyro_irq_handler(int irq, void *handle)
 {
 	struct smi_gyro_client_data *client_data = handle;
 	client_data->timestamp= smi130_gyro_get_alarm_timestamp();
-	schedule_work(&client_data->irq_work);
-	return IRQ_HANDLED;
+	return IRQ_WAKE_THREAD;
 }
 #endif
 static int smi_gyro_probe(struct i2c_client *client, const struct i2c_device_id *id)
@@ -1779,13 +1776,12 @@ static int smi_gyro_probe(struct i2c_client *client, const struct i2c_device_id 
 			PDEBUG("request failed\n");
 		}
 		client_data->IRQ = gpio_to_irq(client_data->gpio_pin);
-		err = request_irq(client_data->IRQ, smi_gyro_irq_handler,
-				IRQF_TRIGGER_RISING,
-				SENSOR_NAME, client_data);
+		err = request_threaded_irq(client_data->IRQ,
+				smi_gyro_irq_handler, smi130_gyro_irq_work_func,
+				IRQF_TRIGGER_RISING, SENSOR_NAME, client_data);
 		if (err < 0)
 			PDEBUG("request handle failed\n");
 	}
-	INIT_WORK(&client_data->irq_work, smi130_gyro_irq_work_func);
 #endif
 	PINFO("sensor %s probed successfully", SENSOR_NAME);
 
