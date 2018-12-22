@@ -1353,12 +1353,12 @@ int wmi_set_ie(struct wil6210_priv *wil, u8 type, u16 ie_len, const void *ie)
 	memcpy(cmd->ie_info, ie, ie_len);
 	rc = wmi_send(wil, WMI_SET_APPIE_CMDID, cmd, len);
 	kfree(cmd);
-out:
+/*out:
 	if (rc) {
 		const char *name = type < ARRAY_SIZE(names) ?
 				   names[type] : "??";
 		wil_err(wil, "set_ie(%d %s) failed : %d\n", type, name, rc);
-	}
+	}*/
 
 	return rc;
 }
