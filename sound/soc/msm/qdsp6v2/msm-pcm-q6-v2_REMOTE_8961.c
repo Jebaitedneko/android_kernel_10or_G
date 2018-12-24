@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -57,8 +57,6 @@ struct snd_msm {
 
 #define CMD_EOS_MIN_TIMEOUT_LENGTH  50
 #define CMD_EOS_TIMEOUT_MULTIPLIER  (HZ * 50)
-#define MAX_PB_COPY_RETRIES         3
-#define MAX_PCM_STREAMS 2
 
 static struct snd_pcm_hardware msm_pcm_hardware_capture = {
 	.info =                 (SNDRV_PCM_INFO_MMAP |
@@ -67,8 +65,7 @@ static struct snd_pcm_hardware msm_pcm_hardware_capture = {
 				SNDRV_PCM_INFO_INTERLEAVED |
 				SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME),
 	.formats =              (SNDRV_PCM_FMTBIT_S16_LE |
-				SNDRV_PCM_FMTBIT_S24_LE |
-				SNDRV_PCM_FMTBIT_S24_3LE),
+				SNDRV_PCM_FMTBIT_S24_LE),
 	.rates =                SNDRV_PCM_RATE_8000_48000,
 	.rate_min =             8000,
 	.rate_max =             48000,
@@ -90,8 +87,7 @@ static struct snd_pcm_hardware msm_pcm_hardware_playback = {
 				SNDRV_PCM_INFO_INTERLEAVED |
 				SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME),
 	.formats =              (SNDRV_PCM_FMTBIT_S16_LE |
-				SNDRV_PCM_FMTBIT_S24_LE |
-				SNDRV_PCM_FMTBIT_S24_3LE),
+				SNDRV_PCM_FMTBIT_S24_LE),
 	.rates =                SNDRV_PCM_RATE_8000_192000,
 	.rate_min =             8000,
 	.rate_max =             192000,
@@ -116,17 +112,6 @@ static struct snd_pcm_hw_constraint_list constraints_sample_rates = {
 	.count = ARRAY_SIZE(supported_sample_rates),
 	.list = supported_sample_rates,
 	.mask = 0,
-};
-
-static unsigned long msm_pcm_fe_topology[MSM_FRONTEND_DAI_MAX][MAX_PCM_STREAMS];
-
-/* default value is DTS (i.e read from device tree) */
-static char const *msm_pcm_fe_topology_text[] = {
-	"DTS", "ULL", "ULL_PP", "LL", "LEGACY" };
-
-static const struct soc_enum msm_pcm_fe_topology_enum[] = {
-	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(msm_pcm_fe_topology_text),
-			    msm_pcm_fe_topology_text),
 };
 
 static void msm_pcm_route_event_handler(enum msm_pcm_routing_event event,
@@ -291,8 +276,7 @@ static int msm_pcm_playback_prepare(struct snd_pcm_substream *substream)
 	struct msm_plat_data *pdata;
 	struct snd_pcm_hw_params *params;
 	int ret;
-	uint16_t bits_per_sample;
-	uint16_t sample_word_size;
+	uint16_t bits_per_sample = 16;
 
 	pdata = (struct msm_plat_data *)
 		dev_get_drvdata(soc_prtd->platform->dev);
@@ -317,28 +301,14 @@ static int msm_pcm_playback_prepare(struct snd_pcm_substream *substream)
 	if (prtd->enabled)
 		return 0;
 
-	prtd->audio_client->perf_mode = pdata->perf_mode_set;
-	pr_debug("%s: perf: %x\n", __func__, prtd->audio_client->perf_mode);
+	prtd->audio_client->perf_mode = pdata->perf_mode;
+	pr_debug("%s: perf: %x\n", __func__, pdata->perf_mode);
 
-	switch (params_format(params)) {
-	case SNDRV_PCM_FORMAT_S24_LE:
+	if (params_format(params) == SNDRV_PCM_FORMAT_S24_LE)
 		bits_per_sample = 24;
-		sample_word_size = 32;
-		break;
-	case SNDRV_PCM_FORMAT_S24_3LE:
-		bits_per_sample = 24;
-		sample_word_size = 24;
-		break;
-	case SNDRV_PCM_FORMAT_S16_LE:
-	default:
-		bits_per_sample = 16;
-		sample_word_size = 16;
-		break;
-	}
 
-	ret = q6asm_open_write_v3(prtd->audio_client,
-				  FORMAT_LINEAR_PCM, bits_per_sample);
-
+	ret = q6asm_open_write_v2(prtd->audio_client,
+			FORMAT_LINEAR_PCM, bits_per_sample);
 	if (ret < 0) {
 		pr_err("%s: q6asm_open_write_v2 failed\n", __func__);
 		q6asm_audio_client_free(prtd->audio_client);
@@ -361,11 +331,19 @@ static int msm_pcm_playback_prepare(struct snd_pcm_substream *substream)
 		return ret;
 	}
 
-	ret = q6asm_media_format_block_multi_ch_pcm_v3(
-				prtd->audio_client, runtime->rate,
-				runtime->channels, !prtd->set_channel_map,
-				prtd->channel_map, bits_per_sample,
-				sample_word_size);
+	switch (runtime->format) {
+	case SNDRV_PCM_FORMAT_S16_LE:
+		bits_per_sample = 16;
+		break;
+	case SNDRV_PCM_FORMAT_S24_LE:
+		bits_per_sample = 24;
+		break;
+	}
+
+	ret = q6asm_media_format_block_multi_ch_pcm_v2(
+			prtd->audio_client, runtime->rate,
+			runtime->channels, !prtd->set_channel_map,
+			prtd->channel_map, bits_per_sample);
 	if (ret < 0)
 		pr_info("%s: CMD Format block failed\n", __func__);
 
@@ -389,7 +367,6 @@ static int msm_pcm_capture_prepare(struct snd_pcm_substream *substream)
 	int ret = 0;
 	int i = 0;
 	uint16_t bits_per_sample = 16;
-	uint16_t sample_word_size;
 
 	pdata = (struct msm_plat_data *)
 		dev_get_drvdata(soc_prtd->platform->dev);
@@ -405,14 +382,13 @@ static int msm_pcm_capture_prepare(struct snd_pcm_substream *substream)
 
 	if (prtd->enabled == IDLE) {
 		pr_debug("%s:perf_mode=%d periods=%d\n", __func__,
-			pdata->perf_mode_set, runtime->periods);
+			pdata->perf_mode, runtime->periods);
 		params = &soc_prtd->dpcm[substream->stream].hw_params;
-		if ((params_format(params) == SNDRV_PCM_FORMAT_S24_LE) ||
-			(params_format(params) == SNDRV_PCM_FORMAT_S24_3LE))
+		if (params_format(params) == SNDRV_PCM_FORMAT_S24_LE)
 			bits_per_sample = 24;
 
 		/* ULL mode is not supported in capture path */
-		if (pdata->perf_mode_set == LEGACY_PCM_MODE)
+		if (pdata->perf_mode == LEGACY_PCM_MODE)
 			prtd->audio_client->perf_mode = LEGACY_PCM_MODE;
 		else
 			prtd->audio_client->perf_mode = LOW_LATENCY_PCM_MODE;
@@ -421,7 +397,7 @@ static int msm_pcm_capture_prepare(struct snd_pcm_substream *substream)
 				__func__, params_channels(params),
 				prtd->audio_client->perf_mode);
 
-		ret = q6asm_open_read_v3(prtd->audio_client, FORMAT_LINEAR_PCM,
+		ret = q6asm_open_read_v2(prtd->audio_client, FORMAT_LINEAR_PCM,
 				bits_per_sample);
 		if (ret < 0) {
 			pr_err("%s: q6asm_open_read failed\n", __func__);
@@ -467,29 +443,18 @@ static int msm_pcm_capture_prepare(struct snd_pcm_substream *substream)
 		return 0;
 
 	switch (runtime->format) {
+	case SNDRV_PCM_FORMAT_S16_LE:
+		bits_per_sample = 16;
+		break;
 	case SNDRV_PCM_FORMAT_S24_LE:
 		bits_per_sample = 24;
-		sample_word_size = 32;
-		break;
-	case SNDRV_PCM_FORMAT_S24_3LE:
-		bits_per_sample = 24;
-		sample_word_size = 24;
-		break;
-	case SNDRV_PCM_FORMAT_S16_LE:
-	default:
-		bits_per_sample = 16;
-		sample_word_size = 16;
 		break;
 	}
-
-	pr_debug("%s: Samp_rate = %d Channel = %d bit width = %d, word size = %d\n",
-			__func__, prtd->samp_rate, prtd->channel_mode,
-			bits_per_sample, sample_word_size);
-	ret = q6asm_enc_cfg_blk_pcm_format_support_v3(prtd->audio_client,
-						      prtd->samp_rate,
-						      prtd->channel_mode,
-						      bits_per_sample,
-						      sample_word_size);
+	pr_debug("Samp_rate = %d\n", prtd->samp_rate);
+	pr_debug("Channel = %d\n", prtd->channel_mode);
+	ret = q6asm_enc_cfg_blk_pcm_format_support(prtd->audio_client,
+					prtd->samp_rate, prtd->channel_mode,
+					bits_per_sample);
 	if (ret < 0)
 		pr_debug("%s: cmd cfg pcm was block failed", __func__);
 
@@ -517,9 +482,6 @@ static int msm_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 		if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK) {
 			prtd->enabled = STOPPED;
 			ret = q6asm_cmd_nowait(prtd->audio_client, CMD_PAUSE);
-			if (!ret)
-				ret = q6asm_cmd_nowait(prtd->audio_client,
-					CMD_FLUSH);
 			break;
 		}
 		/* pending CMD_EOS isn't expected */
@@ -641,7 +603,6 @@ static int msm_pcm_playback_copy(struct snd_pcm_substream *substream, int a,
 	void *data = NULL;
 	uint32_t idx = 0;
 	uint32_t size = 0;
-	uint32_t retries = 0;
 
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct msm_audio *prtd = runtime->private_data;
@@ -650,7 +611,7 @@ static int msm_pcm_playback_copy(struct snd_pcm_substream *substream, int a,
 	pr_debug("%s: prtd->out_count = %d\n",
 				__func__, atomic_read(&prtd->out_count));
 
-	while ((fbytes > 0) && (retries < MAX_PB_COPY_RETRIES)) {
+	while (fbytes > 0) {
 		if (prtd->reset_event) {
 			pr_err("%s: In SSR return ENETRESET before wait\n",
 				__func__);
@@ -679,13 +640,6 @@ static int msm_pcm_playback_copy(struct snd_pcm_substream *substream, int a,
 
 		data = q6asm_is_cpu_buf_avail(IN, prtd->audio_client, &size,
 			&idx);
-		if (data == NULL) {
-			retries++;
-			continue;
-		} else {
-			retries = 0;
-		}
-
 		if (fbytes > size)
 			xfer = size;
 		else
@@ -697,9 +651,6 @@ static int msm_pcm_playback_copy(struct snd_pcm_substream *substream, int a,
 						__func__, fbytes, xfer, size);
 			if (copy_from_user(bufptr, buf, xfer)) {
 				ret = -EFAULT;
-				pr_err("%s: copy_from_user failed\n",
-					__func__);
-				q6asm_cpu_buf_release(IN, prtd->audio_client);
 				goto fail;
 			}
 			buf += xfer;
@@ -713,8 +664,6 @@ static int msm_pcm_playback_copy(struct snd_pcm_substream *substream, int a,
 							0, 0, NO_TIMESTAMP);
 				if (ret < 0) {
 					ret = -EFAULT;
-					q6asm_cpu_buf_release(IN,
-						prtd->audio_client);
 					goto fail;
 				}
 			} else
@@ -723,9 +672,6 @@ static int msm_pcm_playback_copy(struct snd_pcm_substream *substream, int a,
 		}
 	}
 fail:
-	if (retries >= MAX_PB_COPY_RETRIES)
-		ret = -ENOMEM;
-
 	return  ret;
 }
 
@@ -770,8 +716,6 @@ static int msm_pcm_playback_close(struct snd_pcm_substream *substream)
 	msm_pcm_routing_dereg_phy_stream(soc_prtd->dai_link->be_id,
 						SNDRV_PCM_STREAM_PLAYBACK);
 	kfree(prtd);
-	runtime->private_data = NULL;
-
 	return 0;
 }
 
@@ -816,7 +760,7 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 		pr_debug("%s: pcm stopped in_count 0\n", __func__);
 		return 0;
 	}
-	pr_debug("Checking if valid buffer is available...%pK\n",
+	pr_debug("Checking if valid buffer is available...%p\n",
 						data);
 	data = q6asm_is_cpu_buf_avail(OUT, prtd->audio_client, &size, &idx);
 	bufptr = data;
@@ -832,7 +776,6 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 		if (copy_to_user(buf, bufptr+offset, xfer)) {
 			pr_err("Failed to copy buf to user\n");
 			ret = -EFAULT;
-			q6asm_cpu_buf_release(OUT, prtd->audio_client);
 			goto fail;
 		}
 		fbytes -= xfer;
@@ -848,7 +791,6 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 		if (ret < 0) {
 			pr_err("q6asm read failed\n");
 			ret = -EFAULT;
-			q6asm_cpu_buf_release(OUT, prtd->audio_client);
 			goto fail;
 		}
 	} else
@@ -877,7 +819,6 @@ static int msm_pcm_capture_close(struct snd_pcm_substream *substream)
 	msm_pcm_routing_dereg_phy_stream(soc_prtd->dai_link->be_id,
 		SNDRV_PCM_STREAM_CAPTURE);
 	kfree(prtd);
-	runtime->private_data = NULL;
 
 	return 0;
 }
@@ -954,43 +895,15 @@ static int msm_pcm_hw_params(struct snd_pcm_substream *substream,
 				struct snd_pcm_hw_params *params)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_soc_pcm_runtime *soc_prtd = substream->private_data;
 	struct msm_audio *prtd = runtime->private_data;
-	struct msm_plat_data *pdata;
 	struct snd_dma_buffer *dma_buf = &substream->dma_buffer;
 	struct audio_buffer *buf;
 	int dir, ret;
-	unsigned long fe_id = soc_prtd->dai_link->be_id;
-	unsigned long topology;
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		dir = IN;
 	else
 		dir = OUT;
-
-	pdata = (struct msm_plat_data *)
-		dev_get_drvdata(soc_prtd->platform->dev);
-	if (!pdata) {
-		ret = -EINVAL;
-		pr_err("%s: platform data not populated ret: %d\n", __func__,
-		       ret);
-		return ret;
-	}
-
-	topology = msm_pcm_fe_topology[fe_id][substream->stream];
-
-	if (!strcmp(msm_pcm_fe_topology_text[topology], "ULL_PP"))
-		pdata->perf_mode_set = ULL_POST_PROCESSING_PCM_MODE;
-	else if (!strcmp(msm_pcm_fe_topology_text[topology], "ULL"))
-		pdata->perf_mode_set = ULTRA_LOW_LATENCY_PCM_MODE;
-	else if (!strcmp(msm_pcm_fe_topology_text[topology], "LL"))
-		pdata->perf_mode_set = LOW_LATENCY_PCM_MODE;
-	else if (!strcmp(msm_pcm_fe_topology_text[topology], "LEGACY"))
-		pdata->perf_mode_set = LEGACY_PCM_MODE;
-	else
-		/* use the default from the device tree */
-		pdata->perf_mode_set = pdata->perf_mode;
-
 	ret = q6asm_audio_client_buf_alloc_contiguous(dir,
 			prtd->audio_client,
 			(params_buffer_bytes(params) / params_periods(params)),
@@ -1004,7 +917,7 @@ static int msm_pcm_hw_params(struct snd_pcm_substream *substream,
 	if (buf == NULL || buf[0].data == NULL)
 		return -ENOMEM;
 
-	pr_debug("%s:buf = %pK\n", __func__, buf);
+	pr_debug("%s:buf = %p\n", __func__, buf);
 	dma_buf->dev.type = SNDRV_DMA_TYPE_DEV;
 	dma_buf->dev.dev = substream->pcm->card->dev;
 	dma_buf->private_data = NULL;
@@ -1205,174 +1118,7 @@ static int msm_pcm_add_chmap_controls(struct snd_soc_pcm_runtime *rtd)
 	return 0;
 }
 
-static int msm_pcm_fe_topology_info(struct snd_kcontrol *kcontrol,
-				    struct snd_ctl_elem_info *uinfo)
-{
-	const struct soc_enum *e = &msm_pcm_fe_topology_enum[0];
-
-	return snd_ctl_enum_info(uinfo, 1, e->items, e->texts);
-}
-
-static int msm_pcm_fe_playback_topology_get(struct snd_kcontrol *kcontrol,
-				   struct snd_ctl_elem_value *ucontrol)
-{
-	unsigned long fe_id = kcontrol->private_value;
-	unsigned long topology;
-
-	if (fe_id >= MSM_FRONTEND_DAI_MAX) {
-		pr_err("%s Received out of bound fe_id %lu\n", __func__, fe_id);
-		return -EINVAL;
-	}
-
-	topology = msm_pcm_fe_topology[fe_id][SNDRV_PCM_STREAM_PLAYBACK];
-	pr_debug("%s: %lu topology %s\n", __func__, fe_id,
-		 msm_pcm_fe_topology_text[topology]);
-	ucontrol->value.enumerated.item[0] = topology;
-	return 0;
-}
-
-static int msm_pcm_fe_playback_topology_put(struct snd_kcontrol *kcontrol,
-				   struct snd_ctl_elem_value *ucontrol)
-{
-	unsigned long fe_id = kcontrol->private_value;
-	unsigned int item;
-
-	if (fe_id >= MSM_FRONTEND_DAI_MAX) {
-		pr_err("%s Received out of bound fe_id %lu\n", __func__, fe_id);
-		return -EINVAL;
-	}
-
-	item = ucontrol->value.enumerated.item[0];
-	if (item >= ARRAY_SIZE(msm_pcm_fe_topology_text)) {
-		pr_err("%s Received out of bound topology %lu\n", __func__,
-		       fe_id);
-		return -EINVAL;
-	}
-
-	pr_debug("%s: %lu new topology %s\n", __func__, fe_id,
-		 msm_pcm_fe_topology_text[item]);
-	msm_pcm_fe_topology[fe_id][SNDRV_PCM_STREAM_PLAYBACK] = item;
-	return 0;
-}
-
-static int msm_pcm_fe_capture_topology_get(struct snd_kcontrol *kcontrol,
-				   struct snd_ctl_elem_value *ucontrol)
-{
-	unsigned long fe_id = kcontrol->private_value;
-	unsigned long topology;
-
-	if (fe_id >= MSM_FRONTEND_DAI_MAX) {
-		pr_err("%s Received out of bound fe_id %lu\n", __func__, fe_id);
-		return -EINVAL;
-	}
-
-	topology = msm_pcm_fe_topology[fe_id][SNDRV_PCM_STREAM_CAPTURE];
-	pr_debug("%s: %lu topology %s\n", __func__, fe_id,
-		 msm_pcm_fe_topology_text[topology]);
-	ucontrol->value.enumerated.item[0] = topology;
-	return 0;
-}
-
-static int msm_pcm_fe_capture_topology_put(struct snd_kcontrol *kcontrol,
-				   struct snd_ctl_elem_value *ucontrol)
-{
-	unsigned long fe_id = kcontrol->private_value;
-	unsigned int item;
-
-	if (fe_id >= MSM_FRONTEND_DAI_MAX) {
-		pr_err("%s Received out of bound fe_id %lu\n", __func__, fe_id);
-		return -EINVAL;
-	}
-
-	item = ucontrol->value.enumerated.item[0];
-	if (item >= ARRAY_SIZE(msm_pcm_fe_topology_text)) {
-		pr_err("%s Received out of bound topology %lu\n", __func__,
-		       fe_id);
-		return -EINVAL;
-	}
-
-	pr_debug("%s: %lu new topology %s\n", __func__, fe_id,
-		 msm_pcm_fe_topology_text[item]);
-	msm_pcm_fe_topology[fe_id][SNDRV_PCM_STREAM_CAPTURE] = item;
-	return 0;
-}
-
-static int msm_pcm_add_fe_topology_control(struct snd_soc_pcm_runtime *rtd)
-{
-	struct snd_pcm *pcm = rtd->pcm->streams[0].pcm;
-	const char *mixer_ctl_name = "PCM_Dev";
-	const char *deviceNo       = "NN";
-	const char *topo_playback  = "Topology Playback";
-	const char *topo_capture   = "Topology Capture";
-	char *mixer_str = NULL, *mixer_str1 = NULL;
-	int ctl_len, ret;
-	unsigned long fe_id = rtd->dai_link->be_id;
-	struct snd_kcontrol_new topology_control[2] = {
-		{
-			.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
-			.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-			.name =  "?",
-			.info =  msm_pcm_fe_topology_info,
-			.get = msm_pcm_fe_playback_topology_get,
-			.put = msm_pcm_fe_playback_topology_put,
-			.private_value = 0,
-		},
-		{
-			.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
-			.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-			.name =  "?",
-			.info =  msm_pcm_fe_topology_info,
-			.get = msm_pcm_fe_capture_topology_get,
-			.put = msm_pcm_fe_capture_topology_put,
-			.private_value = 0,
-		},
-	};
-
-	if (pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream) {
-		ctl_len = strlen(mixer_ctl_name) + 1 + strlen(deviceNo) + 1 +
-			  strlen(topo_playback) + 1;
-		mixer_str = kzalloc(ctl_len, GFP_KERNEL);
-
-		if (!mixer_str) {
-			ret = -ENOMEM;
-			goto err1;
-		}
-
-		snprintf(mixer_str, ctl_len, "%s %d %s", mixer_ctl_name,
-			 rtd->pcm->device, topo_playback);
-
-		topology_control[0].name = mixer_str;
-		topology_control[0].private_value = fe_id;
-	}
-
-	if (pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream) {
-		ctl_len = strlen(mixer_ctl_name) + 1 + strlen(deviceNo) + 1 +
-			  strlen(topo_capture) + 1;
-		mixer_str1 = kzalloc(ctl_len, GFP_KERNEL);
-
-		if (!mixer_str1) {
-			ret = -ENOMEM;
-			goto err;
-		}
-
-		snprintf(mixer_str1, ctl_len, "%s %d %s", mixer_ctl_name,
-			 rtd->pcm->device, topo_capture);
-
-		topology_control[1].name = mixer_str1;
-		topology_control[1].private_value = fe_id;
-	}
-	ret = snd_soc_add_platform_controls(rtd->platform, topology_control,
-					    ARRAY_SIZE(topology_control));
-	msm_pcm_fe_topology[fe_id][SNDRV_PCM_STREAM_PLAYBACK] = 0;
-	msm_pcm_fe_topology[fe_id][SNDRV_PCM_STREAM_CAPTURE] = 0;
-	kfree(mixer_str1);
-err:
-	kfree(mixer_str);
-err1:
-	return ret;
-}
-
-static int msm_pcm_playback_app_type_cfg_ctl_put(struct snd_kcontrol *kcontrol,
+static int msm_pcm_app_type_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	u64 fe_id = kcontrol->private_value;
@@ -1391,15 +1137,15 @@ static int msm_pcm_playback_app_type_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 	acdb_dev_id = ucontrol->value.integer.value[1];
 	if (0 != ucontrol->value.integer.value[2])
 		sample_rate = ucontrol->value.integer.value[2];
-	pr_debug("%s: app_type- %d acdb_dev_id- %d sample_rate- %d session_type- %d\n",
-		__func__, app_type, acdb_dev_id, sample_rate, SESSION_TYPE_RX);
+	pr_debug("%s: app_type- %d acdb_dev_id- %d sample_rate- %d\n",
+		__func__, app_type, acdb_dev_id, sample_rate);
 	msm_pcm_routing_reg_stream_app_type_cfg(fe_id, app_type,
-			acdb_dev_id, sample_rate, SESSION_TYPE_RX);
+						acdb_dev_id, sample_rate);
 
 	return 0;
 }
 
-static int msm_pcm_playback_app_type_cfg_ctl_get(struct snd_kcontrol *kcontrol,
+static int msm_pcm_app_type_cfg_ctl_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	u64 fe_id = kcontrol->private_value;
@@ -1416,8 +1162,8 @@ static int msm_pcm_playback_app_type_cfg_ctl_get(struct snd_kcontrol *kcontrol,
 		goto done;
 	}
 
-	ret = msm_pcm_routing_get_stream_app_type_cfg(fe_id, SESSION_TYPE_RX,
-		&app_type, &acdb_dev_id, &sample_rate);
+	ret = msm_pcm_routing_get_stream_app_type_cfg(fe_id, &app_type,
+		&acdb_dev_id, &sample_rate);
 	if (ret < 0) {
 		pr_err("%s: msm_pcm_routing_get_stream_app_type_cfg failed returned %d\n",
 			__func__, ret);
@@ -1427,71 +1173,8 @@ static int msm_pcm_playback_app_type_cfg_ctl_get(struct snd_kcontrol *kcontrol,
 	ucontrol->value.integer.value[0] = app_type;
 	ucontrol->value.integer.value[1] = acdb_dev_id;
 	ucontrol->value.integer.value[2] = sample_rate;
-	pr_debug("%s: fedai_id %llu, session_type %d, app_type %d, acdb_dev_id %d, sample_rate %d\n",
-		__func__, fe_id, SESSION_TYPE_RX,
-		app_type, acdb_dev_id, sample_rate);
-done:
-	return ret;
-}
-
-static int msm_pcm_capture_app_type_cfg_ctl_put(struct snd_kcontrol *kcontrol,
-					struct snd_ctl_elem_value *ucontrol)
-{
-	u64 fe_id = kcontrol->private_value;
-	int app_type;
-	int acdb_dev_id;
-	int sample_rate = 48000;
-
-	pr_debug("%s: fe_id- %llu\n", __func__, fe_id);
-	if (fe_id >= MSM_FRONTEND_DAI_MAX) {
-		pr_err("%s: Received out of bounds fe_id %llu\n",
-			__func__, fe_id);
-		return -EINVAL;
-	}
-
-	app_type = ucontrol->value.integer.value[0];
-	acdb_dev_id = ucontrol->value.integer.value[1];
-	if (0 != ucontrol->value.integer.value[2])
-		sample_rate = ucontrol->value.integer.value[2];
-	pr_debug("%s: app_type- %d acdb_dev_id- %d sample_rate- %d session_type- %d\n",
-		__func__, app_type, acdb_dev_id, sample_rate, SESSION_TYPE_TX);
-	msm_pcm_routing_reg_stream_app_type_cfg(fe_id, app_type,
-			acdb_dev_id, sample_rate, SESSION_TYPE_TX);
-
-	return 0;
-}
-
-static int msm_pcm_capture_app_type_cfg_ctl_get(struct snd_kcontrol *kcontrol,
-					struct snd_ctl_elem_value *ucontrol)
-{
-	u64 fe_id = kcontrol->private_value;
-	int ret = 0;
-	int app_type;
-	int acdb_dev_id;
-	int sample_rate;
-
-	pr_debug("%s: fe_id- %llu\n", __func__, fe_id);
-	if (fe_id >= MSM_FRONTEND_DAI_MAX) {
-		pr_err("%s: Received out of bounds fe_id %llu\n",
-			__func__, fe_id);
-		ret = -EINVAL;
-		goto done;
-	}
-
-	ret = msm_pcm_routing_get_stream_app_type_cfg(fe_id, SESSION_TYPE_TX,
-		&app_type, &acdb_dev_id, &sample_rate);
-	if (ret < 0) {
-		pr_err("%s: msm_pcm_routing_get_stream_app_type_cfg failed returned %d\n",
-			__func__, ret);
-		goto done;
-	}
-
-	ucontrol->value.integer.value[0] = app_type;
-	ucontrol->value.integer.value[1] = acdb_dev_id;
-	ucontrol->value.integer.value[2] = sample_rate;
-	pr_debug("%s: fedai_id %llu, session_type %d, app_type %d, acdb_dev_id %d, sample_rate %d\n",
-		__func__, fe_id, SESSION_TYPE_TX,
-		app_type, acdb_dev_id, sample_rate);
+	pr_debug("%s: fedai_id %llu, app_type %d, acdb_dev_id %d, sample_rate %d\n",
+		__func__, fe_id, app_type, acdb_dev_id, sample_rate);
 done:
 	return ret;
 }
@@ -1501,49 +1184,27 @@ static int msm_pcm_add_app_type_controls(struct snd_soc_pcm_runtime *rtd)
 	struct snd_pcm *pcm = rtd->pcm;
 	struct snd_pcm_usr *app_type_info;
 	struct snd_kcontrol *kctl;
-	const char *playback_mixer_ctl_name	= "Audio Stream";
-	const char *capture_mixer_ctl_name	= "Audio Stream Capture";
+	const char *mixer_ctl_name	= "Audio Stream";
 	const char *deviceNo		= "NN";
 	const char *suffix		= "App Type Cfg";
 	int ctl_len, ret = 0;
 
-	if (pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream) {
-		ctl_len = strlen(playback_mixer_ctl_name) + 1 +
-				strlen(deviceNo) + 1 + strlen(suffix) + 1;
-		pr_debug("%s: Playback app type cntrl add\n", __func__);
-		ret = snd_pcm_add_usr_ctls(pcm, SNDRV_PCM_STREAM_PLAYBACK,
-					NULL, 1, ctl_len, rtd->dai_link->be_id,
-					&app_type_info);
-		if (ret < 0) {
-			pr_err("%s: playback app type cntrl add failed: %d\n",
-				__func__, ret);
-			return ret;
-		}
-		kctl = app_type_info->kctl;
-		snprintf(kctl->id.name, ctl_len, "%s %d %s",
-			playback_mixer_ctl_name, rtd->pcm->device, suffix);
-		kctl->put = msm_pcm_playback_app_type_cfg_ctl_put;
-		kctl->get = msm_pcm_playback_app_type_cfg_ctl_get;
+	ctl_len = strlen(mixer_ctl_name) + 1 + strlen(deviceNo) + 1 +
+		  strlen(suffix) + 1;
+	pr_debug("%s, App type cntrl add\n", __func__);
+	ret = snd_pcm_add_usr_ctls(pcm, SNDRV_PCM_STREAM_PLAYBACK,
+				   NULL, 1, ctl_len, rtd->dai_link->be_id,
+				   &app_type_info);
+	if (ret < 0) {
+		pr_err("%s, app type cntrl add failed:%d\n", __func__, ret);
+		return ret;
 	}
-
-	if (pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream) {
-		ctl_len = strlen(capture_mixer_ctl_name) + 1 +
-				strlen(deviceNo) + 1 + strlen(suffix) + 1;
-		pr_debug("%s: Capture app type cntrl add\n", __func__);
-		ret = snd_pcm_add_usr_ctls(pcm, SNDRV_PCM_STREAM_CAPTURE,
-					NULL, 1, ctl_len, rtd->dai_link->be_id,
-					&app_type_info);
-		if (ret < 0) {
-			pr_err("%s: capture app type cntrl add failed: %d\n",
-				__func__, ret);
-			return ret;
-		}
-		kctl = app_type_info->kctl;
-		snprintf(kctl->id.name, ctl_len, "%s %d %s",
-			capture_mixer_ctl_name, rtd->pcm->device, suffix);
-		kctl->put = msm_pcm_capture_app_type_cfg_ctl_put;
-		kctl->get = msm_pcm_capture_app_type_cfg_ctl_get;
-	}
+	kctl = app_type_info->kctl;
+	snprintf(kctl->id.name, ctl_len, "%s %d %s", mixer_ctl_name,
+		 rtd->pcm->device, suffix);
+	kctl = app_type_info->kctl;
+	kctl->put = msm_pcm_app_type_cfg_ctl_put;
+	kctl->get = msm_pcm_app_type_cfg_ctl_get;
 
 	return 0;
 }
@@ -1559,12 +1220,6 @@ static int msm_pcm_add_controls(struct snd_soc_pcm_runtime *rtd)
 	if (ret)
 		pr_err("%s: pcm add app type controls failed:%d\n",
 			__func__, ret);
-
-	ret = msm_pcm_add_fe_topology_control(rtd);
-	if (ret) {
-		pr_err("%s: Could not add pcm topology control %d\n",
-			__func__, ret);
-	}
 	return ret;
 }
 
