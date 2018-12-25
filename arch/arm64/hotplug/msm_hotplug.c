@@ -39,9 +39,9 @@
 #define DEFAULT_NR_CPUS_BOOSTED		NR_CPUS / 2
 #define DEFAULT_MIN_CPUS_ONLINE		1
 #define DEFAULT_MAX_CPUS_ONLINE		NR_CPUS
-#define DEFAULT_FAST_LANE_LOAD		99
-#define DEFAULT_MAX_CPUS_ONLINE_SUSP	1
-
+#define DEFAULT_FAST_LANE_LOAD		300
+#define DEFAULT_MAX_CPUS_ONLINE_SUSP	2
+u64 get_cpu_idle_time(unsigned int cpu, u64 *wall, int io_busy);
 static unsigned int debug = 0;
 module_param_named(debug_mask, debug, uint, 0644);
 
@@ -131,7 +131,7 @@ struct cpu_load_data {
 static DEFINE_PER_CPU(struct cpu_load_data, cpuload);
 
 static bool io_is_busy;
-bool fast_lane_mode;
+//bool fast_lane_mode;
 
 static int update_average_load(unsigned int cpu)
 {
@@ -245,9 +245,13 @@ struct loads_tbl {
 static struct loads_tbl loads[] = {
 	LOAD_SCALE(400, 0),
 	LOAD_SCALE(65, 0),
-	LOAD_SCALE(120, 50),
-	LOAD_SCALE(190, 100),
-	LOAD_SCALE(410, 170),
+	LOAD_SCALE(80, 50),
+	LOAD_SCALE(100, 70),
+	LOAD_SCALE(150, 100),
+	LOAD_SCALE(450, 250),
+	LOAD_SCALE(550, 400),
+	LOAD_SCALE(600, 450),
+	LOAD_SCALE(700, 600),
 	LOAD_SCALE(0, 0),
 };
 
@@ -335,8 +339,7 @@ static void cpu_down_work(struct work_struct *work)
 			continue;
 		lowest_cpu = get_lowest_load_cpu();
 		if (lowest_cpu > 0 && lowest_cpu <= stats.total_cpus) {
-			if (check_lock(lowest_cpu) ||
-			    check_cpuboost(lowest_cpu))
+			if (check_lock(lowest_cpu))
 				break;
 			cpu_down(lowest_cpu);
 		}
@@ -419,7 +422,7 @@ static void reschedule_hotplug_work(void)
 static void msm_hotplug_work(struct work_struct *work)
 {
 	unsigned int i, target = 0;
-
+        bool fast_lane_mode;
 	if (hotplug.suspended && hotplug.max_cpus_online_susp <= 1) {
 		dprintk("%s: suspended.\n", MSM_HOTPLUG);
 		return;
@@ -477,7 +480,7 @@ reschedule:
 static void msm_hotplug_suspend(void)
 {
 	int cpu;
-
+        bool fast_lane_mode;
 	mutex_lock(&hotplug.msm_hotplug_mutex);
 	hotplug.suspended = 1;
 	hotplug.min_cpus_online_res = hotplug.min_cpus_online;
@@ -520,11 +523,7 @@ static void msm_hotplug_resume(void)
 		}
 	}
 
-#ifdef CONFIG_CPU_BOOST
-	if (wakeup_boost || required_wakeup) {
-#else
 	if (required_wakeup) {
-#endif
 		/* Fire up all CPUs */
 		for_each_possible_cpu(cpu) {
 			if (cpu == 0)
@@ -719,7 +718,7 @@ static void __ref msm_hotplug_stop(void)
 {
 	int cpu;
 	struct lock *dl;
-
+        bool fast_lane_mode;
 	flush_workqueue(hotplug_wq);
 	for_each_possible_cpu(cpu) {
 		dl = &per_cpu(lock_info, cpu);
@@ -1124,25 +1123,25 @@ static ssize_t show_current_load(struct device *dev,
 	return sprintf(buf, "%u\n", stats.cur_avg_load);
 }
 
-static DEVICE_ATTR(msm_enabled, 644, show_enable_hotplug, store_enable_hotplug);
-static DEVICE_ATTR(lock_duration, 644, show_lock_duration,
+static DEVICE_ATTR(msm_enabled, 0644, show_enable_hotplug, store_enable_hotplug);
+static DEVICE_ATTR(lock_duration, 0644, show_lock_duration,
 		   store_lock_duration);
-static DEVICE_ATTR(boost_lock_duration, 644, show_boost_lock_duration,
+static DEVICE_ATTR(boost_lock_duration, 0644, show_boost_lock_duration,
 		   store_boost_lock_duration);
-static DEVICE_ATTR(update_rates, 644, show_update_rates, store_update_rates);
-static DEVICE_ATTR(load_levels, 644, show_load_levels, store_load_levels);
-static DEVICE_ATTR(min_cpus_online, 644, show_min_cpus_online,
+static DEVICE_ATTR(update_rates, 0644, show_update_rates, store_update_rates);
+static DEVICE_ATTR(load_levels, 0644, show_load_levels, store_load_levels);
+static DEVICE_ATTR(min_cpus_online, 0644, show_min_cpus_online,
 		   store_min_cpus_online);
-static DEVICE_ATTR(max_cpus_online, 644, show_max_cpus_online,
+static DEVICE_ATTR(max_cpus_online, 0644, show_max_cpus_online,
 		   store_max_cpus_online);
-static DEVICE_ATTR(max_cpus_online_susp, 644, show_max_cpus_online_susp,
+static DEVICE_ATTR(max_cpus_online_susp, 0644, show_max_cpus_online_susp,
 		   store_max_cpus_online_susp);
-static DEVICE_ATTR(cpus_boosted, 644, show_cpus_boosted, store_cpus_boosted);
-static DEVICE_ATTR(offline_load, 644, show_offline_load, store_offline_load);
-static DEVICE_ATTR(fast_lane_load, 644, show_fast_lane_load,
+static DEVICE_ATTR(cpus_boosted, 0644, show_cpus_boosted, store_cpus_boosted);
+static DEVICE_ATTR(offline_load, 0644, show_offline_load, store_offline_load);
+static DEVICE_ATTR(fast_lane_load, 0644, show_fast_lane_load,
 		   store_fast_lane_load);
-static DEVICE_ATTR(io_is_busy, 644, show_io_is_busy, store_io_is_busy);
-static DEVICE_ATTR(current_load, 444, show_current_load, NULL);
+static DEVICE_ATTR(io_is_busy, 0644, show_io_is_busy, store_io_is_busy);
+static DEVICE_ATTR(current_load, 0444, show_current_load, NULL);
 
 static struct attribute *msm_hotplug_attrs[] = {
 	&dev_attr_msm_enabled.attr,
