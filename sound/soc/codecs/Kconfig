@@ -889,10 +889,13 @@ config SND_SOC_MSM_HDMI_DBA_CODEC_RX
         help
         use 100K ohm in pmic to detect specific cable
 
-config SOUND_CONTROL_HAX_3_GPL	
- 	tristate "Faux Sound Control v4.1"	
- 	default y	
- 	help	
-  		Faux Sound Control v4.1, enhanced by Shoaib Anwar a.k.a Shoaib0597 and robcore.
+config SOUND_CONTROL
+ 	bool "Sound control for wcd9335"
+
+#config SOUND_CONTROL_HAX_3_GPL	
+ #	tristate "Faux Sound Control v4.1"	
+ #	default y	
+ #	help	
+  #		Faux Sound Control v4.1, enhanced by Shoaib Anwar a.k.a Shoaib0597 and robcore.
 
 endmenu
