@@ -1,7 +1,0 @@
-menu "Typec driver ic support"
-
-config TYPEC_DRIVER
-	tristate "typec driver support"
-	default n
-
-endmenu
