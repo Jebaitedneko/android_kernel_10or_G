@@ -1174,6 +1174,9 @@ static void cpufreq_policy_put_kobj(struct cpufreq_policy *policy)
 	pr_debug("wait complete\n");
 }
 
+
+
+
 static void cpufreq_policy_free(struct cpufreq_policy *policy)
 {
 	free_cpumask_var(policy->related_cpus);
@@ -1643,6 +1646,20 @@ static void cpufreq_out_of_sync(unsigned int cpu, unsigned int old_freq,
 	cpufreq_freq_transition_end(policy, &freqs, 0);
 }
 
+unsigned int cpufreq_quick_get_util(unsigned int cpu)
+{
+	struct cpufreq_policy *policy = cpufreq_cpu_get(cpu);
+
+	unsigned int ret_util = 0;
+
+	if (policy) {
+		ret_util = policy->util;
+		cpufreq_cpu_put(policy);
+	}
+
+	return ret_util;
+}
+EXPORT_SYMBOL(cpufreq_quick_get_util);
 
 /**
  * cpufreq_quick_get - get the CPU frequency (in kHz) from policy->cur
