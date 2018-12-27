@@ -38,3 +38,11 @@ config THUNDERPLUG_CONTROL
 	default n
 	help
 	  This driver hotplugs cpu cores based on per-core load
+
+ config MAKO_HOTPLUG
+         bool "Mako hotplug driver by franciscofranco"
+         depends on HOTPLUG_CPU
+         default n
+         help
+           Hotplugging driver by franciscofranco.
+
