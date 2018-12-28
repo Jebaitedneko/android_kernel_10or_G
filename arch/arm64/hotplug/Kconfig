@@ -5,13 +5,13 @@ config MSM_HOTPLUG
 	help
 	  The MSM hotplug driver controls on-/offlining of additional cores based on current cpu load.
 
-config ASMP
-	bool "Multi-core automatic hotplug support"
-	depends on SMP
-	default n
-	help
-	Automatically hotplugs the multiple cpu cores on and off
-	based on cpu load and suspend stat
+#config ASMP
+#	bool "Multi-core automatic hotplug support"
+#	depends on SMP
+#	default n
+#	help
+#	Automatically hotplugs the multiple cpu cores on and off
+#	based on cpu load and suspend stat
 
 config INTELLI_PLUG
          bool "Enable intelli-plug cpu hotplug driver"
@@ -39,10 +39,10 @@ config THUNDERPLUG_CONTROL
 	help
 	  This driver hotplugs cpu cores based on per-core load
 
- config MAKO_HOTPLUG
-         bool "Mako hotplug driver by franciscofranco"
-         depends on HOTPLUG_CPU
-         default n
-         help
-           Hotplugging driver by franciscofranco.
+# config MAKO_HOTPLUG
+ #        bool "Mako hotplug driver by franciscofranco"
+  #       depends on HOTPLUG_CPU
+   #      default n
+    #     help
+     #      Hotplugging driver by franciscofranco.
 
