@@ -45,6 +45,9 @@ build.sh
 linux-x86/
 GCC7/
 clang/
+hardrock.sh
+hardrock_pro.sh
+
 #
 # Top-level generic files
 #
