@@ -428,6 +428,8 @@ struct kgsl_process_private {
 	struct idr syncsource_idr;
 	spinlock_t syncsource_lock;
 	int fd_count;
+	spinlock_t ctxt_count_lock;
+	atomic_t ctxt_count;
 };
 
 /**

@@ -47,6 +47,7 @@
 #define MEMSTORE_RB_GPU_ADDR(dev, rb, field)	\
 	((dev)->memstore.gpuaddr + \
 	 KGSL_MEMSTORE_OFFSET(((rb)->id + KGSL_MEMSTORE_MAX), field))
+#define KGSL_MAX_CONTEXTS_PER_PROC 200
 
 /*
  * SCRATCH MEMORY: The scratch memory is one page worth of data that

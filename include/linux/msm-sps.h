@@ -120,6 +120,7 @@
 /* Reset BAM with pipes connected */
 #define SPS_BAM_FORCE_RESET         (1UL << 11)
 
+#define SPS_BAM_OPT_IRQ_NO_SUSPEND	(1UL << 12)
 /* BAM device management flags */
 
 /* BAM global device control is managed remotely */
