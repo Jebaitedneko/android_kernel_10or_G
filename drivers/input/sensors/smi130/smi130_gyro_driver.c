@@ -402,7 +402,7 @@ static int smi_gyro_check_chip_id(struct i2c_client *client)
 static void smi_gyro_dump_reg(struct i2c_client *client)
 {
 	int i;
-	u8 dbg_buf[64];
+	u8 dbg_buf[64] = {0};
 	u8 dbg_buf_str[64 * 3 + 1] = "";
 
 	for (i = 0; i < BYTES_PER_LINE; i++) {
@@ -1900,6 +1900,11 @@ static void smi_gyro_late_resume(struct early_suspend *handler)
 
 	mutex_unlock(&client_data->mutex_op_mode);
 }
+
+static int smi130_enable_int1(void)
+{
+	return smi130_gyro_set_data_en(SMI130_GYRO_DISABLE);
+}
 #else
 static int smi_gyro_suspend(struct i2c_client *client, pm_message_t mesg)
 {
@@ -1938,6 +1943,10 @@ static int smi_gyro_resume(struct i2c_client *client)
 
 	mutex_unlock(&client_data->mutex_op_mode);
 	return err;
+}
+static int smi130_enable_int1(void)
+{
+	return smi130_gyro_set_data_en(SMI130_GYRO_ENABLE);
 }
 #endif
 

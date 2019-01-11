@@ -881,6 +881,7 @@ static struct kgsl_process_private *kgsl_process_private_new(
 
 	spin_lock_init(&private->mem_lock);
 	spin_lock_init(&private->syncsource_lock);
+	spin_lock_init(&private->ctxt_count_lock);
 
 	idr_init(&private->mem_idr);
 	idr_init(&private->syncsource_idr);
