@@ -332,8 +332,7 @@ static void sugov_update_single(struct update_util_data *hook, u64 time,
 		 */
 		if (busy && next_f < sg_policy->next_freq) {
 			next_f = sg_policy->next_freq;
-
-			/* Reset cached freq as next_freq has changed */
+			/* clear cache when it's bypassed */
 			sg_policy->cached_raw_freq = 0;
 		}
 	}
@@ -405,14 +404,16 @@ static void sugov_update_shared(struct update_util_data *hook, u64 time,
 
 	if (sugov_should_update_freq(sg_policy, time)) {
 		if (flags & SCHED_CPUFREQ_DL) {
+			next_f = sg_policy->policy->cpuinfo.max_freq;
 			/* clear cache when it's bypassed */
 			sg_policy->cached_raw_freq = 0;
-			next_f = sg_policy->policy->cpuinfo.max_freq;
 		} else {
 			next_f = sugov_next_freq_shared(sg_cpu, time);
 		}
-
-		sugov_update_commit(sg_policy, time, next_f);
+		if (sg_policy->policy->fast_switch_enabled)
+			sugov_fast_switch(sg_policy, time, next_f);
+		else
+			sugov_deferred_update(sg_policy, time, next_f);
 	}
 
 	raw_spin_unlock(&sg_policy->update_lock);
