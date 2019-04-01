@@ -59,7 +59,6 @@
 #include <linux/delay.h>
 #include <linux/binfmts.h>
 #include <linux/cpu_input_boost.h>
-#include <linux/devfreq_boost.h>
 
 #include <linux/atomic.h>
 
@@ -2414,10 +2413,8 @@ retry_find_task:
 	/* This covers boosting for app launches and app transitions */
 	if (!ret && !threadgroup &&
 	    !strcmp(of->kn->parent->name, "top-app") &&
-	    is_zygote_pid(tsk->parent->pid)) {
-		cpu_input_boost_kick_max(500);
-		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 500);
-	}
+	    is_zygote_pid(tsk->parent->pid))
+		cpu_input_boost_kick_max(256);
 
 	threadgroup_unlock(tsk);
 
