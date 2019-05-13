@@ -3279,7 +3279,7 @@ static void __sched __schedule(void)
 	 * done by the caller to avoid the race with signal_wake_up().
 	 */
 	smp_mb__before_spinlock();
-	raw_spin_lock_irq(&rq->lock);
+	raw_spin_lock(&rq->lock);
 
 	rq->clock_skip_update <<= 1; /* promote REQ to ACT */
 
@@ -8896,7 +8896,6 @@ struct cgroup_subsys cpu_cgrp_subsys = {
 	.fork		= cpu_cgroup_fork,
 	.can_attach	= cpu_cgroup_can_attach,
 	.attach		= cpu_cgroup_attach,
-	.allow_attach   = subsys_cgroup_allow_attach,
 	.exit		= cpu_cgroup_exit,
 	.legacy_cftypes	= cpu_files,
 	.early_init	= 1,

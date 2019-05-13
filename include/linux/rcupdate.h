@@ -44,10 +44,14 @@
 #include <linux/debugobjects.h>
 #include <linux/bug.h>
 #include <linux/compiler.h>
+#include <linux/irqflags.h>
+
 #include <asm/barrier.h>
 
+#ifndef CONFIG_TINY_RCU
 extern int rcu_expedited; /* for sysctl */
 extern int rcu_normal;    /* also for sysctl */
+#endif /* #ifndef CONFIG_TINY_RCU */
 
 #ifdef CONFIG_TINY_RCU
 /* Tiny RCU doesn't expedite, as its purpose in life is instead to be tiny. */
@@ -326,13 +330,18 @@ static inline int rcu_preempt_depth(void)
 
 /* Internal to kernel */
 void rcu_init(void);
-void rcu_end_inkernel_boot(void);
 void rcu_sched_qs(void);
 void rcu_bh_qs(void);
 void rcu_check_callbacks(int user);
 struct notifier_block;
 int rcu_cpu_notify(struct notifier_block *self,
 		   unsigned long action, void *hcpu);
+
+#ifndef CONFIG_TINY_RCU
+void rcu_end_inkernel_boot(void);
+#else /* #ifndef CONFIG_TINY_RCU */
+static inline void rcu_end_inkernel_boot(void) { }
+#endif /* #ifndef CONFIG_TINY_RCU */
 
 #ifdef CONFIG_RCU_STALL_COMMON
 void rcu_sysrq_start(void);
@@ -504,14 +513,7 @@ int rcu_read_lock_bh_held(void);
  * CONFIG_DEBUG_LOCK_ALLOC, this assumes we are in an RCU-sched read-side
  * critical section unless it can prove otherwise.
  */
-#ifdef CONFIG_PREEMPT_COUNT
 int rcu_read_lock_sched_held(void);
-#else /* #ifdef CONFIG_PREEMPT_COUNT */
-static inline int rcu_read_lock_sched_held(void)
-{
-	return 1;
-}
-#endif /* #else #ifdef CONFIG_PREEMPT_COUNT */
 
 #else /* #ifdef CONFIG_DEBUG_LOCK_ALLOC */
 
@@ -528,18 +530,10 @@ static inline int rcu_read_lock_bh_held(void)
 	return 1;
 }
 
-#ifdef CONFIG_PREEMPT_COUNT
 static inline int rcu_read_lock_sched_held(void)
 {
-	return preempt_count() != 0 || irqs_disabled();
+	return !preemptible();
 }
-#else /* #ifdef CONFIG_PREEMPT_COUNT */
-static inline int rcu_read_lock_sched_held(void)
-{
-	return 1;
-}
-#endif /* #else #ifdef CONFIG_PREEMPT_COUNT */
-
 #endif /* #else #ifdef CONFIG_DEBUG_LOCK_ALLOC */
 
 /* Deprecate rcu_lockdep_assert():  Use RCU_LOCKDEP_WARN() instead. */
@@ -1184,6 +1178,19 @@ static inline void rcu_sysidle_force_exit(void)
 }
 
 #endif /* #else #ifdef CONFIG_NO_HZ_FULL_SYSIDLE */
+
+
+/*
+ * Dump the ftrace buffer, but only one time per callsite per boot.
+ */
+#define rcu_ftrace_dump(oops_dump_mode) \
+do { \
+	static atomic_t ___rfd_beenhere = ATOMIC_INIT(0); \
+	\
+	if (!atomic_read(&___rfd_beenhere) && \
+	    !atomic_xchg(&___rfd_beenhere, 1)) \
+		ftrace_dump(oops_dump_mode); \
+} while (0)
 
 
 #endif /* __LINUX_RCUPDATE_H */

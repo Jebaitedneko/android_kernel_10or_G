@@ -1,0 +1,7 @@
+make[1]: Entering directory '/home/hana/kernel_xiaomi_msm8953-3.18/out'
+  HOSTCC  scripts/basic/fixdep
+  GEN     ./Makefile
+scripts/Makefile.host:91: recipe for target 'scripts/basic/fixdep' failed
+../Makefile:440: recipe for target 'scripts_basic' failed
+make[1]: Leaving directory '/home/hana/kernel_xiaomi_msm8953-3.18/out'
+Makefile:151: recipe for target 'sub-make' failed

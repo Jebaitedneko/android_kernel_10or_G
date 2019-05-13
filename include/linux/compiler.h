@@ -19,11 +19,13 @@
 # define __percpu	__attribute__((noderef, address_space(3)))
 #ifdef CONFIG_SPARSE_RCU_POINTER
 # define __rcu		__attribute__((noderef, address_space(4)))
-#else
+#else /* CONFIG_SPARSE_RCU_POINTER */
 # define __rcu
-#endif
+#endif /* CONFIG_SPARSE_RCU_POINTER */
+# define __private	__attribute__((noderef))
 extern void __chk_user_ptr(const volatile void __user *);
 extern void __chk_io_ptr(const volatile void __iomem *);
+# define ACCESS_PRIVATE(p, member) (*((typeof((p)->member) __force *) &(p)->member))
 #else
 # define __user
 # define __kernel
@@ -42,6 +44,8 @@ extern void __chk_io_ptr(const volatile void __iomem *);
 # define __cond_lock(x,c) (c)
 # define __percpu
 # define __rcu
+# define __private
+# define ACCESS_PRIVATE(p, member) ((p)->member)
 #endif
 
 /* Indirect macros required for expanded argument pasting, eg. __LINE__. */
