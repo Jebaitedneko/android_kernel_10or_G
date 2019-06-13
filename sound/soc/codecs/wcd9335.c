@@ -3871,7 +3871,7 @@ static void tasha_codec_hph_post_pa_config(struct tasha_priv *tasha,
 			if (!huwifi_mode)
 				scale_val = 0x1;
 			else
-				scale_val = 031;
+				scale_val = 0x3;
 			break;
 		}
 		if (tasha->anc_func) {
