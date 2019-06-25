@@ -1809,6 +1809,7 @@ free_irqs:
 		free_irq(irq, domain);
 	}
 
+	arm_smmu_free_pgtbl_ops(smmu_domain);
 	__arm_smmu_free_bitmap(smmu->context_map, cfg->cbndx);
 	arm_smmu_free_pgtbl_ops(smmu_domain);
 	smmu_domain->smmu = NULL;
