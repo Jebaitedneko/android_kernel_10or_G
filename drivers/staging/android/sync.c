@@ -272,7 +272,6 @@ static struct sync_fence *sync_fence_alloc(const char *name)
 #ifdef CONFIG_SYNC_DEBUG
 	strlcpy(fence->name, name, sizeof(fence->name));
 #endif
-
 	INIT_LIST_HEAD(&fence->pt_list_head);
 	INIT_LIST_HEAD(&fence->waiter_list_head);
 	spin_lock_init(&fence->waiter_list_lock);
@@ -801,8 +800,10 @@ static long sync_fence_ioctl_fence_info(struct sync_fence *fence,
 	if (data == NULL)
 		return -ENOMEM;
 
+#ifdef CONFIG_SYNC_DEBUG
 	strlcpy(data->name, fence->name, sizeof(data->name));
 	data->status = fence->status;
+#endif
 	len = sizeof(struct sync_fence_info_data);
 
 	list_for_each(pos, &fence->pt_list_head) {
