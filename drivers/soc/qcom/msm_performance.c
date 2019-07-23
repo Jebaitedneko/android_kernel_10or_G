@@ -30,7 +30,7 @@ static int touchboost = 1;
 
 #ifndef CONFIG_MSM_PERFORMANCE_CPUFREQ_LIMITS_VOTING_ONLY
 static unsigned int use_input_evts_with_hi_slvt_detect;
-static int touchboost = 1;
+static int touchboost = 0;
 
 static struct mutex managed_cpus_lock;
 
