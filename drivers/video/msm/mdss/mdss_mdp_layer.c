@@ -1661,6 +1661,7 @@ static int __validate_layers(struct msm_fb_data_type *mfd,
 		goto validate_skip;
 
 	layer_list = commit->input_layers;
+
 	memset(validate_info_list, 0,
 	       sizeof(*validate_info_list) * layer_count);
 
