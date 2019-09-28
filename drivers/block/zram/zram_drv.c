@@ -1292,8 +1292,18 @@ out:
 
 static void destroy_devices(unsigned int nr)
 {
-	del_gendisk(zram->disk);
-	put_disk(zram->disk);
+	struct zram *zram;
+	unsigned int i;
+
+	for (i = 0; i < nr; i++) {
+		zram = &zram_devices[i];
+
+		zram_reset_device(zram);
+
+		blk_cleanup_queue(zram->disk->queue);
+		del_gendisk(zram->disk);
+		put_disk(zram->disk);
+	}
 
 	kfree(zram_devices);
 	unregister_blkdev(zram_major, "zram");

@@ -1478,7 +1478,6 @@ static void xpad_led_disconnect(struct usb_xpad *xpad)
 #else
 static int xpad_led_probe(struct usb_xpad *xpad) { return 0; }
 static void xpad_led_disconnect(struct usb_xpad *xpad) { }
-static void xpad_identify_controller(struct usb_xpad *xpad) { }
 #endif
 
 static int xpad_start_input(struct usb_xpad *xpad)
@@ -1716,13 +1715,7 @@ err_free_input:
 	return error;
 }
 
-static void xpad_deinit_input(struct usb_xpad *xpad)
-{
-	xpad_led_disconnect(xpad);
-	input_unregister_device(xpad->dev);
-}
-
-static int xpad_init_input(struct usb_xpad *xpad)
+static int xpad_probe(struct usb_interface *intf, const struct usb_device_id *id)
 {
 	struct usb_device *udev = interface_to_usbdev(intf);
 	struct usb_xpad *xpad;
