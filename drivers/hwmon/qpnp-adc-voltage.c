@@ -2523,7 +2523,7 @@ static ssize_t qpnp_adc_show(struct device *dev,
 	rc = qpnp_vadc_read(vadc, attr->index, &result);
 
 	if (rc) {
-		pr_err("VADC read error with %d\n", rc);
+		pr_debug("VADC read error with %d\n", rc);
 		return 0;
 	}
 
@@ -2578,7 +2578,7 @@ static int qpnp_vadc_get_temp(struct thermal_zone_device *thermal,
 				vadc_therm->vadc_channel, &result);
 	if (rc) {
 		if (rc != -EPROBE_DEFER)
-			pr_err("VADC read error with %d\n", rc);
+			pr_debug("VADC read error with %d\n", rc);
 		return rc;
 	}
 
