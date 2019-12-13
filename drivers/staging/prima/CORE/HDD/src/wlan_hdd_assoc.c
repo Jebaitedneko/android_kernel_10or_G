@@ -2488,6 +2488,7 @@ static eHalStatus hdd_AssociationCompletionHandler( hdd_adapter_t *pAdapter, tCs
                                  pRoamInfo->nBeaconLength +
                                  pRoamInfo->nAssocReqLength);
             if (pFTAssocRsp != NULL)
+	    {
                 // pFTAssocRsp needs to point to the IEs
                 pFTAssocRsp += FT_ASSOC_RSP_IES_OFFSET;
                 hddLog(LOG1, "%s: AssocRsp is now at %02x%02x", __func__,
