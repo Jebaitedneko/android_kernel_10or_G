@@ -11153,38 +11153,35 @@ WLANTL_Translate80211To8023Header
      return vosStatus;
   }
 
-  switch ( w80211Header.wFrmCtrl.fromDS )
-  {
-  case 0:
-    if ( w80211Header.wFrmCtrl.toDS )
-    {
-      //SoftAP AP mode
-      vos_mem_copy( w8023Header.vDA, w80211Header.vA3, VOS_MAC_ADDR_SIZE);
-      vos_mem_copy( w8023Header.vSA, w80211Header.vA2, VOS_MAC_ADDR_SIZE);
-      TLLOG2(VOS_TRACE( VOS_MODULE_ID_TL, VOS_TRACE_LEVEL_INFO_HIGH,
-                  "WLAN TL SoftAP: 802 3 DA %08x SA %08x",
-                  w8023Header.vDA, w8023Header.vSA));
-    }
-    else 
-    {
-      /* IBSS */
-      vos_mem_copy( w8023Header.vDA, w80211Header.vA1, VOS_MAC_ADDR_SIZE);
-      vos_mem_copy( w8023Header.vSA, w80211Header.vA2, VOS_MAC_ADDR_SIZE);
-    }
-    break;
-  case 1:
-    if ( w80211Header.wFrmCtrl.toDS )
-    {
-      /* BT-AMP case */
-      vos_mem_copy( w8023Header.vDA, w80211Header.vA1, VOS_MAC_ADDR_SIZE);
-      vos_mem_copy( w8023Header.vSA, w80211Header.vA2, VOS_MAC_ADDR_SIZE);
-    }
-    else
-    { /* Infra */
-      vos_mem_copy( w8023Header.vDA, w80211Header.vA1, VOS_MAC_ADDR_SIZE);
-      vos_mem_copy( w8023Header.vSA, w80211Header.vA3, VOS_MAC_ADDR_SIZE);
-    }
-    break;
+  if (( w80211Header.wFrmCtrl.fromDS ) == 0) {
+	if( w80211Header.wFrmCtrl.toDS )
+		{
+			//SoftAP AP mode
+			vos_mem_copy( w8023Header.vDA, w80211Header.vA3, VOS_MAC_ADDR_SIZE);
+			vos_mem_copy( w8023Header.vSA, w80211Header.vA2, VOS_MAC_ADDR_SIZE);
+			TLLOG2(VOS_TRACE( VOS_MODULE_ID_TL, VOS_TRACE_LEVEL_INFO_HIGH,
+			"WLAN TL SoftAP: 802 3 DA %08x SA %08x",
+			w8023Header.vDA, w8023Header.vSA));
+		}
+	else
+		{
+			/* IBSS */
+			vos_mem_copy( w8023Header.vDA, w80211Header.vA1, VOS_MAC_ADDR_SIZE);
+			vos_mem_copy( w8023Header.vSA, w80211Header.vA2, VOS_MAC_ADDR_SIZE);
+		}
+  } else if (( w80211Header.wFrmCtrl.fromDS ) == 1) {
+	if ( w80211Header.wFrmCtrl.toDS )
+		{
+			/* BT-AMP case */
+			vos_mem_copy( w8023Header.vDA, w80211Header.vA1, VOS_MAC_ADDR_SIZE);
+			vos_mem_copy( w8023Header.vSA, w80211Header.vA2, VOS_MAC_ADDR_SIZE);
+    		}
+	else
+		{
+			/* Infra */
+			vos_mem_copy( w8023Header.vDA, w80211Header.vA1, VOS_MAC_ADDR_SIZE);
+			vos_mem_copy( w8023Header.vSA, w80211Header.vA3, VOS_MAC_ADDR_SIZE);
+		}
   }
 
   if( usActualHLen > ucHeaderLen )
@@ -11325,35 +11322,29 @@ WLANTL_MonTranslate80211To8023Header
 
      return vosStatus;
   }
-  switch ( w80211Header.wFrmCtrl.fromDS )
-  {
-  case 0:
-    if ( w80211Header.wFrmCtrl.toDS )
-    {
+  if (( w80211Header.wFrmCtrl.fromDS ) == 0) {
+    if ( w80211Header.wFrmCtrl.toDS ) {
+      //SoftAP AP mode
       vos_mem_copy( w8023Header.vDA, w80211Header.vA3, VOS_MAC_ADDR_SIZE);
       vos_mem_copy( w8023Header.vSA, w80211Header.vA2, VOS_MAC_ADDR_SIZE);
       TLLOG2(VOS_TRACE( VOS_MODULE_ID_TL, VOS_TRACE_LEVEL_INFO_HIGH,
                   "WLAN TL SoftAP: 802 3 DA %08x SA %08x",
                   w8023Header.vDA, w8023Header.vSA));
-    }
-    else
-    {
+    } else  {
+      /* IBSS */
       vos_mem_copy( w8023Header.vDA, w80211Header.vA1, VOS_MAC_ADDR_SIZE);
       vos_mem_copy( w8023Header.vSA, w80211Header.vA2, VOS_MAC_ADDR_SIZE);
     }
-    break;
-  case 1:
-    if ( w80211Header.wFrmCtrl.toDS )
-    {
+  } else if (( w80211Header.wFrmCtrl.fromDS ) == 1) {
+    if ( w80211Header.wFrmCtrl.toDS ) {
+      /* BT-AMP case */
       vos_mem_copy( w8023Header.vDA, w80211Header.vA1, VOS_MAC_ADDR_SIZE);
       vos_mem_copy( w8023Header.vSA, w80211Header.vA2, VOS_MAC_ADDR_SIZE);
-    }
-    else
-    {
+    } else {
+	  /* Infra */
       vos_mem_copy( w8023Header.vDA, w80211Header.vA1, VOS_MAC_ADDR_SIZE);
       vos_mem_copy( w8023Header.vSA, w80211Header.vA3, VOS_MAC_ADDR_SIZE);
     }
-    break;
   }
   if( usActualHLen > ucMPDUHLen )
   {
