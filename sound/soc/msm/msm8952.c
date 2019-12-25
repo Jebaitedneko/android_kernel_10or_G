@@ -3392,7 +3392,7 @@ parse_mclk_freq:
 
 	ret = snd_soc_register_card(card);
 	if (ret) {
-		dev_err(&pdev->dev, "snd_soc_register_card failed (%d)\n",
+		dev_dbg(&pdev->dev, "snd_soc_register_card failed (%d)\n",
 			ret);
 		goto err;
 	}
