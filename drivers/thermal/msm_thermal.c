@@ -5037,7 +5037,7 @@ static void interrupt_mode_init(void)
 
 static int __ref set_enabled(const char *val, const struct kernel_param *kp)
 {
-	int ret = 0;
+	int ret = 1;
 
 	ret = param_set_bool(val, kp);
 	if (!enabled)
