@@ -91,7 +91,7 @@
 #define MDSS_BRIGHT_TO_BL_DIM(out, v) do {\
 			out = ((v) * (v) * 255  / 4095 + (v) * (255 - (v)) / 32);\
 			} while (0)
-bool __read_mostly backlight_dimmer = true;
+bool __read_mostly backlight_dimmer = false;
 module_param(backlight_dimmer, bool, 0644);
 
 int backlight_min = 0;
