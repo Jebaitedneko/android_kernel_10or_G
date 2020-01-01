@@ -4634,7 +4634,7 @@ static int mdss_fb_atomic_commit_ioctl(struct fb_info *info,
 	int ret, i = 0, j = 0, rc;
 	struct mdp_layer_commit  commit;
 	u32 buffer_size, layer_count;
-	struct mdp_input_layer *layer, layer_list[MAX_LAYER_COUNT];
+	struct mdp_input_layer *layer;
 	struct mdp_input_layer __user *input_layer_list;
 	struct mdp_output_layer output_layer;
 	struct mdp_output_layer __user *output_layer_user;

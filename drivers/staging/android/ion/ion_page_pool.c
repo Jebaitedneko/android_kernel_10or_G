@@ -23,8 +23,6 @@
 #include <linux/slab.h>
 #include <linux/swap.h>
 #include <linux/vmalloc.h>
-#include <linux/vmstat.h>
-#include <linux/mmzone.h>
 #include "ion_priv.h"
 
 static void *ion_page_pool_alloc_pages(struct ion_page_pool *pool)
@@ -37,7 +35,8 @@ static void *ion_page_pool_alloc_pages(struct ion_page_pool *pool)
 		return NULL;
 
 	if (pool->gfp_mask & __GFP_ZERO)
-		if (msm_ion_heap_high_order_page_zero(page, pool->order))
+		if (msm_ion_heap_high_order_page_zero(pool->dev, page,
+						      pool->order))
 			goto error_free_pages;
 
 	ion_page_pool_alloc_set_cache_policy(pool, page);
@@ -58,8 +57,6 @@ static void ion_page_pool_free_pages(struct ion_page_pool *pool,
 static int ion_page_pool_add(struct ion_page_pool *pool, struct page *page,
 				bool prefetch)
 {
-	int page_count = 1 << pool->order;
-
 	spin_lock(&pool->lock);
 	if (PageHighMem(page)) {
 		list_add_tail(&page->lru, &pool->high_items);
@@ -71,9 +68,6 @@ static int ion_page_pool_add(struct ion_page_pool *pool, struct page *page,
 	if (!prefetch)
 		pool->nr_unreserved++;
 
-	mod_zone_page_state(page_zone(page), NR_FILE_PAGES, page_count);
-	mod_zone_page_state(page_zone(page), NR_INACTIVE_FILE, page_count);
-
 	spin_unlock(&pool->lock);
 	return 0;
 }
@@ -82,7 +76,6 @@ static struct page *ion_page_pool_remove(struct ion_page_pool *pool, bool high,
 					bool prefetch)
 {
 	struct page *page;
-	int page_count = 1 << pool->order;
 
 	if (high) {
 		BUG_ON(!pool->high_count);
@@ -102,10 +95,6 @@ static struct page *ion_page_pool_remove(struct ion_page_pool *pool, bool high,
 						pool->nr_unreserved);
 
 	list_del(&page->lru);
-
-	mod_zone_page_state(page_zone(page), NR_INACTIVE_FILE, -page_count);
-	mod_zone_page_state(page_zone(page), NR_FILE_PAGES, -page_count);
-
 	return page;
 }
 
@@ -234,12 +223,14 @@ int ion_page_pool_shrink(struct ion_page_pool *pool, gfp_t gfp_mask,
 	return freed;
 }
 
-struct ion_page_pool *ion_page_pool_create(gfp_t gfp_mask, unsigned int order)
+struct ion_page_pool *ion_page_pool_create(struct device *dev, gfp_t gfp_mask,
+					   unsigned int order)
 {
 	struct ion_page_pool *pool = kmalloc(sizeof(struct ion_page_pool),
 					     GFP_KERNEL);
 	if (!pool)
 		return NULL;
+	pool->dev = dev;
 	pool->high_count = 0;
 	pool->low_count = 0;
 	pool->nr_unreserved = 0;
