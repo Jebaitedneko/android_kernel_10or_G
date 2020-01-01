@@ -286,6 +286,7 @@ static int max_extfrag_threshold = 1000;
 #endif
 
 static struct ctl_table kern_table[] = {
+#if 0
 	{
 		.procname	= "sched_boost",
 		.data		= &sysctl_sched_boost,
@@ -295,6 +296,7 @@ static struct ctl_table kern_table[] = {
 		.extra1         = &zero,
 		.extra2		= &three,
 	},
+#endif
 #ifdef CONFIG_SCHED_SYSCTL
 	{
 		.procname	= "sched_child_runs_first",
