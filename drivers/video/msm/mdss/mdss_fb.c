@@ -4631,8 +4631,6 @@ err:
 static int mdss_fb_atomic_commit_ioctl(struct fb_info *info,
 	unsigned long *argp, struct file *file)
 {
-	static struct mdp_input_layer layer_list[MAX_LAYER_COUNT]
-		____cacheline_aligned_in_smp;
 	int ret, i = 0, j = 0, rc;
 	struct mdp_layer_commit  commit;
 	u32 buffer_size, layer_count;
