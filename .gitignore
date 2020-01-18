@@ -100,3 +100,8 @@ all.config
 
 # Object directory
 out/
+
+# Extras
+*.log
+*dtb
+*.zip
