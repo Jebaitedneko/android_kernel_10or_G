@@ -507,14 +507,18 @@
 		qcom,sensor-id = <9>, <10>, <11>, <12>,
 				<4>, <5>, <6>, <7>;
 		qcom,poll-ms = <1000>;
-		qcom,limit-temp = <60>;
-		qcom,temp-hysteresis = <85>;
+		qcom,limit-temp = <70>;
+		qcom,temp-hysteresis = <12>;
 		qcom,freq-step = <1>;
-		qcom,core-limit-temp = <70>;
-		qcom,core-temp-hysteresis = <75>;
-		qcom,freq-mitigation-temp = <95>;
-		qcom,freq-mitigation-temp-hysteresis = <15>;
-		qcom,freq-mitigation-value = <1689600>;
+		qcom,core-limit-temp = <80>;
+		qcom,core-temp-hysteresis = <12>;
+		qcom,hotplug-temp = <105>;
+		qcom,hotplug-temp-hysteresis = <15>;
+		qcom,freq-mitigation-temp = <105>;
+		qcom,freq-mitigation-temp-hysteresis = <12>;
+		qcom,freq-mitigation-value = <2016000>;
+		qcom,cpu-sensors = "tsens_tz_sensor9", "tsens_tz_sensor10", "tsens_tz_sensor11", "tsens_tz_sensor12",
+                           "tsens_tz_sensor4", "tsens_tz_sensor5", "tsens_tz_sensor6", "tsens_tz_sensor7";
 		qcom,therm-reset-temp = <115>;
 		qcom,synchronous-cluster-id = <0 1>;
 		qcom,synchronous-cluster-map = <0 4 &CPU0 &CPU1 &CPU2 &CPU3>,
