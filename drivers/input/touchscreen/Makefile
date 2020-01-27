@@ -97,9 +97,4 @@ else
 obj-$(CONFIG_TOUCHSCREEN_GT9XX)		+= gt9xx/
 endif
 obj-$(CONFIG_TOUCHSCREEN_HIMAX_CHIPSET)	+= hxchipset/
-ifeq ($(CONFIG_MACH_XIAOMI_TISSOT),y)
-obj-$(CONFIG_TOUCHSCREEN_FTS)		+= ft8716/
-else
 obj-$(CONFIG_TOUCHSCREEN_FTS)		+= focaltech_touch/
-endif
-obj-$(CONFIG_TOUCHSCREEN_TD4310)	+= td4310/

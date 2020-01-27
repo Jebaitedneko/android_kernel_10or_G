@@ -844,12 +844,10 @@ static int32_t msm_actuator_park_lens(struct msm_actuator_ctrl_t *a_ctrl)
 #ifdef CONFIG_MACH_XIAOMI_MIDO
 		if (next_lens_pos > PARK_LENS_QUIET_UPPER_CODE)
 			next_lens_pos = PARK_LENS_QUIET_UPPER_CODE;
-		else {
-			if (next_lens_pos > PARK_LENS_QUIET_LOWER_CODE)
-				next_lens_pos -= PARK_LENS_QUIET_STEP;
-			else
-				next_lens_pos = 0;
-  		}
+		else if (next_lens_pos > PARK_LENS_QUIET_LOWER_CODE)
+			next_lens_pos -= PARK_LENS_QUIET_STEP;
+		else
+			next_lens_pos = 0;
 #else
 		if (next_lens_pos > (a_ctrl->park_lens.max_step *
 			PARK_LENS_LONG_STEP)) {

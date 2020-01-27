@@ -386,12 +386,6 @@ config MACH_XIAOMI_MIDO
 	help
 	  This enables support for Xiaomi Redmi Note 4(X).
 
-config MACH_XIAOMI_TISSOT
-	bool "Mi A1"
-	select MACH_XIAOMI_MSM8953
-	help
-	  This enables support for Xiaomi Mi A1.
-
 endchoice
 
 endif
