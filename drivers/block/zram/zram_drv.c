@@ -283,6 +283,9 @@ static ssize_t max_comp_streams_store(struct device *dev,
 	struct zram *zram = dev_to_zram(dev);
 	int ret;
 
+	/* Prevent userspace from changing max_comp_streams */
+	return len;
+
 	ret = kstrtoint(buf, 0, &num);
 	if (ret < 0)
 		return ret;
@@ -853,8 +856,7 @@ static void zram_reset_device(struct zram *zram)
 	/* Reset stats */
 	memset(&zram->stats, 0, sizeof(zram->stats));
 	zram->disksize = 0;
-	zram->max_comp_streams = 1;
-
+	zram->max_comp_streams = CONFIG_NR_CPUS;
 	set_capacity(zram->disk, 0);
 	part_stat_set_all(&zram->disk->part0, 0);
 
@@ -1281,7 +1283,7 @@ static int create_device(struct zram *zram, int device_id)
 
 	strlcpy(zram->compressor, default_compressor, sizeof(zram->compressor));
 	zram->meta = NULL;
-	zram->max_comp_streams = 1;
+	zram->max_comp_streams = CONFIG_NR_CPUS;
 	return 0;
 
 out_free_queue:
