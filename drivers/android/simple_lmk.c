@@ -209,6 +209,7 @@ static void scan_and_kill(unsigned long pages_needed)
 	/* Kill the victims */
 	atomic_set_release(&victims_to_kill, nr_to_kill);
 	for (i = 0; i < nr_to_kill; i++) {
+		static const struct sched_param sched_zero_prio;
 		struct victim_info *victim = &victims[i];
 		struct task_struct *t, *vtsk = victim->tsk;
 
@@ -225,17 +226,8 @@ static void scan_and_kill(unsigned long pages_needed)
 			set_tsk_thread_flag(t, TIF_MEMDIE);
 		rcu_read_unlock();
 
-		/* Grab a reference to the victim for later before unlocking */
-		get_task_struct(vtsk);
-		task_unlock(vtsk);
-	}
-
-	/* Try to speed up the death process now that we can schedule again */
-	for (i = 0; i < nr_to_kill; i++) {
-		struct task_struct *vtsk = victims[i].tsk;
-
-		/* Increase the victim's priority to make it die faster */
-		set_user_nice(vtsk, MIN_NICE);
+		/* Elevate the victim to SCHED_RR with zero RT priority */
+		sched_setscheduler_nocheck(vtsk, SCHED_RR, &sched_zero_prio);
 
 		/* Allow the victim to run on any CPU */
 		set_cpus_allowed_ptr(vtsk, cpu_all_mask);
