@@ -2953,7 +2953,6 @@ static inline unsigned long *end_of_stack(struct task_struct *p)
 }
 
 #endif
-
 #define task_stack_end_corrupted(task) \
 		(*(end_of_stack(task)) != STACK_END_MAGIC)
 
