@@ -460,6 +460,7 @@ static int si470x_i2c_remove(struct i2c_client *client)
 
 	v4l2_ctrl_handler_free(&radio->hdl);
 	v4l2_device_unregister(&radio->v4l2_dev);
+	kfree(radio);
 	return 0;
 }
 
