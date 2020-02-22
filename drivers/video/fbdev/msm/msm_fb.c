@@ -212,7 +212,7 @@ restart:
 		spin_unlock_irqrestore(&msmfb->update_lock, irq_flags);
 		if (pan_display)
 			wait_event_interruptible_timeout(msmfb->frame_wq,
-				msmfb->sleeping != SLEEPING, msecs_to_jiffies(100));
+				msmfb->sleeping != SLEEPING, HZ/10);
 		return;
 	}
 
@@ -224,7 +224,7 @@ restart:
 		spin_unlock_irqrestore(&msmfb->update_lock, irq_flags);
 		ret = wait_event_interruptible_timeout(msmfb->frame_wq,
 			msmfb->frame_done == msmfb->frame_requested &&
-			msmfb->sleeping != UPDATING, msecs_to_jiffies(5000));
+			msmfb->sleeping != UPDATING, 5 * HZ);
 		if (ret <= 0 && (msmfb->frame_requested != msmfb->frame_done ||
 				 msmfb->sleeping == UPDATING)) {
 			if (retry && panel->request_vsync &&
