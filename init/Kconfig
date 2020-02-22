@@ -1326,6 +1326,12 @@ config CPUSET_BG
 	help
 	  The CPU mask to use for background application cpuset.
 
+config CPUSET_AUDIO
+	string "Value for 'audio-app' cpuset"
+	default "0-3"
+	help
+	  The CPU mask to use for audio-app application cpuset.
+	  
 config CPUSET_CAMERA
 	string "Value for 'camera' cpuset"
         default "0-7"
