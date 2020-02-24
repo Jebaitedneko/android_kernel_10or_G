@@ -644,6 +644,9 @@ ifeq ($(cc-name),gcc)
 KBUILD_CFLAGS	+= -Wno-psabi
 endif
 
+## hide "warning: integer-overflow in expression"
+KBUILD_CFLAGS	+= $(call cc-disable-warning, integer-overflow)
+
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= $(call cc-option,-Oz,-Os)
 else
