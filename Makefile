@@ -644,6 +644,9 @@ ifeq ($(cc-name),gcc)
 KBUILD_CFLAGS	+= -Wno-psabi
 endif
 
+## hide "error: cast to smaller integer type 'eSapStatus' from 'void *' "
+KBUILD_CFLAGS	+= $(call cc-disable-warning, pointer-to-int-cast)
+
 ## hide "warning: integer-overflow in expression"
 KBUILD_CFLAGS	+= $(call cc-disable-warning, integer-overflow)
 
