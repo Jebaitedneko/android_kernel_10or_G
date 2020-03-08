@@ -3254,7 +3254,7 @@ static int __ref update_offline_cores(int val)
 			ret = device_offline(cpu_dev);
 			if (ret) {
 				cpus_offlined &= ~BIT(cpu);
-				pr_err_ratelimited(
+				pr_debug(
 					"Unable to offline CPU%d. err:%d\n",
 					cpu, ret);
 				pend_hotplug_req = true;
@@ -3283,7 +3283,7 @@ static int __ref update_offline_cores(int val)
 				rval |= ret;
 				cpus_offlined |= BIT(cpu);
 				pend_hotplug_req = true;
-				pr_err_ratelimited(
+				pr_debug(
 					"Unable to online CPU%d. err:%d\n",
 					cpu, ret);
 			} else {
