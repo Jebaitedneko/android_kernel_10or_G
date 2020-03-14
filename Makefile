@@ -646,7 +646,7 @@ else
 ifeq ($(cc-name),clang)
 KBUILD_CFLAGS	+= -O3 $(call cc-option,-fsanitize=local-init) -march=armv8-a -mtune=cortex-a53 -mcpu=cortex-a53
 else
-KBUILD_CFLAGS	+= -O2
+KBUILD_CFLAGS	+= -O3
 endif
 endif
 
