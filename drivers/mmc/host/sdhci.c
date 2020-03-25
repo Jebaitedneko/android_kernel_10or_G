@@ -1730,6 +1730,7 @@ static void sdhci_request(struct mmc_host *mmc, struct mmc_request *mrq)
 		return;
 	}
 
+<<<<<<< HEAD
 	/*
 	 * Firstly check card presence from cd-gpio.  The return could
 	 * be one of the following possibilities:
@@ -1746,6 +1747,9 @@ static void sdhci_request(struct mmc_host *mmc, struct mmc_request *mrq)
 			present = sdhci_readl(host, SDHCI_PRESENT_STATE) &
 					SDHCI_CARD_PRESENT;
 	}
+=======
+	present = mmc->ops->get_cd(mmc);
+>>>>>>> 1cd88a7d78a0de59379cb2c3aca1f373acb7b8de
 
 	spin_lock_irqsave(&host->lock, flags);
 
