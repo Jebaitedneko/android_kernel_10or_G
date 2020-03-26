@@ -4503,7 +4503,7 @@ repeat:
 			ac.ac_b_ex.fe_group = 0;
 			ac.ac_b_ex.fe_start = 0;
 			ac.ac_b_ex.fe_len = 0;
-			ac,ac_status = AC_STATUS_CONTINUE;
+			ac.ac_status = AC_STATUS_CONTINUE;
 			goto repeat;
 		} else if (*errp) {
 			ext4_discard_allocated_blocks(&ac);
