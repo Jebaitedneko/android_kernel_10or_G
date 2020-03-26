@@ -281,6 +281,7 @@ static int enable_spk_ext_pa(struct snd_soc_codec *codec, int enable)
 {
 	struct snd_soc_card *card = codec->component.card;
 	struct msm8916_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
+	int ret;
 #ifdef CONFIG_MACH_XIAOMI_MIDO
 	int pa_mode = EXT_PA_MODE;
 #endif
@@ -316,12 +317,12 @@ static int enable_spk_ext_pa(struct snd_soc_codec *codec, int enable)
 		gpio_set_value_cansleep(pdata->spk_ext_pa_gpio, enable);
 #ifndef CONFIG_MACH_XIAOMI_MIDO
 		ret = msm_gpioset_suspend(CLIENT_WCD_INT, "ext_spk_gpio");
+#endif
 		if (ret) {
 			pr_err("%s: gpio set cannot be de-activated %s\n",
 					__func__, "ext_spk_gpio");
 			return ret;
 		}
-#endif
 	}
 	return 0;
 }
