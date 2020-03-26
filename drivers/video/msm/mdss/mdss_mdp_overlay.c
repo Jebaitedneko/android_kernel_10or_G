@@ -5414,8 +5414,7 @@ static int __handle_overlay_prepare(struct msm_fb_data_type *mfd,
 	struct mdss_data_type *mdata = mfd_to_mdata(mfd);
 	struct mdss_overlay_private *mdp5_data = mfd_to_mdp5_data(mfd);
 
-	static struct mdp_overlay sorted_ovs[OVERLAY_MAX]
-		____cacheline_aligned_in_smp;
+	struct mdp_overlay *sorted_ovs = NULL;
 	struct mdp_overlay *req, *prev_req;
 
 	struct mdss_mdp_pipe *pipe, *left_blend_pipe;
@@ -5434,11 +5433,18 @@ static int __handle_overlay_prepare(struct msm_fb_data_type *mfd,
 	}
 
 	if (sort_needed) {
-		memset(sorted_ovs, 0, num_ovs * sizeof(*ip_ovs));
+		sorted_ovs = kzalloc(num_ovs * sizeof(*ip_ovs), GFP_KERNEL);
+		if (!sorted_ovs) {
+			pr_err("error allocating ovlist mem\n");
+			mutex_unlock(&mdp5_data->ov_lock);
+			return -ENOMEM;
+		}
 		memcpy(sorted_ovs, ip_ovs, num_ovs * sizeof(*ip_ovs));
 		ret = __mdss_overlay_src_split_sort(mfd, sorted_ovs, num_ovs);
 		if (ret) {
 			pr_err("src_split_sort failed. ret=%d\n", ret);
+			mutex_unlock(&mdp5_data->ov_lock);
+			kfree(sorted_ovs);
 			return ret;
 		}
 	}
@@ -5536,6 +5542,8 @@ validate_exit:
 		mdss_mdp_overlay_release(mfd, new_reqs);
 	}
 	mutex_unlock(&mdp5_data->ov_lock);
+
+	kfree(sorted_ovs);
 
 	return ret;
 }
