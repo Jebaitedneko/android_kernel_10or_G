@@ -23,8 +23,6 @@
 #include <linux/slab.h>
 #include <linux/swap.h>
 #include <linux/vmalloc.h>
-#include <linux/vmstat.h>
-#include <linux/mmzone.h>
 #include "ion_priv.h"
 
 static void *ion_page_pool_alloc_pages(struct ion_page_pool *pool)
@@ -58,10 +56,7 @@ static void ion_page_pool_free_pages(struct ion_page_pool *pool,
 static int ion_page_pool_add(struct ion_page_pool *pool, struct page *page,
 				bool prefetch)
 {
-	int page_count = 1 << pool->order;
-
 	mutex_lock(&pool->mutex);
-
 	if (PageHighMem(page)) {
 		list_add_tail(&page->lru, &pool->high_items);
 		pool->high_count++;
@@ -72,9 +67,6 @@ static int ion_page_pool_add(struct ion_page_pool *pool, struct page *page,
 	if (!prefetch)
 		pool->nr_unreserved++;
 
-	mod_zone_page_state(page_zone(page), NR_FILE_PAGES, page_count);
-	mod_zone_page_state(page_zone(page), NR_INACTIVE_FILE, page_count);
-
 	mutex_unlock(&pool->mutex);
 	return 0;
 }
@@ -83,7 +75,6 @@ static struct page *ion_page_pool_remove(struct ion_page_pool *pool, bool high,
 					bool prefetch)
 {
 	struct page *page;
-	int page_count = 1 << pool->order;
 
 	if (high) {
 		BUG_ON(!pool->high_count);
@@ -103,10 +94,6 @@ static struct page *ion_page_pool_remove(struct ion_page_pool *pool, bool high,
 						pool->nr_unreserved);
 
 	list_del(&page->lru);
-
-	mod_zone_page_state(page_zone(page), NR_INACTIVE_FILE, -page_count);
-	mod_zone_page_state(page_zone(page), NR_FILE_PAGES, -page_count);
-
 	return page;
 }
 
