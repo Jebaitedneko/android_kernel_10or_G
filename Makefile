@@ -633,17 +633,6 @@ endif
 
 include $(srctree)/arch/$(SRCARCH)/Makefile
 
-ifdef CONFIG_LLVM_POLLY
-KBUILD_CFLAGS	+= -mllvm -polly \
-		   -mllvm -polly-run-dce \
-		   -mllvm -polly-run-inliner \
-		   -mllvm -polly-opt-fusion=max \
-		   -mllvm -polly-ast-use-context \
-		   -mllvm -polly-detect-keep-going \
-		   -mllvm -polly-vectorizer=stripmine \
-		   -mllvm -polly-invariant-load-hoisting
-endif
-
 KBUILD_CFLAGS	+= $(call cc-option,-fno-delete-null-pointer-checks,)
 KBUILD_CFLAGS	+= $(call cc-disable-warning,maybe-uninitialized,)
 KBUILD_CFLAGS	+= $(call cc-disable-warning,frame-address,)
@@ -660,6 +649,16 @@ KBUILD_CFLAGS	+= $(call cc-option,-Oz,-Os)
 else
 ifeq ($(cc-name),clang)
 KBUILD_CFLAGS	+= -O3 $(call cc-option,-fsanitize=local-init) -march=armv8-a -mtune=cortex-a53 -mcpu=cortex-a53
+ifdef CONFIG_LLVM_POLLY
+KBUILD_CFLAGS	+= $(call cc-option, -mllvm -polly) \
+		   $(call cc-option, -mllvm -polly-run-dce) \
+		   $(call cc-option, -mllvm -polly-run-inliner) \
+		   $(call cc-option, -mllvm -polly-opt-fusion=max) \
+		   $(call cc-option, -mllvm -polly-ast-use-context) \
+		   $(call cc-option, -mllvm -polly-detect-keep-going) \
+		   $(call cc-option, -mllvm -polly-vectorizer=stripmine) \
+		   $(call cc-option, -mllvm -polly-invariant-load-hoisting)
+endif
 else
 KBUILD_CFLAGS	+= -O3
 endif
