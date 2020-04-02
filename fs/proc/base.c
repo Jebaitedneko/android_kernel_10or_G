@@ -1042,6 +1042,9 @@ out:
 		    !strcmp(task_comm, "eaurora.snapcam") ||
 		    !strcmp(task_comm, "android.gallery") ||
 		    !strcmp(task_comm, "mnirom.omnijaws") ||
+		    !strcmp(task_comm, ".lineageos.snap") ||
+                    !strcmp(task_comm, "d.apps.photosgo") ||
+		    !strcmp(task_comm, "android.camera2") ||
 		    !strcmp(task_comm, ".oneplus.camera")) {
 			struct task_kill_info *kinfo;
 
