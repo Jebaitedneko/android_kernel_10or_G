@@ -143,7 +143,7 @@ static int cpe_debug_mode;
 #define DAPM_MICBIAS3_STANDALONE "MIC BIAS3 Standalone"
 #define DAPM_MICBIAS4_STANDALONE "MIC BIAS4 Standalone"
 
-int g_DebugMode = 0;
+int g_DebugMode = 1;
 struct switch_dev *g_audiowizard_force_preset_sdev = NULL;
 #define DAPM_LDO_H_STANDALONE "LDO_H"
 module_param(cpe_debug_mode, int,
@@ -14123,6 +14123,9 @@ static int tasha_codec_probe(struct snd_soc_codec *codec)
 	snd_soc_dapm_disable_pin(dapm, "ANC EAR");
 	mutex_unlock(&codec->mutex);
 	snd_soc_dapm_sync(dapm);
+
+	if (pdata->wcd9xxx_mic_tristate)
+		tasha_set_high_impedance_mode(codec);
 
 	/* ASUS_BSP Paul +++ */
         if (!g_audiowizard_force_preset_sdev) {
