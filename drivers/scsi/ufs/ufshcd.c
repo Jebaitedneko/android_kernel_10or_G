@@ -7193,6 +7193,7 @@ out:
 	return err;
 }
 
+<<<<<<< HEAD
 /**
  * ufshcd_ioctl - ufs ioctl callback registered in scsi_host
  * @dev: scsi device required for per LUN queries
