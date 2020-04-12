@@ -1,0 +1,216 @@
+/*
+ * platform indepent driver interface
+ *
+ * Coypritht (c) 2017 Goodix
+ */
+#include <linux/delay.h>
+#include <linux/workqueue.h>
+#include <linux/of_gpio.h>
+#include <linux/gpio.h>
+#include <linux/regulator/consumer.h>
+#include <linux/timer.h>
+#include <linux/err.h>
+
+#include "gf_spi.h"
+
+#if defined(USE_SPI_BUS)
+#include <linux/spi/spi.h>
+#include <linux/spi/spidev.h>
+#elif defined(USE_PLATFORM_BUS)
+#include <linux/platform_device.h>
+#endif
+
+int gf_parse_dts(struct gf_dev* gf_dev)
+{
+	int rc = 0;
+	//int id_val = -1;
+	rc = gf_power_init(gf_dev, true);
+
+	if (rc) {
+			printk("power init failed  rc = %d\n",rc);
+			return rc;
+	}
+	rc = gf_power_on(gf_dev);
+	if ( rc ) {
+
+		printk("gf_parse_dts gf_power_on is fail   rc = %d\n",rc);
+		return -1;
+	}
+	/*rc = gf_power_on(gf_dev);
+	if ( rc ) {
+		return -1;
+	}
+	//id resource 
+	gf_dev->id_gpio = of_get_named_gpio(gf_dev->spi->dev.of_node,"goodix,gpio_id",0);
+	if (!gpio_is_valid(gf_dev->id_gpio)) {
+		pr_info("ID GPIO is invalid.\n");
+		return -1;
+	}
+	rc = gpio_request(gf_dev->id_gpio,"gf_gpio_id");
+		if (rc) {
+	      dev_err(&gf_dev->spi->dev, "Failed to request ID GPIO. rc = %d\n", rc);
+		return -1;
+	}
+       id_val = gpio_get_value(gf_dev->id_gpio);
+	printk( "goodix id_val = %d,id_gpio = %d \n",id_val,gf_dev->id_gpio);
+	if ( 0 == id_val)
+	{
+		printk( "is not goodixingerprint IC \n");
+		return -1;
+	}
+	*/
+	/*get reset resource*/
+	gf_dev->reset_gpio = of_get_named_gpio(gf_dev->spi->dev.of_node,"goodix,gpio_reset",0);
+	pr_info("goodix::rest_gpio:%d\n", gf_dev->reset_gpio);
+	if(!gpio_is_valid(gf_dev->reset_gpio)) {
+		pr_info("RESET GPIO is invalid.\n");
+		return -1;
+	}
+
+	rc = gpio_request(gf_dev->reset_gpio, "goodix_reset");
+	if(rc) {
+		dev_err(&gf_dev->spi->dev, "Failed to request RESET GPIO. rc = %d\n", rc);
+		return -1;
+	}
+
+	gpio_direction_output(gf_dev->reset_gpio, 1);
+
+	/*get irq resourece*/
+	gf_dev->irq_gpio = of_get_named_gpio(gf_dev->spi->dev.of_node,"goodix,gpio_irq",0);
+	pr_info("goodix::irq_gpio:%d\n", gf_dev->irq_gpio);
+	if(!gpio_is_valid(gf_dev->irq_gpio)) {
+		pr_info("IRQ GPIO is invalid.\n");
+		return -1;
+	}
+
+	rc = gpio_request(gf_dev->irq_gpio, "goodix_irq");
+	if(rc) {
+		dev_err(&gf_dev->spi->dev, "Failed to request IRQ GPIO. rc = %d\n", rc);
+		return -1;
+	}
+	gpio_direction_input(gf_dev->irq_gpio);
+
+	return 0;
+}
+
+void gf_cleanup(struct gf_dev	* gf_dev)
+{
+	pr_info("[info] %s\n",__func__);
+	if (gpio_is_valid(gf_dev->irq_gpio))
+	{
+		gpio_free(gf_dev->irq_gpio);
+		pr_info("remove irq_gpio success\n");
+	}
+	/*if (gpio_is_valid(gf_dev->id_gpio))
+	{
+		gpio_free(gf_dev->id_gpio);
+		pr_info("remove id_gpio success\n");
+	}*/
+	if (gpio_is_valid(gf_dev->reset_gpio))
+	{
+		gpio_free(gf_dev->reset_gpio);
+		pr_info("remove reset_gpio success\n");
+	}
+	/*if (gpio_is_valid(gf_dev->pwr_gpio))
+	{
+		gpio_free(gf_dev->pwr_gpio);
+		pr_info("remove pwr_gpio success\n");
+	}*/
+}
+
+int gf_power_on(struct gf_dev* gf_dev)
+{
+	int rc = 0; 
+	/*gf_dev->pwr_gpio = of_get_named_gpio_flags(gf_dev->spi->dev.of_node, "goodix,gpio_pwr", 0,NULL);
+	rc = gpio_direction_output(gf_dev->pwr_gpio,1);
+	printk("goodix_fp_probe gpio_pwr= %d,ret = %d\n", gf_dev->pwr_gpio,rc);
+	if ( rc ){
+		pr_info("---- power on fail----\n");
+		return -1;
+	}*/
+	//rc = of_property_read_string(gf_dev->spi->dev.of_node, "fg_power", &gf_dev->pwr_gpio);
+	//if(rc){
+		//printk("fail to get 1590 ldo10 pwr_gpio rc = %d\n",rc);
+		//return rc;
+	//}
+		rc = regulator_enable(gf_dev->vdd);
+		if ( rc ){
+			printk("regulator_enable is fail  rc = %d\n",rc);
+			return rc;
+		}
+	//}
+	msleep(10);
+	pr_info("---- power on ok ----\n");
+
+	return rc;
+}
+int gf_power_init(struct gf_dev* gf_dev, bool on)
+{
+	int rc;
+
+	if (!on)
+		goto pwr_deinit;
+	printk("hzh:gf_power_init eeeeeeeeeeeeeeeeeeeeeeeeeee111\n");
+	gf_dev->vdd = regulator_get(&gf_dev->spi->dev, "vdd");
+	if (IS_ERR(gf_dev->vdd)) {
+		rc = PTR_ERR(gf_dev->vdd);
+		dev_err(&gf_dev->spi->dev,
+			"Regulator get failed vdd-supply rc=%d\n", rc);
+		return rc;
+	}
+
+	if (regulator_count_voltages(gf_dev->vdd) > 0) {
+		rc = regulator_set_voltage(gf_dev->vdd, 2600000,
+					   3300000);
+		if (rc) {
+			dev_err(&gf_dev->spi->dev,
+				"Regulator set_vtg failed vdd rc=%d\n", rc);
+			goto reg_vdd_put;
+		}
+	}
+
+	return 0;
+//[BUGFIX]-Add-Begin by TCTSH xingchen.wang, task 1052817 ,2015/12/16
+//[BUGFIX]-Add-End by TCTSH xingchen.wang. 2015/12/16
+reg_vdd_put:
+	regulator_put(gf_dev->vdd);
+	return rc;
+
+pwr_deinit:
+	if (regulator_count_voltages(gf_dev->vdd) > 0)
+		regulator_set_voltage(gf_dev->vdd, 0, 3300000);
+
+	regulator_put(gf_dev->vdd);
+	return 0;
+}
+int gf_power_off(struct gf_dev* gf_dev)
+{	
+	int rc = 0;
+	pr_info("---- power off ----\n");
+	return rc;
+}
+
+int gf_hw_reset(struct gf_dev *gf_dev, unsigned int delay_ms)
+{
+	if(gf_dev == NULL) {
+		pr_info("Input buff is NULL.\n");
+		return -1;
+	}
+	gpio_direction_output(gf_dev->reset_gpio, 1);
+	gpio_set_value(gf_dev->reset_gpio, 0);
+	mdelay(3);
+	gpio_set_value(gf_dev->reset_gpio, 1);
+	mdelay(delay_ms);
+	return 0;
+}
+
+int gf_irq_num(struct gf_dev *gf_dev)
+{
+	if(gf_dev == NULL) {
+		pr_info("Input buff is NULL.\n");
+		return -1;
+	} else {
+		return gpio_to_irq(gf_dev->irq_gpio);
+	}
+}
+

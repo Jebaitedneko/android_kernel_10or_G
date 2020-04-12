@@ -1,0 +1,49 @@
+
+qcom,2623087_asus_hades_4850mah_averaged_masterslave_oct5th2016 {
+	/* #2623087_Asus_Hades_4850mAh_averaged_MasterSlave_Oct5th2016*/
+	qcom,max-voltage-uv = <4400000>;
+	qcom,nom-batt-capacity-mah = <4850>;
+	qcom,batt-id-kohm = <51>;
+	qcom,battery-beta = <3435>;
+	qcom,battery-type = "2623087_asus_hades_4850mah_averaged_masterslave_oct5th2016";
+	qcom,chg-rslow-comp-c1 = <5523370>;
+	qcom,chg-rslow-comp-c2 = <15143730>;
+	qcom,chg-rs-to-rslow = <796388>;
+	qcom,chg-rslow-comp-thr = <0xD0>;
+	qcom,checksum = <0xA4A6>;
+	qcom,gui-version = "PMI8950GUI - 2.0.0.16";
+	qcom,fg-profile-data = [
+		 08 88 6D 7E 
+		 17 82 7F 7C 
+		 5D 83 A0 65 
+		 C9 81 42 8C 
+		 22 82 9B 99 
+		 49 BC 6D C8 
+		 62 0F 08 88 
+		 F0 7D AD 81 
+		 1C 7C 5B 83 
+		 C0 5B F5 80 
+		 F2 8C 66 82 
+		 6C 98 84 B6 
+		 73 C2 58 11 
+		 9B 12 8E 5A 
+		 91 6F DB F9 
+		 4D 36 45 46 
+		 43 40 00 00 
+		 48 47 9C 38 
+		 27 38 00 00 
+		 00 00 00 00 
+		 00 00 00 00 
+		 B2 69 48 6A 
+		 21 71 69 8B 
+		 0A 7C AC 71 
+		 5D 6D 48 7B 
+		 FE 75 E2 6B 
+		 AE 75 63 A1 
+		 2A 5F 5A 16 
+		 5C A0 71 0C 
+		 28 00 FF 36 
+		 F0 11 30 03 
+		 00 00 00 0C 
+	];
+};
