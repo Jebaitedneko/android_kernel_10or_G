@@ -1,4 +1,4 @@
 #ignore build files
-google_toolchains
 *.sh
 out_*
+out
