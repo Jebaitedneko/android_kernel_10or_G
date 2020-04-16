@@ -778,6 +778,12 @@ KBUILD_CFLAGS += $(call cc-disable-warning, stringop-truncation)
 # disable invalid "can't wrap" optimizations for signed / pointers
 KBUILD_CFLAGS	+= $(call cc-option,-fno-strict-overflow)
 
+# disable duplicate-decl-specifier
+KBUILD_CFLAGS	+= $(call cc-disable-warning,duplicate-decl-specifier)
+
+# disable misleading-indentation
+KBUILD_CFLAGS	+= $(call cc-disable-warning,misleading-indentation)
+
 # Make sure -fstack-check isn't enabled (like gentoo apparently did)
 KBUILD_CFLAGS  += $(call cc-option,-fno-stack-check,)
 
