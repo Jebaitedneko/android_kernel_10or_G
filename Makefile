@@ -790,6 +790,12 @@ KBUILD_CFLAGS	+= $(call cc-disable-warning,memset-elt-size)
 # disable bool-operation
 KBUILD_CFLAGS	+= $(call cc-disable-warning,bool-operation)
 
+# disable parentheses
+KBUILD_CFLAGS	+= $(call cc-disable-warning,parentheses)
+
+# disable bool-compare
+KBUILD_CFLAGS	+= $(call cc-disable-warning,bool-compare)
+
 # Make sure -fstack-check isn't enabled (like gentoo apparently did)
 KBUILD_CFLAGS  += $(call cc-option,-fno-stack-check,)
 
