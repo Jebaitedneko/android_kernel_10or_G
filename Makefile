@@ -787,6 +787,9 @@ KBUILD_CFLAGS	+= $(call cc-disable-warning,misleading-indentation)
 # disable memset-elt-size
 KBUILD_CFLAGS	+= $(call cc-disable-warning,memset-elt-size)
 
+# disable bool-operation
+KBUILD_CFLAGS	+= $(call cc-disable-warning,bool-operation)
+
 # Make sure -fstack-check isn't enabled (like gentoo apparently did)
 KBUILD_CFLAGS  += $(call cc-option,-fno-stack-check,)
 
