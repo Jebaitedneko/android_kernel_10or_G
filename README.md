@@ -3,6 +3,10 @@ Kernel sources for 10or G
 
 generated defconfig = 10or_G_defconfig
 
+LINEAGE PRE ALPHA BUILD RELEASED
+lineage-15.1 with kernel 3.18.140 (20200419)
+https://mega.nz/folder/Uws2DCqA#yc91Vrk5IzoVnQ5Sl7caMg
+
 #nougat 3.18.31
 >source: https://android-library.s3.ap-south-1.amazonaws.com/10or/10orG_Nougat_Opensource_Release_20171120.zip
 >
