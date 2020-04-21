@@ -5,8 +5,7 @@
  *
  * Copyright (C) 2012 Alexandra Chin <alexandra.chin@tw.synaptics.com>
  * Copyright (C) 2012 Scott Lin <scott.lin@tw.synaptics.com>
- * Copyright (C) 2016, 2018 The Linux Foundation.  All rights reserved.
- *
+ * Copyright (C) 2016, The Linux Foundation.  All rights reserved.
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -81,12 +80,6 @@ static int parse_dt(struct device *dev, struct synaptics_dsx_board_data *bdata)
 
 	bdata->resume_in_workqueue = of_property_read_bool(np,
 			"synaptics,resume-in-workqueue");
-
-	bdata->wakeup_gesture_en = of_property_read_bool(np,
-			"synaptics,wakeup-gestures-en");
-
-	bdata->dont_disable_regs = of_property_read_bool(np,
-			"synaptics,do-not-disable-regulators");
 
 	retval = of_property_read_string(np, "synaptics,pwr-reg-name", &name);
 	if (retval < 0)
@@ -188,10 +181,6 @@ static int parse_dt(struct device *dev, struct synaptics_dsx_board_data *bdata)
 		bdata->max_y_for_2d = -1;
 	}
 
-	retval = of_property_read_u32(np, "synaptics,bus-lpm-cur-uA",
-			&value);
-	bdata->bus_lpm_cur_uA = retval < 0 ? 0 : value;
-
 	prop = of_find_property(np, "synaptics,swap-axes", NULL);
 	bdata->swap_axes = prop > 0 ? true : false;
 
@@ -215,12 +204,6 @@ static int parse_dt(struct device *dev, struct synaptics_dsx_board_data *bdata)
 	} else {
 		bdata->ub_i2c_addr = -1;
 	}
-
-	retval = of_property_read_string(np, "synaptics,fw-name", &name);
-	if (retval < 0)
-		bdata->fw_name = NULL;
-	else
-		bdata->fw_name = name;
 
 	prop = of_find_property(np, "synaptics,cap-button-codes", NULL);
 	if (prop && prop->length) {
@@ -462,11 +445,11 @@ static int synaptics_rmi4_i2c_write(struct synaptics_rmi4_data *rmi4_data,
 	struct i2c_client *i2c = to_i2c_client(rmi4_data->pdev->dev.parent);
 	struct i2c_msg msg[1];
 
-	mutex_lock(&rmi4_data->rmi4_io_ctrl_mutex);
-
 	retval = synaptics_rmi4_i2c_alloc_buf(rmi4_data, length + 1);
 	if (retval < 0)
-		goto exit;
+		return retval;
+
+	mutex_lock(&rmi4_data->rmi4_io_ctrl_mutex);
 
 	retval = synaptics_rmi4_i2c_set_page(rmi4_data, addr);
 	if (retval != PAGE_SELECT_LEN) {
