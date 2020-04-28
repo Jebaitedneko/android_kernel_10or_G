@@ -209,9 +209,6 @@ static int ext4_init_block_bitmap(struct super_block *sb,
 	memset(bh->b_data, 0, sb->s_blocksize);
 
 	bit_max = ext4_num_base_meta_clusters(sb, block_group);
-	if ((bit_max >> 3) >= bh->b_size)
-		return -EIO;
-
 	for (bit = 0; bit < bit_max; bit++)
 		ext4_set_bit(bit, bh->b_data);
 
@@ -243,6 +240,8 @@ static int ext4_init_block_bitmap(struct super_block *sb,
 	 */
 	ext4_mark_bitmap_end(num_clusters_in_group(sb, block_group),
 			     sb->s_blocksize * 8, bh->b_data);
+	ext4_block_bitmap_csum_set(sb, block_group, gdp, bh);
+	ext4_group_desc_csum_set(sb, block_group, gdp);
 	return 0;
 }
 
@@ -444,7 +443,6 @@ ext4_read_block_bitmap_nowait(struct super_block *sb, ext4_group_t block_group)
 		err = ext4_init_block_bitmap(sb, bh, block_group, desc);
 		set_bitmap_uptodate(bh);
 		set_buffer_uptodate(bh);
-		set_buffer_verified(bh);
 		ext4_unlock_group(sb, block_group);
 		unlock_buffer(bh);
 		if (err)
