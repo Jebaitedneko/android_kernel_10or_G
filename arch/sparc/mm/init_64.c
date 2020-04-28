@@ -1377,7 +1377,7 @@ bool kern_addr_valid(unsigned long addr)
 	if ((long)addr < 0L) {
 		unsigned long pa = __pa(addr);
 
-		if ((pa >> max_phys_bits) != 0UL)
+		if ((addr >> max_phys_bits) != 0UL)
 			return false;
 
 		return pfn_valid(pa >> PAGE_SHIFT);
@@ -2730,10 +2730,9 @@ void hugetlb_setup(struct pt_regs *regs)
 	 * the Data-TLB for huge pages.
 	 */
 	if (tlb_type == cheetah_plus) {
-		bool need_context_reload = false;
 		unsigned long ctx;
 
-		spin_lock_irq(&ctx_alloc_lock);
+		spin_lock(&ctx_alloc_lock);
 		ctx = mm->context.sparc64_ctx_val;
 		ctx &= ~CTX_PGSZ_MASK;
 		ctx |= CTX_PGSZ_BASE << CTX_PGSZ0_SHIFT;
@@ -2752,12 +2751,9 @@ void hugetlb_setup(struct pt_regs *regs)
 			 * also executing in this address space.
 			 */
 			mm->context.sparc64_ctx_val = ctx;
-			need_context_reload = true;
-		}
-		spin_unlock_irq(&ctx_alloc_lock);
-
-		if (need_context_reload)
 			on_each_cpu(context_reload, mm, 0);
+		}
+		spin_unlock(&ctx_alloc_lock);
 	}
 }
 #endif

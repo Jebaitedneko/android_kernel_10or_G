@@ -97,9 +97,6 @@ int __cpu_up(unsigned int cpu, struct task_struct *idle)
 	 * We need to tell the secondary core where to find its stack and the
 	 * page tables.
 	 */
-#ifdef CONFIG_THREAD_INFO_IN_TASK
-	secondary_data.task = idle;
-#endif
 	secondary_data.stack = task_stack_page(idle) + THREAD_START_SP;
 	__flush_dcache_area(&secondary_data, sizeof(secondary_data));
 
@@ -123,9 +120,6 @@ int __cpu_up(unsigned int cpu, struct task_struct *idle)
 		pr_err("CPU%u: failed to boot: %d\n", cpu, ret);
 	}
 
-#ifdef CONFIG_THREAD_INFO_IN_TASK
-	secondary_data.task = NULL;
-#endif
 	secondary_data.stack = NULL;
 
 	return ret;
@@ -151,6 +145,7 @@ asmlinkage void secondary_start_kernel(void)
 	 */
 	atomic_inc(&mm->mm_count);
 	current->active_mm = mm;
+	cpumask_set_cpu(cpu, mm_cpumask(mm));
 
 	set_my_cpu_offset(per_cpu_offset(smp_processor_id()));
 	pr_debug("CPU%u: Booted secondary processor\n", cpu);
@@ -160,18 +155,10 @@ asmlinkage void secondary_start_kernel(void)
 	 * point to zero page to avoid speculatively fetching new entries.
 	 */
 	cpu_set_reserved_ttbr0();
-	local_flush_tlb_all();
-	cpu_set_default_tcr_t0sz();
+	flush_tlb_all();
 
 	preempt_disable();
 	trace_hardirqs_off();
-
-	/*
-	 * If the system has established the capabilities, make sure
-	 * this CPU ticks all of those. If it doesn't, the CPU will
-	 * fail to come online.
-	 */
-	verify_local_cpu_capabilities();
 
 	if (cpu_ops[cpu]->cpu_postboot)
 		cpu_ops[cpu]->cpu_postboot();
@@ -193,11 +180,10 @@ asmlinkage void secondary_start_kernel(void)
 	 * the CPU migration code to notice that the CPU is online
 	 * before we continue.
 	 */
-	pr_info("CPU%u: Booted secondary processor [%08x]\n",
-					 cpu, read_cpuid_id());
 	set_cpu_online(cpu, true);
 	complete(&cpu_running);
 
+	local_dbg_enable();
 	local_irq_enable();
 	local_async_enable();
 
@@ -249,6 +235,12 @@ int __cpu_disable(void)
 	 * OK - migrate IRQs away from this CPU
 	 */
 	migrate_irqs();
+
+	/*
+	 * Remove this CPU from the vm mask set of all processes.
+	 */
+	clear_tasks_mm_cpumask(cpu);
+
 	return 0;
 }
 
@@ -331,13 +323,11 @@ void __ref cpu_die(void)
 void __init smp_cpus_done(unsigned int max_cpus)
 {
 	pr_info("SMP: Total of %d processors activated.\n", num_online_cpus());
-	setup_cpu_features();
-	apply_alternatives_all();
+	apply_alternatives();
 }
 
 void __init smp_prepare_boot_cpu(void)
 {
-	cpuinfo_store_boot_cpu();
 	set_my_cpu_offset(per_cpu_offset(smp_processor_id()));
 }
 
