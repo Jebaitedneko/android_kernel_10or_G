@@ -203,6 +203,16 @@ config OV12830
 		snapshot config = 4224 * 3000 at 15 fps.
 		2 lanes max fps is 18, 4 lanes max fps is 24.
 
+config GC5025
+	bool "Sensor GC5025 (BAYER 5M)"
+	depends on MSMB_CAMERA
+	default y
+	---help---
+		Galaxycore 5 MP Bayer Sensor,
+		preview set to 2592*1944 at 30 fps,
+		snapshot set to 2592*1944 at 30 fps,
+		This sensor driver does not support auto focus.
+
 config MSM_V4L2_VIDEO_OVERLAY_DEVICE
 	tristate "Qualcomm MSM V4l2 video overlay device"
 	---help---
@@ -241,3 +251,21 @@ config MSM_JPEGDMA
         select V4L2_MEM2MEM_DEV
 	---help---
 	  Enable support for Jpeg dma engine.
+
+config HQ_PLATFORM_CAMERA_SUBFLASH
+	bool "Huaqin configurate sub flash for front camera"
+	
+	---help---
+	  Say Y if supported
+
+config HQ_PLATFORM_CAMERA_FRONTFLASH
+	bool "Huaqin configurate front flash for front camera"
+	
+	---help---
+	  Say Y if supported
+
+config HQ_HI553_OTP
+	bool "Huaqin configurate hi553 otp"
+
+	---help---
+	  Say Y if supported

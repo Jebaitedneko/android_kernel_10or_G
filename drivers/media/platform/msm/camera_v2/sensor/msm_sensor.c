@@ -18,6 +18,17 @@
 #include <linux/regulator/rpm-smd-regulator.h>
 #include <linux/regulator/consumer.h>
 
+#ifdef CONFIG_HQ_ZQL1590_SUPPORT
+#include <linux/of_gpio.h> //Mesin added for diff main camera 5/10
+#endif
+//// add for gc5005 OTP
+#define gc5025_USE_OTP
+
+#ifdef gc5025_USE_OTP
+void gc5025_gcore_identify_otp(struct msm_sensor_ctrl_t *s_ctrl);
+#endif
+////end OTP
+
 #undef CDBG
 #define CDBG(fmt, args...) pr_debug(fmt, ##args)
 
@@ -157,8 +168,8 @@ int msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 	power_info = &s_ctrl->sensordata->power_info;
 	sensor_i2c_client = s_ctrl->sensor_i2c_client;
 	slave_info = s_ctrl->sensordata->slave_info;
-	sensor_name = s_ctrl->sensordata->sensor_name;
-
+	sensor_name = s_ctrl->sensordata->sensor_name; 
+	pr_err("%s: Mesin_sensor_id id: 0x%x \n",__func__, slave_info->sensor_id);
 	if (!power_info || !sensor_i2c_client || !slave_info ||
 		!sensor_name) {
 		pr_err("%s:%d failed: %pK %pK %pK %pK\n",
@@ -179,7 +190,7 @@ int msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 		if (rc < 0) {
 			msm_camera_power_down(power_info,
 				s_ctrl->sensor_device_type, sensor_i2c_client);
-			msleep(20);
+			msleep(5);
 			continue;
 		} else {
 			break;
@@ -205,9 +216,14 @@ static uint16_t msm_sensor_id_by_mask(struct msm_sensor_ctrl_t *s_ctrl,
 		sensor_id_mask >>= 1;
 		sensor_id >>= 1;
 	}
+	pr_err("Mesin_msm_sensor_id_by_mask=%d\n",sensor_id);
 	return sensor_id;
 }
 
+#ifdef CONFIG_HQ_ZQL1590_SUPPORT
+static unsigned Main_rgb_camera_gpio_id_pin = (62);
+static unsigned Main_mono_camera_gpio_id_pin = (63);
+#endif
 int msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 {
 	int rc = 0;
@@ -215,7 +231,29 @@ int msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 	struct msm_camera_i2c_client *sensor_i2c_client;
 	struct msm_camera_slave_info *slave_info;
 	const char *sensor_name;
-
+#ifdef CONFIG_HQ_ZQL1590_SUPPORT   
+    int ret;
+    //Mesin add
+		ret = gpio_request(Main_rgb_camera_gpio_id_pin,"Main_rgb_camera_gpio_id_pin");
+		if (ret < 0) {
+			pr_err("Unable to Main_rgb_camera_gpio_id_pin\n");
+			gpio_free(Main_rgb_camera_gpio_id_pin);
+		}
+		else{
+			ret = gpio_direction_input(Main_rgb_camera_gpio_id_pin);
+			pr_err("[Mesin]-%s: ret = %d\n", __func__, ret);
+		}	
+ //Mesin add
+		ret = gpio_request(Main_mono_camera_gpio_id_pin,"Main_mono_camera_gpio_id_pin");
+			if (ret < 0) {
+				pr_err("Unable to Main_mono_camera_gpio_id_pin\n");
+				gpio_free(Main_mono_camera_gpio_id_pin);
+			}
+			else{
+				ret = gpio_direction_input(Main_mono_camera_gpio_id_pin);
+				pr_err("[Mesin]-%s: ret = %d\n", __func__, ret);
+			}	
+#endif
 	if (!s_ctrl) {
 		pr_err("%s:%d failed: %pK\n",
 			__func__, __LINE__, s_ctrl);
@@ -239,9 +277,31 @@ int msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 		pr_err("%s: %s: read id failed\n", __func__, sensor_name);
 		return rc;
 	}
+//Mesin added for diff main camera 5/10
+#ifdef CONFIG_HQ_ZQL1590_SUPPORT
+   pr_err("Main_rgb_camera_gpio_id_pin=%d,Main_mono_camera_gpio_id_pin%d",gpio_get_value(Main_rgb_camera_gpio_id_pin),gpio_get_value(Main_mono_camera_gpio_id_pin));
+   pr_err("Mesin_chipid=0x%x,%s\n",chipid,sensor_name);
+   if ((0==gpio_get_value(Main_rgb_camera_gpio_id_pin))&&(0==gpio_get_value(Main_mono_camera_gpio_id_pin)))
+   	{
+   	   if(0xd855 == chipid){
+         chipid=chipid+1;
+   	   	}
+    }
+#endif
+//Mesin added for diff main camera 5/10
 
-	pr_debug("%s: read id: 0x%x expected id 0x%x:\n",
+//// add for gc5005 OTP
+#ifdef gc5025_USE_OTP
+	if(!strcmp(sensor_name,"gc5025_hq")){
+		pr_err("5025k enter gc5025otp");
+		gc5025_gcore_identify_otp(s_ctrl);
+		}
+#endif
+////end OTP
+
+	pr_err("%s: Mesin_read id: 0x%x expected id 0x%x:\n",
 			__func__, chipid, slave_info->sensor_id);
+         
 	if (msm_sensor_id_by_mask(s_ctrl, chipid) != slave_info->sensor_id) {
 		pr_err("%s chip id %x does not match %x\n",
 				__func__, chipid, slave_info->sensor_id);

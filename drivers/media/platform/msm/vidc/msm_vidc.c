@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1307,6 +1307,8 @@ static void cleanup_instance(struct msm_vidc_inst *inst)
 		if (inst->extradata_handle)
 			msm_comm_smem_free(inst, inst->extradata_handle);
 
+		debugfs_remove_recursive(inst->debugfs_root);
+
 		mutex_lock(&inst->pending_getpropq.lock);
 		if (!list_empty(&inst->pending_getpropq.list)) {
 			dprintk(VIDC_ERR,
@@ -1340,7 +1342,6 @@ int msm_vidc_destroy(struct msm_vidc_inst *inst)
 	for (i = 0; i < MAX_PORT_NUM; i++)
 		vb2_queue_release(&inst->bufq[i].vb2_bufq);
 
-	msm_vidc_debugfs_deinit_inst(inst);
 	pr_info(VIDC_DBG_TAG "Closed video instance: %pK\n",
 			VIDC_MSG_PRIO2STRING(VIDC_INFO), inst);
 	kfree(inst);

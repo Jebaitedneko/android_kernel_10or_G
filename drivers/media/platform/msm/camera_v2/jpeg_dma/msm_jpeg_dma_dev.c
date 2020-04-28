@@ -1,4 +1,4 @@
-/* Copyright (c) 2015-2017, 2019 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -812,12 +812,9 @@ static int msm_jpegdma_s_fmt_vid_out(struct file *file,
 static int msm_jpegdma_reqbufs(struct file *file,
 	void *fh, struct v4l2_requestbuffers *req)
 {
-	int ret = 0;
 	struct jpegdma_ctx *ctx = msm_jpegdma_ctx_from_fh(fh);
-	mutex_lock(&ctx->lock);
-	ret = v4l2_m2m_reqbufs(file, ctx->m2m_ctx, req);
-	mutex_unlock(&ctx->lock);
-	return ret;
+
+	return v4l2_m2m_reqbufs(file, ctx->m2m_ctx, req);
 }
 
 /*
@@ -874,6 +871,7 @@ static int msm_jpegdma_qbuf(struct file *file, void *fh,
 	if (ret < 0)
 		dev_err(ctx->jdma_device->dev, "QBuf fail\n");
 	mutex_unlock(&ctx->lock);
+
 	return ret;
 }
 
@@ -887,12 +885,8 @@ static int msm_jpegdma_dqbuf(struct file *file,
 	void *fh, struct v4l2_buffer *buf)
 {
 	struct jpegdma_ctx *ctx = msm_jpegdma_ctx_from_fh(fh);
-	int ret;
 
-	mutex_lock(&ctx->lock);
-	ret = v4l2_m2m_dqbuf(file, ctx->m2m_ctx, buf);
-	mutex_unlock(&ctx->lock);
-	return ret;
+	return v4l2_m2m_dqbuf(file, ctx->m2m_ctx, buf);
 }
 
 /*
@@ -907,15 +901,13 @@ static int msm_jpegdma_streamon(struct file *file,
 	struct jpegdma_ctx *ctx = msm_jpegdma_ctx_from_fh(fh);
 	int ret;
 
-	mutex_lock(&ctx->lock);
-	if (!msm_jpegdma_config_ok(ctx)) {
-		mutex_unlock(&ctx->lock);
+	if (!msm_jpegdma_config_ok(ctx))
 		return -EINVAL;
-	}
+
 	ret = v4l2_m2m_streamon(file, ctx->m2m_ctx, buf_type);
 	if (ret < 0)
 		dev_err(ctx->jdma_device->dev, "Stream on fail\n");
-	mutex_unlock(&ctx->lock);
+
 	return ret;
 }
 
@@ -930,11 +922,11 @@ static int msm_jpegdma_streamoff(struct file *file,
 {
 	struct jpegdma_ctx *ctx = msm_jpegdma_ctx_from_fh(fh);
 	int ret;
-	mutex_lock(&ctx->lock);
+
 	ret = v4l2_m2m_streamoff(file, ctx->m2m_ctx, buf_type);
 	if (ret < 0)
 		dev_err(ctx->jdma_device->dev, "Stream off fails\n");
-	mutex_unlock(&ctx->lock);
+
 	return ret;
 }
 
@@ -1047,10 +1039,13 @@ static int msm_jpegdma_s_crop(struct file *file, void *fh,
 		return -EINVAL;
 
 	mutex_lock(&ctx->lock);
+
 	ctx->crop = crop->c;
 	if (atomic_read(&ctx->active))
 		ret = msm_jpegdma_update_hw_config(ctx);
+
 	mutex_unlock(&ctx->lock);
+
 	return ret;
 }
 
@@ -1093,7 +1088,7 @@ static int msm_jpegdma_s_parm(struct file *file, void *fh,
 		return -EINVAL;
 
 	if (!a->parm.output.timeperframe.numerator ||
-		!a->parm.output.timeperframe.denominator)
+	    !a->parm.output.timeperframe.denominator)
 		return -EINVAL;
 
 	/* Frame rate is not supported during streaming */
@@ -1227,7 +1222,6 @@ void msm_jpegdma_isr_processing_done(struct msm_jpegdma_device *dma)
 	struct jpegdma_ctx *ctx;
 
 	mutex_lock(&dma->lock);
-
 	ctx = v4l2_m2m_get_curr_priv(dma->m2m_dev);
 	if (ctx) {
 		mutex_lock(&ctx->lock);
