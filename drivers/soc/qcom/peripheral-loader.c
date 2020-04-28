@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -822,9 +822,7 @@ int pil_boot(struct pil_desc *desc)
 	}
 
 	if (desc->ops->init_image)
-		ret = desc->ops->init_image(desc, fw->data, fw->size,
-			priv->region_start,
-			priv->region_end - priv->region_start);
+		ret = desc->ops->init_image(desc, fw->data, fw->size);
 	if (ret) {
 		pil_err(desc, "Invalid firmware metadata\n");
 		goto err_boot;
@@ -839,6 +837,17 @@ int pil_boot(struct pil_desc *desc)
 	}
 
 	if (desc->subsys_vmid > 0) {
+		/* In case of modem ssr, we need to assign memory back to linux.
+		 * This is not true after cold boot since linux already owns it.
+		 * Also for secure boot devices, modem memory has to be released
+		 * after MBA is booted. */
+		if (desc->modem_ssr) {
+			ret = pil_assign_mem_to_linux(desc, priv->region_start,
+				(priv->region_end - priv->region_start));
+			if (ret)
+				pil_err(desc, "Failed to assign to linux, ret- %d\n",
+								ret);
+		}
 		ret = pil_assign_mem_to_subsys_and_linux(desc,
 				priv->region_start,
 				(priv->region_end - priv->region_start));
@@ -901,8 +910,6 @@ out:
 						priv->region_start),
 					VMID_HLOS);
 			}
-			if (desc->clear_fw_region && priv->region_start)
-				pil_clear_segment(desc);
 			dma_free_attrs(desc->dev, priv->region_size,
 					priv->region, priv->region_start,
 					&desc->attrs);
