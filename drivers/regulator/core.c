@@ -112,11 +112,6 @@ static struct regulator *create_regulator(struct regulator_dev *rdev,
 					  struct device *dev,
 					  const char *supply_name);
 
-static struct regulator_dev *dev_to_rdev(struct device *dev)
-{
-	return container_of(dev, struct regulator_dev, dev);
-}
-
 static const char *rdev_get_name(struct regulator_dev *rdev)
 {
 	if (rdev->constraints && rdev->constraints->name)
@@ -1361,7 +1356,6 @@ static struct regulator *_regulator_get(struct device *dev, const char *id,
 	struct regulator *regulator = ERR_PTR(-EPROBE_DEFER);
 	const char *devname = NULL;
 	int ret;
-
 	if (id == NULL) {
 		pr_err("get() with no identifier\n");
 		return ERR_PTR(-EINVAL);
@@ -1463,7 +1457,7 @@ out:
  * device pins in the datasheet.
  */
 struct regulator *regulator_get(struct device *dev, const char *id)
-{
+{	
 	return _regulator_get(dev, id, false, true);
 }
 EXPORT_SYMBOL_GPL(regulator_get);
@@ -1525,7 +1519,6 @@ EXPORT_SYMBOL_GPL(regulator_get_optional);
 static void _regulator_put(struct regulator *regulator)
 {
 	struct regulator_dev *rdev;
-
 	if (regulator == NULL || IS_ERR(regulator))
 		return;
 
@@ -2152,14 +2145,6 @@ static void regulator_disable_work(struct work_struct *work)
 	count = rdev->deferred_disables;
 	rdev->deferred_disables = 0;
 
-	/*
-	 * Workqueue functions queue the new work instance while the previous
-	 * work instance is being processed. Cancel the queued work instance
-	 * as the work instance under processing does the job of the queued
-	 * work instance.
-	 */
-	cancel_delayed_work(&rdev->disable_work);
-
 	for (i = 0; i < count; i++) {
 		ret = _regulator_disable(rdev);
 		if (ret != 0)
@@ -2194,6 +2179,7 @@ static void regulator_disable_work(struct work_struct *work)
 int regulator_disable_deferred(struct regulator *regulator, int ms)
 {
 	struct regulator_dev *rdev = regulator->rdev;
+	int ret;
 
 	if (regulator->always_on)
 		return 0;
@@ -2203,11 +2189,15 @@ int regulator_disable_deferred(struct regulator *regulator, int ms)
 
 	mutex_lock(&rdev->mutex);
 	rdev->deferred_disables++;
-	mod_delayed_work(system_power_efficient_wq, &rdev->disable_work,
-			 msecs_to_jiffies(ms));
 	mutex_unlock(&rdev->mutex);
 
-	return 0;
+	ret = queue_delayed_work(system_power_efficient_wq,
+				 &rdev->disable_work,
+				 msecs_to_jiffies(ms));
+	if (ret < 0)
+		return ret;
+	else
+		return 0;
 }
 EXPORT_SYMBOL_GPL(regulator_disable_deferred);
 
@@ -3824,7 +3814,7 @@ static ssize_t reg_debug_volt_get(struct file *file, char __user *buf,
 	mutex_lock(&debug_buf_mutex);
 
 	output = snprintf(debug_buf, MAX_DEBUG_BUF_LEN-1, "%d\n", voltage);
-	rc = simple_read_from_buffer((void __user *) buf, count, ppos,
+	rc = simple_read_from_buffer((void __user *) buf, output, ppos,
 					(void *) debug_buf, output);
 
 	mutex_unlock(&debug_buf_mutex);
@@ -4533,57 +4523,13 @@ static int __init regulator_init(void)
 /* init early to allow our consumers to complete system booting */
 core_initcall(regulator_init);
 
-static int __init regulator_late_cleanup(struct device *dev, void *data)
-{
-	struct regulator_dev *rdev = dev_to_rdev(dev);
-	const struct regulator_ops *ops = rdev->desc->ops;
-	struct regulation_constraints *c = rdev->constraints;
-	int enabled, ret;
-
-	if (c && c->always_on)
-		return 0;
-
-	if (c && !(c->valid_ops_mask & REGULATOR_CHANGE_STATUS))
-		return 0;
-
-	mutex_lock(&rdev->mutex);
-
-	if (rdev->use_count)
-		goto unlock;
-
-	/* If we can't read the status assume it's on. */
-	if (ops->is_enabled)
-		enabled = ops->is_enabled(rdev);
-	else
-		enabled = 1;
-
-	if (!enabled)
-		goto unlock;
-
-	if (have_full_constraints()) {
-		/* We log since this may kill the system if it goes
-		 * wrong. */
-		rdev_info(rdev, "disabling\n");
-		ret = _regulator_do_disable(rdev);
-		if (ret != 0)
-			rdev_err(rdev, "couldn't disable: %d\n", ret);
-	} else {
-		/* The intention is that in future we will
-		 * assume that full constraints are provided
-		 * so warn even if we aren't going to do
-		 * anything here.
-		 */
-		rdev_warn(rdev, "incomplete constraints, leaving on\n");
-	}
-
-unlock:
-	mutex_unlock(&rdev->mutex);
-
-	return 0;
-}
-
 static int __init regulator_init_complete(void)
 {
+	struct regulator_dev *rdev;
+	const struct regulator_ops *ops;
+	struct regulation_constraints *c;
+	int enabled, ret;
+
 	/*
 	 * Since DT doesn't provide an idiomatic mechanism for
 	 * enabling full constraints and since it's much more natural
@@ -4593,13 +4539,58 @@ static int __init regulator_init_complete(void)
 	if (of_have_populated_dt())
 		has_full_constraints = true;
 
+	mutex_lock(&regulator_list_mutex);
+
 	/* If we have a full configuration then disable any regulators
 	 * we have permission to change the status for and which are
 	 * not in use or always_on.  This is effectively the default
 	 * for DT and ACPI as they have full constraints.
 	 */
-	class_for_each_device(&regulator_class, NULL, NULL,
-			      regulator_late_cleanup);
+	list_for_each_entry(rdev, &regulator_list, list) {
+		ops = rdev->desc->ops;
+		c = rdev->constraints;
+
+		if (c && c->always_on)
+			continue;
+
+		if (c && !(c->valid_ops_mask & REGULATOR_CHANGE_STATUS))
+			continue;
+
+		mutex_lock(&rdev->mutex);
+
+		if (rdev->use_count)
+			goto unlock;
+
+		/* If we can't read the status assume it's on. */
+		if (ops->is_enabled)
+			enabled = ops->is_enabled(rdev);
+		else
+			enabled = 1;
+
+		if (!enabled)
+			goto unlock;
+
+		if (have_full_constraints()) {
+			/* We log since this may kill the system if it
+			 * goes wrong. */
+			rdev_info(rdev, "disabling\n");
+			ret = _regulator_do_disable(rdev);
+			if (ret != 0)
+				rdev_err(rdev, "couldn't disable: %d\n", ret);
+		} else {
+			/* The intention is that in future we will
+			 * assume that full constraints are provided
+			 * so warn even if we aren't going to do
+			 * anything here.
+			 */
+			rdev_warn(rdev, "incomplete constraints, leaving on\n");
+		}
+
+unlock:
+		mutex_unlock(&rdev->mutex);
+	}
+
+	mutex_unlock(&regulator_list_mutex);
 
 	return 0;
 }

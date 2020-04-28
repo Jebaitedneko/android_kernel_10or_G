@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -498,7 +498,7 @@ static int ipa3_uc_send_cmd_64b_param(u32 cmd_lo, u32 cmd_hi, u32 opcode,
 {
 	int index;
 	union IpaHwCpuCmdCompletedResponseData_t uc_rsp;
-	unsigned long flags = 0;
+	unsigned long flags;
 	int retries = 0;
 
 send_cmd_lock:
@@ -585,9 +585,7 @@ send_cmd:
 
 	if (ipa3_ctx->uc_ctx.uc_status != expected_status) {
 		if (ipa3_ctx->uc_ctx.uc_status ==
-		    IPA_HW_PROD_DISABLE_CMD_GSI_STOP_FAILURE ||
-		    ipa3_ctx->uc_ctx.uc_status ==
-		    IPA_HW_CONS_DISABLE_CMD_GSI_STOP_FAILURE) {
+			IPA_HW_PROD_DISABLE_CMD_GSI_STOP_FAILURE) {
 			retries++;
 			if (retries == IPA_GSI_CHANNEL_STOP_MAX_RETRY) {
 				IPAERR("Failed after %d tries\n", retries);
@@ -596,9 +594,7 @@ send_cmd:
 				return -EFAULT;
 			}
 			IPA3_UC_UNLOCK(flags);
-			if (ipa3_ctx->uc_ctx.uc_status ==
-			    IPA_HW_PROD_DISABLE_CMD_GSI_STOP_FAILURE)
-				ipa3_inject_dma_task_for_gsi();
+			ipa3_inject_dma_task_for_gsi();
 			/* sleep for short period to flush IPA */
 			usleep_range(IPA_GSI_CHANNEL_STOP_SLEEP_MIN_USEC,
 				IPA_GSI_CHANNEL_STOP_SLEEP_MAX_USEC);
@@ -775,7 +771,7 @@ int ipa3_uc_send_cmd(u32 cmd, u32 opcode, u32 expected_status,
 void ipa3_uc_register_handlers(enum ipa3_hw_features feature,
 			      struct ipa3_uc_hdlrs *hdlrs)
 {
-	unsigned long flags = 0;
+	unsigned long flags;
 
 	if (0 > feature || IPA_HW_FEATURE_MAX <= feature) {
 		IPAERR("Feature %u is invalid, not registering hdlrs\n",
@@ -844,14 +840,13 @@ int ipa3_uc_reset_pipe(enum ipa_client_type ipa_client)
 
 int ipa3_uc_is_gsi_channel_empty(enum ipa_client_type ipa_client)
 {
-	const struct ipa_gsi_ep_config *gsi_ep_info;
+	struct ipa_gsi_ep_config *gsi_ep_info;
 	union IpaHwChkChEmptyCmdData_t cmd;
 	int ret;
 
-	gsi_ep_info = ipa3_get_gsi_ep_info(ipa_client);
+	gsi_ep_info = ipa3_get_gsi_ep_info(ipa3_get_ep_mapping(ipa_client));
 	if (!gsi_ep_info) {
-		IPAERR("Failed getting GSI EP info for client=%d\n",
-		       ipa_client);
+		IPAERR("Invalid IPA ep index\n");
 		return 0;
 	}
 

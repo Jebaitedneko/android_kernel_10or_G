@@ -17,7 +17,6 @@
 #ifndef __WIL6210_H__
 #define __WIL6210_H__
 
-#include <linux/etherdevice.h>
 #include <linux/netdevice.h>
 #include <linux/wireless.h>
 #include <net/cfg80211.h>
@@ -25,7 +24,6 @@
 #include <linux/types.h>
 #include "wmi.h"
 #include "wil_platform.h"
-#include "ftm.h"
 
 extern bool no_fw_recovery;
 extern unsigned int mtu_max;
@@ -578,11 +576,10 @@ struct wil6210_priv {
 	struct wireless_dev *wdev;
 	void __iomem *csr;
 	DECLARE_BITMAP(status, wil_status_last);
-	u8 fw_version[ETHTOOL_FWVERS_LEN];
+	u32 fw_version;
 	u32 hw_version;
 	const char *hw_name;
 	DECLARE_BITMAP(hw_capabilities, hw_capability_last);
-	DECLARE_BITMAP(fw_capabilities, WMI_FW_CAPABILITY_MAX);
 	u8 n_mids; /* number of additional MIDs as reported by FW */
 	u32 recovery_count; /* num of FW recovery attempts in a short time */
 	u32 recovery_state; /* FW recovery state machine */
@@ -660,13 +657,11 @@ struct wil6210_priv {
 
 	/* P2P_DEVICE vif */
 	struct wireless_dev *p2p_wdev;
-	struct mutex p2p_wdev_mutex; /* protect @p2p_wdev and @scan_request */
+	struct mutex p2p_wdev_mutex; /* protect @p2p_wdev */
 	struct wireless_dev *radio_wdev;
 
 	/* High Access Latency Policy voting */
 	struct wil_halp halp;
-
-	struct wil_ftm_priv ftm;
 
 #ifdef CONFIG_PM
 #ifdef CONFIG_PM_SLEEP
@@ -785,7 +780,6 @@ void wil_mbox_ring_le2cpus(struct wil6210_mbox_ring *r);
 int wil_find_cid(struct wil6210_priv *wil, const u8 *mac);
 void wil_set_ethtoolops(struct net_device *ndev);
 
-void __iomem *wmi_buffer_block(struct wil6210_priv *wil, __le32 ptr, u32 size);
 void __iomem *wmi_buffer(struct wil6210_priv *wil, __le32 ptr);
 void __iomem *wmi_addr(struct wil6210_priv *wil, u32 ptr);
 int wmi_read_hdr(struct wil6210_priv *wil, __le32 ptr,
@@ -830,7 +824,6 @@ void wil_unmask_irq(struct wil6210_priv *wil);
 void wil_configure_interrupt_moderation(struct wil6210_priv *wil);
 void wil_disable_irq(struct wil6210_priv *wil);
 void wil_enable_irq(struct wil6210_priv *wil);
-void wil6210_mask_halp(struct wil6210_priv *wil);
 
 /* P2P */
 bool wil_p2p_is_social_scan(struct cfg80211_scan_request *request);
@@ -843,7 +836,6 @@ u8 wil_p2p_stop_discovery(struct wil6210_priv *wil);
 int wil_p2p_cancel_listen(struct wil6210_priv *wil, u64 cookie);
 void wil_p2p_listen_expired(struct work_struct *work);
 void wil_p2p_search_expired(struct work_struct *work);
-void wil_p2p_stop_radio_operations(struct wil6210_priv *wil);
 
 /* WMI for P2P */
 int wmi_p2p_cfg(struct wil6210_priv *wil, int channel, int bi);
@@ -869,8 +861,6 @@ int wmi_pcp_start(struct wil6210_priv *wil, int bi, u8 wmi_nettype,
 		  u8 chan, u8 hidden_ssid, u8 is_go);
 int wmi_pcp_stop(struct wil6210_priv *wil);
 int wmi_led_cfg(struct wil6210_priv *wil, bool enable);
-int wmi_aoa_meas(struct wil6210_priv *wil, const void *mac_addr, u8 chan,
-		 u8 type);
 void wil6210_disconnect(struct wil6210_priv *wil, const u8 *bssid,
 			u16 reason_code, bool from_event);
 void wil_probe_client_flush(struct wil6210_priv *wil);
@@ -899,8 +889,7 @@ void wil6210_unmask_irq_rx(struct wil6210_priv *wil);
 int wil_iftype_nl2wmi(enum nl80211_iftype type);
 
 int wil_ioctl(struct wil6210_priv *wil, void __user *data, int cmd);
-int wil_request_firmware(struct wil6210_priv *wil, const char *name,
-			 bool load);
+int wil_request_firmware(struct wil6210_priv *wil, const char *name);
 
 int wil_can_suspend(struct wil6210_priv *wil, bool is_runtime);
 int wil_suspend(struct wil6210_priv *wil, bool is_runtime);
@@ -913,19 +902,5 @@ void wil_halp_vote(struct wil6210_priv *wil);
 void wil_halp_unvote(struct wil6210_priv *wil);
 void wil6210_set_halp(struct wil6210_priv *wil);
 void wil6210_clear_halp(struct wil6210_priv *wil);
-
-void wil_ftm_init(struct wil6210_priv *wil);
-void wil_ftm_deinit(struct wil6210_priv *wil);
-void wil_ftm_stop_operations(struct wil6210_priv *wil);
-void wil_aoa_cfg80211_meas_result(struct wil6210_priv *wil,
-				  struct wil_aoa_meas_result *result);
-
-void wil_ftm_evt_session_ended(struct wil6210_priv *wil,
-			       struct wmi_tof_session_end_event *evt);
-void wil_ftm_evt_per_dest_res(struct wil6210_priv *wil,
-			      struct wmi_tof_ftm_per_dest_res_event *evt);
-void wil_aoa_evt_meas(struct wil6210_priv *wil,
-		      struct wmi_aoa_meas_event *evt,
-		      int len);
 
 #endif /* __WIL6210_H__ */

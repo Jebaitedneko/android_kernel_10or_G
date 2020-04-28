@@ -356,7 +356,7 @@ struct gpio_chip *gpiochip_find(void *data,
 
 	spin_lock_irqsave(&gpio_lock, flags);
 	list_for_each_entry(chip, &gpio_chips, list)
-		if (chip && match(chip, data))
+		if (match(chip, data))
 			break;
 
 	/* No match? */
@@ -990,12 +990,12 @@ static int _gpiod_direction_output_raw(struct gpio_desc *desc, int value)
 	int			status = -EINVAL;
 
 	/* GPIOs used for IRQs shall not be set as output */
-	if (test_bit(FLAG_USED_AS_IRQ, &desc->flags)) {
+	/*if (test_bit(FLAG_USED_AS_IRQ, &desc->flags)) {
 		gpiod_err(desc,
 			  "%s: tried to set a GPIO tied to an IRQ as output\n",
 			  __func__);
 		return -EIO;
-	}
+	}                                                                                            jiachenxi detete for goodix ctp*/
 
 	/* Open drain pin should not be driven to 1 */
 	if (value && test_bit(FLAG_OPEN_DRAIN,  &desc->flags))

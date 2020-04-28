@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2017, 2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -508,12 +508,12 @@ int sps_bam_enable(struct sps_bam *dev)
 		if (dev->props.logging_number > 0)
 			dev->props.logging_number--;
 		SPS_INFO(dev,
-			"sps:BAM %pa (va:0x%pK) enabled: ver:0x%x, number of pipes:%d\n",
+			"sps:BAM %pa (va:0x%p) enabled: ver:0x%x, number of pipes:%d\n",
 			BAM_ID(dev), dev->base, dev->version,
 			dev->props.num_pipes);
 	} else
 		SPS_DBG3(dev,
-			"sps:BAM %pa (va:0x%pK) enabled: ver:0x%x, number of pipes:%d\n",
+			"sps:BAM %pa (va:0x%p) enabled: ver:0x%x, number of pipes:%d\n",
 			BAM_ID(dev), dev->base, dev->version,
 			dev->props.num_pipes);
 
@@ -891,8 +891,8 @@ int sps_bam_pipe_connect(struct sps_pipe *bam_pipe,
 			else
 				iova = bam_pipe->connect.source_iova;
 			SPS_DBG2(dev,
-				"sps:BAM %pa pipe %d uses IOVA 0x%pK.\n",
-				 BAM_ID(dev), pipe_index, (void *)iova);
+				"sps:BAM %pa pipe %d uses IOVA 0x%lx.\n",
+				 BAM_ID(dev), pipe_index, iova);
 			hw_params.peer_phys_addr = (u32)iova;
 		} else {
 			hw_params.peer_phys_addr = peer_bam->props.phys_addr;
@@ -914,9 +914,9 @@ int sps_bam_pipe_connect(struct sps_pipe *bam_pipe,
 			hw_params.data_base =
 				(phys_addr_t)bam_pipe->connect.data.iova;
 			SPS_DBG2(dev,
-				"sps:BAM %pa pipe %d uses IOVA 0x%pK for data FIFO.\n",
+				"sps:BAM %pa pipe %d uses IOVA 0x%lx for data FIFO.\n",
 				 BAM_ID(dev), pipe_index,
-				 (void *)(bam_pipe->connect.data.iova));
+				 bam_pipe->connect.data.iova);
 		} else {
 			hw_params.data_base = map->data.phys_base;
 		}
@@ -967,9 +967,9 @@ int sps_bam_pipe_connect(struct sps_pipe *bam_pipe,
 			hw_params.desc_base =
 				(phys_addr_t)bam_pipe->connect.desc.iova;
 			SPS_DBG2(dev,
-				"sps:BAM %pa pipe %d uses IOVA 0x%pK for desc FIFO.\n",
+				"sps:BAM %pa pipe %d uses IOVA 0x%lx for desc FIFO.\n",
 				 BAM_ID(dev), pipe_index,
-				 (void *)(bam_pipe->connect.desc.iova));
+				 bam_pipe->connect.desc.iova);
 		} else {
 			hw_params.desc_base = map->desc.phys_base;
 		}
@@ -1090,7 +1090,6 @@ int sps_bam_pipe_disconnect(struct sps_bam *dev, u32 pipe_index)
 {
 	struct sps_pipe *pipe;
 	int result;
-	unsigned long flags;
 
 	if (pipe_index >= dev->props.num_pipes) {
 		SPS_ERR(dev, "sps:Invalid BAM %pa pipe: %d\n", BAM_ID(dev),
@@ -1102,10 +1101,8 @@ int sps_bam_pipe_disconnect(struct sps_bam *dev, u32 pipe_index)
 	pipe = dev->pipes[pipe_index];
 	if (BAM_PIPE_IS_ASSIGNED(pipe)) {
 		if ((dev->pipe_active_mask & (1UL << pipe_index))) {
-			spin_lock_irqsave(&dev->isr_lock, flags);
 			list_del(&pipe->list);
 			dev->pipe_active_mask &= ~(1UL << pipe_index);
-			spin_unlock_irqrestore(&dev->isr_lock, flags);
 		}
 		dev->pipe_remote_mask &= ~(1UL << pipe_index);
 		if (pipe->connect.options & SPS_O_NO_DISABLE)
@@ -1419,9 +1416,8 @@ int sps_bam_pipe_transfer_one(struct sps_bam *dev,
 	u32 next_write;
 	static int show_recom;
 
-	SPS_DBG(dev, "sps:BAM %pa pipe %d addr 0x%pK size 0x%x flags 0x%x\n",
-			BAM_ID(dev), pipe_index,
-			(void *)(long)addr, size, flags);
+	SPS_DBG(dev, "sps:BAM %pa pipe %d addr 0x%x size 0x%x flags 0x%x\n",
+			BAM_ID(dev), pipe_index, addr, size, flags);
 
 	/* Is this a BAM-to-BAM or satellite connection? */
 	if ((pipe->state & (BAM_STATE_BAM2BAM | BAM_STATE_REMOTE))) {
@@ -1945,8 +1941,8 @@ static void pipe_handler_eot(struct sps_bam *dev, struct sps_pipe *pipe)
 	user = &pipe->sys.user_ptrs[offset / sizeof(struct sps_iovec)];
 	for (;;) {
 		SPS_DBG(dev,
-			"sps:%s; pipe index:%d; iovec addr:0x%pK; size:0x%x; flags:0x%x; enabled:0x%x; *user is %s NULL.\n",
-			__func__, pipe->pipe_index, (void *)(long)cache->addr,
+			"sps:%s; pipe index:%d; iovec addr:0x%x; size:0x%x; flags:0x%x; enabled:0x%x; *user is %s NULL.\n",
+			__func__, pipe->pipe_index, cache->addr,
 			cache->size, cache->flags, enabled,
 			(*user == NULL) ? "" : "not");
 
@@ -2135,7 +2131,7 @@ int sps_bam_pipe_get_event(struct sps_bam *dev,
 
 	if (pipe->sys.no_queue) {
 		SPS_ERR(dev,
-			"sps:Invalid connection for event: BAM %pa pipe %d context 0x%pK\n",
+			"sps:Invalid connection for event: BAM %pa pipe %d context 0x%p\n",
 			BAM_ID(dev), pipe_index, pipe);
 		notify->event_id = SPS_EVENT_INVALID;
 		return SPS_ERROR;
@@ -2234,8 +2230,8 @@ int sps_bam_pipe_get_iovec(struct sps_bam *dev, u32 pipe_index,
 		pipe->sys.acked_offset = 0;
 
 	SPS_DBG(dev,
-		"sps:%s; pipe index:%d; iovec addr:0x%pK; size:0x%x; flags:0x%x; acked_offset:0x%x.\n",
-		__func__, pipe->pipe_index, (void *)(long)desc->addr,
+		"sps:%s; pipe index:%d; iovec addr:0x%x; size:0x%x; flags:0x%x; acked_offset:0x%x.\n",
+		__func__, pipe->pipe_index, desc->addr,
 		desc->size, desc->flags, pipe->sys.acked_offset);
 
 	return 0;

@@ -1,5 +1,4 @@
-/* Copyright (c) 2012, 2014-2016, 2018 The Linux Foundation. All rights
- * reserved.
+/* Copyright (c) 2012,2014-2016 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -21,7 +20,6 @@
 #include <linux/skbuff.h>
 #endif
 #include <linux/debugfs.h>
-#include <net/cnss_prealloc.h>
 
 static DEFINE_SPINLOCK(alloc_lock);
 
@@ -36,7 +34,7 @@ static struct dentry *debug_base;
 
 struct wcnss_prealloc {
 	int occupied;
-	size_t size;
+	unsigned int size;
 	void *ptr;
 #ifdef CONFIG_SLUB_DEBUG
 	unsigned long stack_trace[WCNSS_MAX_STACK_TRACE];
@@ -214,7 +212,7 @@ static inline void wcnss_prealloc_save_stack_trace(struct wcnss_prealloc *entry)
 }
 #endif
 
-void *wcnss_prealloc_get(size_t size)
+void *wcnss_prealloc_get(unsigned int size)
 {
 	int i = 0;
 	unsigned long flags;
@@ -234,8 +232,9 @@ void *wcnss_prealloc_get(size_t size)
 	}
 	spin_unlock_irqrestore(&alloc_lock, flags);
 
-	pr_err("wcnss: %s: prealloc not available for size: %zu\n",
-	       __func__, size);
+	pr_err("wcnss: %s: prealloc not available for size: %d\n",
+			__func__, size);
+	WARN_ON(1);
 
 	return NULL;
 }
@@ -311,72 +310,22 @@ EXPORT_SYMBOL(wcnss_skb_prealloc_put);
 #ifdef CONFIG_SLUB_DEBUG
 void wcnss_prealloc_check_memory_leak(void)
 {
-	int i;
-	bool leak_detected = false;
+	int i, j = 0;
 
 	for (i = 0; i < ARRAY_SIZE(wcnss_allocs); i++) {
 		if (!wcnss_allocs[i].occupied)
 			continue;
 
-		if (!leak_detected) {
+		if (j == 0) {
 			pr_err("wcnss_prealloc: Memory leak detected\n");
-			leak_detected = true;
+			j++;
 		}
 
-		pr_err("Size: %zu, addr: %pK, backtrace:\n",
-		       wcnss_allocs[i].size, wcnss_allocs[i].ptr);
+		pr_err("Size: %u, addr: %pK, backtrace:\n",
+				wcnss_allocs[i].size, wcnss_allocs[i].ptr);
 		print_stack_trace(&wcnss_allocs[i].trace, 1);
 	}
 
-}
-#endif
-
-#if defined(CONFIG_WCNSS_SKB_PRE_ALLOC) && defined(CONFIG_SLUB_DEBUG)
-/* Check memory leak for socket buffer pre-alloc memeory pool */
-void wcnss_skb_prealloc_check_memory_leak(void)
-{
-	int i;
-	bool leak_detected = false;
-
-	for (i = 0; i < ARRAY_SIZE(wcnss_skb_allocs); i++) {
-		if (!wcnss_skb_allocs[i].occupied)
-			continue;
-
-		if (!leak_detected) {
-			pr_err("wcnss_skb_prealloc: Memory leak detected\n");
-			leak_detected = true;
-		}
-
-		pr_err(
-			"Size: %u, addr: %pK, backtrace:\n",
-			wcnss_skb_allocs[i].size, wcnss_skb_allocs[i].ptr);
-		print_stack_trace(&wcnss_skb_allocs[i].trace, 1);
-	}
-}
-#else
-void wcnss_skb_prealloc_check_memory_leak(void) {}
-#endif
-
-#ifdef CONFIG_WCNSS_SKB_PRE_ALLOC
-/* Reset socket buffer pre-allock memory pool */
-int wcnss_skb_pre_alloc_reset(void)
-{
-	int i, n = 0;
-
-	for (i = 0; i < ARRAY_SIZE(wcnss_skb_allocs); i++) {
-		if (!wcnss_skb_allocs[i].occupied)
-			continue;
-
-		wcnss_skb_allocs[i].occupied = 0;
-		n++;
-	}
-
-	return n;
-}
-#else
-int wcnss_skb_pre_alloc_reset(void)
-{
-	return 0;
 }
 #endif
 
