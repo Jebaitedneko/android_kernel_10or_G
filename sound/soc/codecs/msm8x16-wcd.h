@@ -228,6 +228,7 @@ struct msm8916_asoc_mach_data {
 	int ext_pa;
 	int us_euro_gpio;
 	int spk_ext_pa_gpio;
+	int spk_ext_pa1_gpio;
 	int mclk_freq;
 	int lb_mode;
 	int afe_clk_ver;
@@ -305,6 +306,10 @@ struct msm8x16_wcd_priv {
 	u32 comp_enabled[MSM8X16_WCD_RX_MAX];
 	bool spk_boost_set;
 	bool ear_pa_boost_set;
+#ifdef CONFIG_HQ_ZQL1590_SUPPORT
+	bool ear_2in1_ctrl_set;
+	bool free_call_ctrl_set;
+#endif
 	bool ext_spk_boost_set;
 	bool dec_active[NUM_DECIMATORS];
 	struct on_demand_supply on_demand_list[ON_DEMAND_SUPPLIES_MAX];
