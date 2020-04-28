@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -11,8 +11,8 @@
  * GNU General Public License for more details.
  */
 
-#ifndef __DRIVERS_CLK_QCOM_VDD_LEVEL_9650_H
-#define __DRIVERS_CLK_QCOM_VDD_LEVEL_9650_H
+#ifndef __DRIVERS_CLK_QCOM_VDD_LEVEL_CALIFORNIUM_H
+#define __DRIVERS_CLK_QCOM_VDD_LEVEL_CALIFORNIUM_H
 
 #include <linux/clk/msm-clock-generic.h>
 #include <linux/regulator/rpm-smd-regulator.h>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -21,7 +21,7 @@
 #include <linux/platform_device.h>
 #include <linux/module.h>
 #include <linux/clk/msm-clock-generic.h>
-#include <dt-bindings/clock/msm-clocks-9650.h>
+#include <dt-bindings/clock/msm-clocks-californium.h>
 #include <soc/qcom/clock-rpm.h>
 #include <soc/qcom/clock-local2.h>
 #include <soc/qcom/clock-voter.h>
@@ -29,7 +29,7 @@
 #include <soc/qcom/clock-alpha-pll.h>
 #include <soc/qcom/rpm-smd.h>
 
-#include "vdd-level-9650.h"
+#include "vdd-level-californium.h"
 
 #define RPM_MISC_CLK_TYPE	0x306b6c63
 #define RPM_BUS_CLK_TYPE	0x316b6c63
@@ -182,12 +182,6 @@ static DEFINE_VDD_REGULATORS(vdd_dig_ao, VDD_DIG_NUM, 1, vdd_corner, NULL);
 #define QUSB_REF_CLK_EN                                  (0x41030)
 #define DCC_CBCR                                         (0x77004)
 #define MSS_CFG_AHB_CBCR				 (0x49000)
-
-/* sdx20 */
-#define PCIE_AUX_CBCR						(0x5D024)
-#define PCIE_AUX_PHY_CMD_RCGR		(0x5D030)
-#define PCIE_BCR					(0x5D004)
-#define PCIE_AUX_CLK_SEL			(0x5D028)
 
 DEFINE_CLK_RPM_SMD_BRANCH(xo, xo_a_clk, RPM_MISC_CLK_TYPE,
 			  XO_ID, 19200000);
@@ -1334,7 +1328,6 @@ static struct branch_clk gcc_mss_cfg_ahb_clk = {
 static struct mux_clk gcc_debug_mux;
 static struct clk_ops clk_ops_debug_mux;
 static struct clk_mux_ops gcc_debug_mux_ops;
-static struct branch_clk gcc_pcie_aux_clk;
 
 static struct measure_clk_data debug_mux_priv = {
 	.cxo = &xo.c,
@@ -1399,7 +1392,6 @@ static struct mux_clk gcc_debug_mux = {
 		{ &gcc_pcie_sleep_clk.c, 0x023b },
 		{ &gcc_pcie_axi_mstr_clk.c, 0x023c },
 		{ &gcc_dcc_clk.c, 0x0278 },
-		{&gcc_pcie_aux_clk.c, 0x023d },
 	),
 	.c = {
 		.dbg_name = "gcc_debug_mux",
@@ -1409,7 +1401,8 @@ static struct mux_clk gcc_debug_mux = {
 	},
 };
 
-static struct clk_lookup msm_clocks_rpm_9650[] = {
+static struct clk_lookup msm_clocks_rpm_californium[] = {
+	CLK_LIST(a7pll_clk),
 	CLK_LIST(xo),
 	CLK_LIST(xo_a_clk),
 	CLK_LIST(ce_clk),
@@ -1461,7 +1454,7 @@ static struct clk_lookup msm_clocks_rpm_9650[] = {
 	CLK_LIST(rf_clk3_pin_ao),
 };
 
-static struct clk_lookup msm_clocks_gcc_9650[] = {
+static struct clk_lookup msm_clocks_gcc_californium[] = {
 	CLK_LIST(gpll0),
 	CLK_LIST(gpll0_ao),
 	CLK_LIST(gpll0_out_main_cgc),
@@ -1537,155 +1530,12 @@ static struct clk_lookup msm_clocks_gcc_9650[] = {
 	CLK_LIST(gcc_usb3_pipe_clk),
 	CLK_LIST(gcc_usb_phy_cfg_ahb_clk),
 	CLK_LIST(gcc_mss_cfg_ahb_clk),
-	CLK_LIST(a7pll_clk),
 };
 
-/* sdx20 */
-/* Fractional Val offset from PLL base */
-#define APCS_CPU_PLL_FRAC_OFF	0x40
-
-static int set_pcie_aux_mux_sel(struct mux_clk *clk, int sel);
-static int get_pcie_aux_mux_sel(struct mux_clk *clk);
-
-static struct alpha_pll_masks fabia_pll_masks_p = {
-	.lock_mask = BIT(31),
-	.active_mask = BIT(30),
-	.update_mask = BIT(22),
-	.output_mask = 0xf,
-};
-
-static struct alpha_pll_vco_tbl fabia_pll_vco_p[] = {
-	VCO(0,  250000000,  2000000000),
-	VCO(1,  125000000,  1000000000),
-};
-
-static struct rcg_clk pcie_aux_phy_clk_src = {
-	.cmd_rcgr_reg = PCIE_AUX_PHY_CMD_RCGR,
-	.set_rate = set_rate_mnd,
-	.freq_tbl = ftbl_pcie_aux_clk_src,
-	.current_freq = &rcg_dummy_freq,
-	.base = &virt_base,
-	.c = {
-		.dbg_name = "pcie_aux_phy_clk_src",
-		.ops = &clk_ops_rcg_mnd,
-		VDD_DIG_FMAX_MAP1(LOWER, 19200000),
-		CLK_INIT(pcie_aux_phy_clk_src.c),
-	},
-};
-
-static struct clk_freq_tbl ftbl_apss_ahb_clk_src_sdx20[] = {
-	F(  50000000, gpll0_ao_out_main_cgc,   12,    0,     0),
-	F( 100000000, gpll0_ao_out_main_cgc,    6,    0,     0),
-	F( 133333333, gpll0_ao_out_main_cgc,  4.5,    0,     0),
-	F_END
-};
-
-static struct clk_freq_tbl ftbl_usb30_mock_utmi_clk_src_sdx20[] = {
-	F(  19200000,         xo,    1,    0,     0),
-	F_END
-};
-
-DEFINE_CLK_DUMMY(pcie20_phy_aux_clk, 16600000);
-
-static struct clk_mux_ops pcie_aux_mux_ops = {
-	.set_mux_sel = set_pcie_aux_mux_sel,
-	.get_mux_sel = get_pcie_aux_mux_sel
-};
-
-static struct mux_clk pcie_aux_mux_clk  = {
-	.num_parents = 2,
-	.offset = PCIE_AUX_CLK_SEL,
-	.parents = (struct clk_src[]) {
-		{&pcie20_phy_aux_clk.c, 0},
-		{&xo.c, 2},
-	},
-	.ops = &pcie_aux_mux_ops,
-	.mask = 0x3,
-	.shift = 0,
-	.base = &virt_base,
-	.c = {
-		.dbg_name = "pcie_aux_mux_clk",
-		.ops = &clk_ops_gen_mux,
-		.flags = CLKFLAG_NO_RATE_CACHE,
-		CLK_INIT(pcie_aux_mux_clk.c),
-	}
-};
-
-static struct branch_clk gcc_pcie_aux_clk = {
-	.cbcr_reg = PCIE_AUX_CBCR,
-	.bcr_reg = PCIE_BCR,
-	.has_sibling = 0,
-	.base = &virt_base,
-	.c = {
-		.parent = &pcie_aux_mux_clk.c,
-		.dbg_name = "gcc_pcie_aux_clk",
-		.ops = &clk_ops_branch,
-		CLK_INIT(gcc_pcie_aux_clk.c),
-	},
-};
-
-static struct clk_lookup msm_clocks_gcc_sdx20[] = {
-	CLK_LIST(gcc_pcie_aux_clk),
-	CLK_LIST(pcie_aux_phy_clk_src),
-	CLK_LIST(pcie20_phy_aux_clk),
-	CLK_LIST(pcie_aux_mux_clk),
-};
-
-static int set_pcie_aux_mux_sel(struct mux_clk *clk, int sel)
-{
-	u32 regval;
-
-	regval = readl_relaxed(*clk->base + clk->offset);
-	regval &= ~(clk->mask << clk->shift);
-	regval |= (sel & clk->mask) << clk->shift;
-	writel_relaxed(regval, *clk->base + clk->offset);
-
-	return 0;
-}
-
-static int get_pcie_aux_mux_sel(struct mux_clk *clk)
-{
-	u32 regval;
-
-	regval = readl_relaxed(*clk->base + clk->offset);
-	return (regval >> clk->shift) & clk->mask;
-}
-
-static void msm_clocks_gcc_sdx20_fixup(void)
-{
-	gcc_pcie_sleep_clk.c.parent =  &pcie_aux_phy_clk_src.c;
-
-	a7pll_clk.fabia_frac_offset = APCS_CPU_PLL_FRAC_OFF;
-	a7pll_clk.masks = &fabia_pll_masks_p;
-	a7pll_clk.vco_tbl =  fabia_pll_vco_p;
-	a7pll_clk.num_vco =  ARRAY_SIZE(fabia_pll_vco_p);
-	a7pll_clk.c.ops = &clk_ops_fabia_alpha_pll;
-	a7pll_clk.is_fabia = true;
-
-	apss_ahb_clk_src.freq_tbl = ftbl_apss_ahb_clk_src_sdx20;
-	usb30_mock_utmi_clk_src.freq_tbl =
-		ftbl_usb30_mock_utmi_clk_src_sdx20;
-
-	sdcc1_apps_clk_src.c.fmax[VDD_DIG_MIN] = 25000000;
-	sdcc1_apps_clk_src.c.fmax[VDD_DIG_LOWER] = 50000000;
-	sdcc1_apps_clk_src.c.fmax[VDD_DIG_LOW] = 1000000000;
-	sdcc1_apps_clk_src.c.fmax[VDD_DIG_NOMINAL] = 2000000000;
-
-	blsp1_qup1_spi_apps_clk_src.c.fmax[VDD_DIG_MIN] = 6250000;
-	blsp1_qup1_spi_apps_clk_src.c.fmax[VDD_DIG_MIN] = 6250000;
-	blsp1_qup2_i2c_apps_clk_src.c.fmax[VDD_DIG_MIN] = 9600000;
-	blsp1_qup2_spi_apps_clk_src.c.fmax[VDD_DIG_MIN] = 6250000;
-	blsp1_qup3_i2c_apps_clk_src.c.fmax[VDD_DIG_MIN] = 9600000;
-	blsp1_qup3_spi_apps_clk_src.c.fmax[VDD_DIG_MIN] = 6250000;
-
-	pcie_aux_clk_src.c.ops = &clk_ops_dummy;
-}
-
-static int msm_gcc_9650_probe(struct platform_device *pdev)
+static int msm_gcc_californium_probe(struct platform_device *pdev)
 {
 	struct resource *res;
 	int ret;
-	bool for_sdx20 = false;
 
 	ret = vote_bimc(&bimc_clk, INT_MAX);
 	if (ret < 0)
@@ -1729,18 +1579,10 @@ static int msm_gcc_9650_probe(struct platform_device *pdev)
 	}
 
 	ret = of_msm_clock_register(pdev->dev.of_node,
-				    msm_clocks_rpm_9650,
-				    ARRAY_SIZE(msm_clocks_rpm_9650));
+				    msm_clocks_rpm_californium,
+				    ARRAY_SIZE(msm_clocks_rpm_californium));
 	if (ret)
 		return ret;
-
-	if (of_device_is_compatible(pdev->dev.of_node, "qcom,gcc-9650")) {
-		vdd_dig.use_max_uV = true;
-		vdd_dig_ao.use_max_uV = true;
-	}
-
-	for_sdx20 = of_device_is_compatible(pdev->dev.of_node,
-						"qcom,gcc-sdx20");
 
 	ret = enable_rpm_scaling();
 	if (ret < 0)
@@ -1748,25 +1590,9 @@ static int msm_gcc_9650_probe(struct platform_device *pdev)
 
 	dev_info(&pdev->dev, "Registered RPM clocks.\n");
 
-	/*
-	 * Update for sdx20 clocks.
-	 */
-	if (for_sdx20)
-		msm_clocks_gcc_sdx20_fixup();
-
 	ret = of_msm_clock_register(pdev->dev.of_node,
-				    msm_clocks_gcc_9650,
-				    ARRAY_SIZE(msm_clocks_gcc_9650));
-	if (ret)
-		return ret;
-
-	/*
-	 * Register sdx20 clocks.
-	 */
-	if (for_sdx20)
-		ret = of_msm_clock_register(pdev->dev.of_node,
-				    msm_clocks_gcc_sdx20,
-				    ARRAY_SIZE(msm_clocks_gcc_sdx20));
+				    msm_clocks_gcc_californium,
+				    ARRAY_SIZE(msm_clocks_gcc_californium));
 	if (ret)
 		return ret;
 
@@ -1785,37 +1611,36 @@ static int msm_gcc_9650_probe(struct platform_device *pdev)
 }
 
 static struct of_device_id msm_clock_gcc_match_table[] = {
-	{ .compatible = "qcom,gcc-9650" },
-	{ .compatible = "qcom,gcc-sdx20" },
+	{ .compatible = "qcom,gcc-californium" },
 	{}
 };
 
 static struct platform_driver msm_clock_gcc_driver = {
-	.probe = msm_gcc_9650_probe,
+	.probe = msm_gcc_californium_probe,
 	.driver = {
-		.name = "qcom,gcc-9650",
+		.name = "qcom,gcc-californium",
 		.of_match_table = msm_clock_gcc_match_table,
 		.owner = THIS_MODULE,
 	},
 };
 
-int __init msm_gcc_9650_init(void)
+int __init msm_gcc_californium_init(void)
 {
 	return platform_driver_register(&msm_clock_gcc_driver);
 }
-arch_initcall(msm_gcc_9650_init);
+arch_initcall(msm_gcc_californium_init);
 
 /* ======== Clock Debug Controller ======== */
-static struct clk_lookup msm_clocks_measure_9650[] = {
+static struct clk_lookup msm_clocks_measure_californium[] = {
 	CLK_LOOKUP_OF("measure", gcc_debug_mux, "debug"),
 };
 
 static struct of_device_id msm_clock_debug_match_table[] = {
-	{ .compatible = "qcom,cc-debug-9650" },
+	{ .compatible = "qcom,cc-debug-californium" },
 	{}
 };
 
-static int msm_clock_debug_9650_probe(struct platform_device *pdev)
+static int msm_clock_debug_californium_probe(struct platform_device *pdev)
 {
 	struct resource *res;
 	int ret;
@@ -1837,8 +1662,8 @@ static int msm_clock_debug_9650_probe(struct platform_device *pdev)
 	}
 
 	ret = of_msm_clock_register(pdev->dev.of_node,
-				    msm_clocks_measure_9650,
-				    ARRAY_SIZE(msm_clocks_measure_9650));
+				    msm_clocks_measure_californium,
+				    ARRAY_SIZE(msm_clocks_measure_californium));
 	if (ret)
 		return ret;
 
@@ -1847,16 +1672,16 @@ static int msm_clock_debug_9650_probe(struct platform_device *pdev)
 }
 
 static struct platform_driver msm_clock_debug_driver = {
-	.probe = msm_clock_debug_9650_probe,
+	.probe = msm_clock_debug_californium_probe,
 	.driver = {
-		.name = "qcom,cc-debug-9650",
+		.name = "qcom,cc-debug-californium",
 		.of_match_table = msm_clock_debug_match_table,
 		.owner = THIS_MODULE,
 	},
 };
 
-int __init msm_clock_debug_9650_init(void)
+int __init msm_clock_debug_californium_init(void)
 {
 	return platform_driver_register(&msm_clock_debug_driver);
 }
-late_initcall(msm_clock_debug_9650_init);
+late_initcall(msm_clock_debug_californium_init);
