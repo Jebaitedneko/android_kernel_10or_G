@@ -26,6 +26,13 @@
 #include "mmc_ops.h"
 #include "sd_ops.h"
 
+/* Added by luochuan for increase flash hardware_info (general) 2017-4-6 begin */
+#ifdef CONFIG_HQ_SYSFS_SUPPORT
+#include <linux/hqsysfs.h>
+extern struct mmc_host *g_emmc_host;
+#endif
+/* Added by luochuan for increase flash hardware_info (general) 2017-4-6 end */
+
 static const unsigned int tran_exp[] = {
 	10000,		100000,		1000000,	10000000,
 	0,		0,		0,		0
@@ -704,14 +711,6 @@ static int mmc_read_ext_csd(struct mmc_card *card, u8 *ext_csd)
 		card->ext_csd.cache_flush_policy = 0;
 	}
 
-	/* eMMC v5 or later */
-	if (card->ext_csd.rev >= 7) {
-		card->ext_csd.pre_eol_info = ext_csd[EXT_CSD_PRE_EOL_INFO];
-		card->ext_csd.device_life_time_est_typ_a =
-			ext_csd[EXT_CSD_DEVICE_LIFE_TIME_EST_TYP_A];
-		card->ext_csd.device_life_time_est_typ_b =
-			ext_csd[EXT_CSD_DEVICE_LIFE_TIME_EST_TYP_B];
-	}
 out:
 	return err;
 }
@@ -812,11 +811,6 @@ MMC_DEV_ATTR(manfid, "0x%06x\n", card->cid.manfid);
 MMC_DEV_ATTR(name, "%s\n", card->cid.prod_name);
 MMC_DEV_ATTR(oemid, "0x%04x\n", card->cid.oemid);
 MMC_DEV_ATTR(prv, "0x%x\n", card->cid.prv);
-MMC_DEV_ATTR(rev, "0x%x\n", card->ext_csd.rev);
-MMC_DEV_ATTR(pre_eol_info, "%02x\n", card->ext_csd.pre_eol_info);
-MMC_DEV_ATTR(life_time, "0x%02x 0x%02x\n",
-	card->ext_csd.device_life_time_est_typ_a,
-	card->ext_csd.device_life_time_est_typ_b);
 MMC_DEV_ATTR(serial, "0x%08x\n", card->cid.serial);
 MMC_DEV_ATTR(enhanced_area_offset, "%llu\n",
 		card->ext_csd.enhanced_area_offset);
@@ -838,9 +832,6 @@ static struct attribute *mmc_std_attrs[] = {
 	&dev_attr_name.attr,
 	&dev_attr_oemid.attr,
 	&dev_attr_prv.attr,
-	&dev_attr_rev.attr,
-	&dev_attr_pre_eol_info.attr,
-	&dev_attr_life_time.attr,
 	&dev_attr_serial.attr,
 	&dev_attr_enhanced_area_offset.attr,
 	&dev_attr_enhanced_area_size.attr,
@@ -1292,11 +1283,6 @@ static int mmc_select_hs200(struct mmc_card *card)
 				   true, false, true);
 		if (!err) {
 			mmc_set_timing(host, MMC_TIMING_MMC_HS200);
-			/*
-			 * Since after switching to hs200, crc errors might
-			 * occur for commands send before tuning.
-			 * So ignore crc error for cmd13.
-			 */
 			err = mmc_switch_status(card, true);
 
 		}
@@ -1395,6 +1381,7 @@ EXPORT_SYMBOL(tuning_blk_pattern_8bit);
 static int mmc_hs200_tuning(struct mmc_card *card)
 {
 	struct mmc_host *host = card->host;
+	int err = 0;
 
 	/*
 	 * Timing should be adjusted to the HS400 target
@@ -1404,7 +1391,18 @@ static int mmc_hs200_tuning(struct mmc_card *card)
 	    host->ios.bus_width == MMC_BUS_WIDTH_8)
 		mmc_set_timing(host, MMC_TIMING_MMC_HS400);
 
-	return mmc_execute_tuning(card);
+	if (host->ops->execute_tuning) {
+		mmc_host_clk_hold(host);
+		err = host->ops->execute_tuning(host,
+				MMC_SEND_TUNING_BLOCK_HS200);
+		mmc_host_clk_release(host);
+
+		if (err)
+			pr_warn("%s: tuning execution failed\n",
+				mmc_hostname(host));
+	}
+
+	return err;
 }
 
 static int mmc_select_cmdq(struct mmc_card *card)
@@ -1808,6 +1806,16 @@ reinit:
 					mmc_hostname(host), __func__, err);
 			goto free_card;
 		}
+
+        /* Added by luochuan to increase emcp hardware info. (general) 2017-4-6 begin */
+#ifdef CONFIG_HQ_SYSFS_SUPPORT
+        if(host->index==0)
+		{
+			g_emmc_host = host;
+			hq_regiser_hw_info(HWID_EMMC, "emmc");
+		}  
+#endif
+        /* Added by luochuan to increase emcp hardware info. (general) 2016-4-6 end */
 
 		/* If doing byte addressing, check if required to do sector
 		 * addressing.  Handle the case of <2GB cards needing sector
@@ -2374,7 +2382,7 @@ static int mmc_test_awake_ext_csd(struct mmc_host *host)
 
 static int _mmc_suspend(struct mmc_host *host, bool is_suspend)
 {
-	int err = 0, ret;
+	int err = 0;
 
 	BUG_ON(!host);
 	BUG_ON(!host->card);
@@ -2383,9 +2391,7 @@ static int _mmc_suspend(struct mmc_host *host, bool is_suspend)
 	if (err) {
 		pr_err("%s: %s: fail to suspend clock scaling (%d)\n",
 			mmc_hostname(host), __func__, err);
-		if (host->card->cmdq_init)
-			wake_up(&host->cmdq_ctx.wait);
-		return err;
+		goto out;
 	}
 
 	mmc_claim_host(host);
@@ -2409,12 +2415,12 @@ static int _mmc_suspend(struct mmc_host *host, bool is_suspend)
 	if (mmc_card_doing_bkops(host->card)) {
 		err = mmc_stop_bkops(host->card);
 		if (err)
-			goto out_err;
+			goto out;
 	}
 
 	err = mmc_flush_cache(host->card);
 	if (err)
-		goto out_err;
+		goto out;
 
 	if (mmc_can_sleepawake(host)) {
 		/*
@@ -2431,38 +2437,16 @@ static int _mmc_suspend(struct mmc_host *host, bool is_suspend)
 		err = mmc_deselect_cards(host);
 	}
 
-	if (err)
-		goto out_err;
-	mmc_power_off(host);
-	mmc_card_set_suspended(host->card);
-
-	goto out;
-
-out_err:
-	/*
-	 * In case of err let's put controller back in cmdq mode and unhalt
-	 * the controller.
-	 * We expect cmdq_enable and unhalt won't return any error
-	 * since it is anyway enabling few registers.
-	 */
-	if (host->card->cmdq_init) {
-		mmc_host_clk_hold(host);
-		ret = host->cmdq_ops->enable(host);
-		if (ret)
-			pr_err("%s: %s: enabling CMDQ mode failed (%d)\n",
-				mmc_hostname(host), __func__, ret);
-		mmc_host_clk_release(host);
-		mmc_cmdq_halt(host, false);
+	if (!err) {
+		mmc_power_off(host);
+		mmc_card_set_suspended(host->card);
 	}
-
 out:
 	/* Kick CMDQ thread to process any requests came in while suspending */
 	if (host->card->cmdq_init)
 		wake_up(&host->cmdq_ctx.wait);
 
 	mmc_release_host(host);
-	if (err)
-		mmc_resume_clk_scaling(host);
 	return err;
 }
 
@@ -2484,9 +2468,6 @@ static int mmc_partial_init(struct mmc_host *host)
 	if (mmc_card_hs400(card)) {
 		if (card->ext_csd.strobe_support && host->ops->enhanced_strobe)
 			err = host->ops->enhanced_strobe(host);
-		else if (host->ops->execute_tuning)
-			err = host->ops->execute_tuning(host,
-				MMC_SEND_TUNING_BLOCK_HS200);
 	} else if (mmc_card_hs200(card) && host->ops->execute_tuning) {
 		err = host->ops->execute_tuning(host,
 			MMC_SEND_TUNING_BLOCK_HS200);
@@ -2780,22 +2761,6 @@ static int mmc_power_restore(struct mmc_host *host)
 	return ret;
 }
 
-static int mmc_shutdown(struct mmc_host *host)
-{
-	struct mmc_card *card = host->card;
-
-	/*
-	 * Exit clock scaling so that it doesn't kick in after
-	 * power off notification is sent
-	 */
-	if (host->caps2 & MMC_CAP2_CLK_SCALE)
-		mmc_exit_clk_scaling(card->host);
-	/* send power off notification */
-	if (mmc_card_mmc(card))
-		mmc_send_pon(card);
-	return 0;
-}
-
 static const struct mmc_bus_ops mmc_ops = {
 	.remove = mmc_remove,
 	.detect = mmc_detect,
@@ -2806,7 +2771,6 @@ static const struct mmc_bus_ops mmc_ops = {
 	.power_restore = mmc_power_restore,
 	.alive = mmc_alive,
 	.change_bus_speed = mmc_change_bus_speed,
-	.shutdown = mmc_shutdown,
 };
 
 /*
