@@ -26,6 +26,13 @@
 #include "mmc_ops.h"
 #include "sd_ops.h"
 
+/* Added by luochuan for increase flash hardware_info (general) 2017-4-6 begin */
+#ifdef CONFIG_HQ_SYSFS_SUPPORT
+#include <linux/hqsysfs.h>
+extern struct mmc_host *g_emmc_host;
+#endif
+/* Added by luochuan for increase flash hardware_info (general) 2017-4-6 end */
+
 static const unsigned int tran_exp[] = {
 	10000,		100000,		1000000,	10000000,
 	0,		0,		0,		0
@@ -1276,11 +1283,6 @@ static int mmc_select_hs200(struct mmc_card *card)
 				   true, false, true);
 		if (!err) {
 			mmc_set_timing(host, MMC_TIMING_MMC_HS200);
-			/*
-			 * Since after switching to hs200, crc errors might
-			 * occur for commands send before tuning.
-			 * So ignore crc error for cmd13.
-			 */
 			err = mmc_switch_status(card, true);
 
 		}
@@ -1804,6 +1806,16 @@ reinit:
 					mmc_hostname(host), __func__, err);
 			goto free_card;
 		}
+
+        /* Added by luochuan to increase emcp hardware info. (general) 2017-4-6 begin */
+#ifdef CONFIG_HQ_SYSFS_SUPPORT
+        if(host->index==0)
+		{
+			g_emmc_host = host;
+			hq_regiser_hw_info(HWID_EMMC, "emmc");
+		}  
+#endif
+        /* Added by luochuan to increase emcp hardware info. (general) 2016-4-6 end */
 
 		/* If doing byte addressing, check if required to do sector
 		 * addressing.  Handle the case of <2GB cards needing sector
