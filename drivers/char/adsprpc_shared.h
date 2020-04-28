@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -22,10 +22,7 @@
 #define FASTRPC_IOCTL_INVOKE_FD  _IOWR('R', 4, struct fastrpc_ioctl_invoke_fd)
 #define FASTRPC_IOCTL_SETMODE    _IOWR('R', 5, uint32_t)
 #define FASTRPC_IOCTL_INIT       _IOWR('R', 6, struct fastrpc_ioctl_init)
-#define FASTRPC_IOCTL_GETINFO	_IOWR('R', 8, uint32_t)
 #define FASTRPC_GLINK_GUID "fastrpcglink-apps-dsp"
-#define FASTRPC_IOCTL_CONTROL	_IOWR('R', 12, struct fastrpc_ioctl_control)
-
 #define FASTRPC_SMD_GUID "fastrpcsmd-apps-dsp"
 #define DEVICE_NAME      "adsprpc-smd"
 
@@ -97,7 +94,7 @@ do {\
 
 struct remote_buf64 {
 	uint64_t pv;
-	uint64_t len;
+	int64_t len;
 };
 
 union remote_arg64 {
@@ -109,7 +106,7 @@ union remote_arg64 {
 
 struct remote_buf {
 	void *pv;		/* buffer pointer */
-	size_t len;		/* length of buffer */
+	ssize_t len;		/* length of buffer */
 };
 
 union remote_arg {
@@ -130,51 +127,26 @@ struct fastrpc_ioctl_invoke_fd {
 
 struct fastrpc_ioctl_init {
 	uint32_t flags;		/* one of FASTRPC_INIT_* macros */
-	uintptr_t file;		/* pointer to elf file */
-	uint32_t filelen;	/* elf file length */
+	uintptr_t __user file;	/* pointer to elf file */
+	int32_t filelen;	/* elf file length */
 	int32_t filefd;		/* ION fd for the file */
-	uintptr_t mem;		/* mem for the PD */
-	uint32_t memlen;	/* mem length */
+	uintptr_t __user mem;	/* mem for the PD */
+	int32_t memlen;		/* mem length */
 	int32_t memfd;		/* ION fd for the mem */
 };
 
 struct fastrpc_ioctl_munmap {
 	uintptr_t vaddrout;	/* address to unmap */
-	size_t size;		/* size */
+	ssize_t size;		/* size */
 };
 
 
 struct fastrpc_ioctl_mmap {
 	int fd;				/* ion fd */
 	uint32_t flags;			/* flags for dsp to map with */
-	uintptr_t vaddrin;		/* optional virtual address */
-	size_t size;			/* size */
+	uintptr_t __user *vaddrin;	/* optional virtual address */
+	ssize_t size;			/* size */
 	uintptr_t vaddrout;		/* dsps virtual address */
-};
-
-#define FASTRPC_CONTROL_LATENCY	(1)
-struct fastrpc_ctrl_latency {
-	uint32_t enable;	/* !latency control enable */
-	uint32_t level;		/* !level of control */
-};
-
-#define FASTRPC_CONTROL_SMMU	(2)
-struct fastrpc_ctrl_smmu {
-	uint32_t sharedcb;
-};
-
-#define FASTRPC_CONTROL_KALLOC (3)
-struct fastrpc_ctrl_kalloc {
-	uint32_t kalloc_support; /* Remote memory allocation from kernel */
-};
-
-struct fastrpc_ioctl_control {
-	uint32_t req;
-	union {
-		struct fastrpc_ctrl_latency lp;
-		struct fastrpc_ctrl_smmu smmu;
-		struct fastrpc_ctrl_kalloc kalloc;
-	};
 };
 
 struct smq_null_invoke {
@@ -212,15 +184,14 @@ struct smq_invoke_rsp {
 static inline struct smq_invoke_buf *smq_invoke_buf_start(remote_arg64_t *pra,
 							uint32_t sc)
 {
-	uint32_t len = REMOTE_SCALARS_LENGTH(sc);
-
+	int len = REMOTE_SCALARS_LENGTH(sc);
 	return (struct smq_invoke_buf *)(&pra[len]);
 }
 
 static inline struct smq_phy_page *smq_phy_page_start(uint32_t sc,
 						struct smq_invoke_buf *buf)
 {
-	uint32_t nTotal = REMOTE_SCALARS_INBUFS(sc)+REMOTE_SCALARS_OUTBUFS(sc);
+	int nTotal = REMOTE_SCALARS_INBUFS(sc) + REMOTE_SCALARS_OUTBUFS(sc);
 	return (struct smq_phy_page *)(&buf[nTotal]);
 }
 
