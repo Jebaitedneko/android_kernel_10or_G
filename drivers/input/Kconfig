@@ -175,24 +175,23 @@ config INPUT_APMPOWER
 	  module will be called apm-power.
 
 config INPUT_KEYRESET
-	bool "Reset key"
+	tristate "Reset key"
 	depends on INPUT
 	select INPUT_KEYCOMBO
 	---help---
 	  Say Y here if you want to reboot when some keys are pressed;
 
+	  To compile this driver as a module, choose M here: the
+	  module will be called keyreset.
+
 config INPUT_KEYCOMBO
-	bool "Key combo"
+	tristate "Key combo"
 	depends on INPUT
 	---help---
 	  Say Y here if you want to take action when some keys are pressed;
 
-config SENSORS_HALL
-	bool "Hall sensor"
-	depends on INPUT
-	---help---
-	 Say y here if you want to use this hall sensor driver, it
-	 is like a switch. For example, lid.
+	  To compile this driver as a module, choose M here: the
+	  module will be called keycombo.
 
 comment "Input Device Drivers"
 
@@ -205,6 +204,8 @@ source "drivers/input/joystick/Kconfig"
 source "drivers/input/tablet/Kconfig"
 
 source "drivers/input/touchscreen/Kconfig"
+
+source "drivers/input/fingerprint/Kconfig"
 
 source "drivers/input/misc/Kconfig"
 
