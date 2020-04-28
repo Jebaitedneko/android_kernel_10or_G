@@ -21,7 +21,7 @@
 	model = "Qualcomm Technologies, Inc. MSM8940-PMI8950 QRD SKU6";
 	compatible = "qcom,msm8940-qrd-sku6", "qcom,msm8940-qrd",
 		   "qcom,msm8940", "qcom,qrd";
-	qcom,board-id= <0x2000b 0>;
+	qcom,board-id= <0xb 0>;
 };
 
 / {
