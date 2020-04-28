@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2016	, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -67,7 +67,6 @@ static char *debugfs_buf;
 static u32 debugfs_buf_size;
 static u32 debugfs_buf_used;
 static int wraparound;
-static struct mutex sps_debugfs_lock;
 
 struct dentry *dent;
 struct dentry *dfile_info;
@@ -86,7 +85,6 @@ static struct sps_bam *phy2bam(phys_addr_t phys_addr);
 /* record debug info for debugfs */
 void sps_debugfs_record(const char *msg)
 {
-	mutex_lock(&sps_debugfs_lock);
 	if (debugfs_record_enabled) {
 		if (debugfs_buf_used + MAX_MSG_LEN >= debugfs_buf_size) {
 			debugfs_buf_used = 0;
@@ -100,7 +98,6 @@ void sps_debugfs_record(const char *msg)
 					debugfs_buf_size - debugfs_buf_used,
 					"\n**** end line of sps log ****\n\n");
 	}
-	mutex_unlock(&sps_debugfs_lock);
 }
 
 /* read the recorded debug info to userspace */
@@ -110,7 +107,6 @@ static ssize_t sps_read_info(struct file *file, char __user *ubuf,
 	int ret = 0;
 	int size;
 
-	mutex_lock(&sps_debugfs_lock);
 	if (debugfs_record_enabled) {
 		if (wraparound)
 			size = debugfs_buf_size - MAX_MSG_LEN;
@@ -120,7 +116,6 @@ static ssize_t sps_read_info(struct file *file, char __user *ubuf,
 		ret = simple_read_from_buffer(ubuf, count, ppos,
 				debugfs_buf, size);
 	}
-	mutex_unlock(&sps_debugfs_lock);
 
 	return ret;
 }
@@ -166,13 +161,11 @@ static ssize_t sps_set_info(struct file *file, const char __user *buf,
 
 	new_buf_size = buf_size_kb * SZ_1K;
 
-	mutex_lock(&sps_debugfs_lock);
 	if (debugfs_record_enabled) {
 		if (debugfs_buf_size == new_buf_size) {
 			/* need do nothing */
 			pr_info("sps:debugfs: input buffer size "
 				"is the same as before.\n");
-			mutex_unlock(&sps_debugfs_lock);
 			return count;
 		} else {
 			/* release the current buffer */
@@ -192,14 +185,12 @@ static ssize_t sps_set_info(struct file *file, const char __user *buf,
 	if (!debugfs_buf) {
 		debugfs_buf_size = 0;
 		pr_err("sps:fail to allocate memory for debug_fs.\n");
-		mutex_unlock(&sps_debugfs_lock);
 		return -ENOMEM;
 	}
 
 	debugfs_buf_used = 0;
 	wraparound = false;
 	debugfs_record_enabled = true;
-	mutex_unlock(&sps_debugfs_lock);
 
 	return count;
 }
@@ -248,7 +239,6 @@ static ssize_t sps_set_logging_option(struct file *file, const char __user *buf,
 		return count;
 	}
 
-	mutex_lock(&sps_debugfs_lock);
 	if (((option == 0) || (option == 2)) &&
 		((logging_option == 1) || (logging_option == 3))) {
 		debugfs_record_enabled = false;
@@ -260,7 +250,6 @@ static ssize_t sps_set_logging_option(struct file *file, const char __user *buf,
 	}
 
 	logging_option = option;
-	mutex_unlock(&sps_debugfs_lock);
 
 	return count;
 }
@@ -598,8 +587,6 @@ static void sps_debugfs_init(void)
 		goto bam_log_level_err;
 	}
 
-	mutex_init(&sps_debugfs_lock);
-
 	return;
 
 bam_log_level_err:
@@ -677,8 +664,7 @@ int sps_get_bam_debug_info(unsigned long dev, u32 option, u32 para,
 	/* Search for the target BAM device */
 	bam = sps_h2bam(dev);
 	if (bam == NULL) {
-		pr_err("sps:Can't find any BAM with handle 0x%pK.",
-					(void *)dev);
+		pr_err("sps:Can't find any BAM with handle 0x%lx.", dev);
 		mutex_unlock(&sps->lock);
 		return SPS_ERROR;
 	}
@@ -932,7 +918,7 @@ static int sps_device_init(void)
 		goto exit_err;
 	}
 
-	SPS_DBG3(sps, "sps:bamdma_bam.phys=%pa.virt=0x%pK.",
+	SPS_DBG3(sps, "sps:bamdma_bam.phys=%pa.virt=0x%p.",
 		&bamdma_props.phys_addr,
 		bamdma_props.virt_addr);
 
@@ -947,7 +933,7 @@ static int sps_device_init(void)
 		goto exit_err;
 	}
 
-	SPS_DBG3(sps, "sps:bamdma_dma.phys=%pa.virt=0x%pK.",
+	SPS_DBG3(sps, "sps:bamdma_dma.phys=%pa.virt=0x%p.",
 		&bamdma_props.periph_phys_addr,
 		bamdma_props.periph_virt_addr);
 
@@ -1007,6 +993,8 @@ static void sps_device_de_init(void)
 				"sps:%s:BAMs are still registered", __func__);
 
 		sps_map_de_init();
+
+		kfree(sps);
 	}
 
 	sps_mem_de_init();
@@ -1213,7 +1201,7 @@ struct sps_bam *sps_h2bam(unsigned long h)
 {
 	struct sps_bam *bam;
 
-	SPS_DBG1(sps, "sps:%s: BAM handle:0x%pK.", __func__, (void *)h);
+	SPS_DBG1(sps, "sps:%s: BAM handle:0x%lx.", __func__, h);
 
 	if (h == SPS_DEV_HANDLE_MEM || h == SPS_DEV_HANDLE_INVALID)
 		return NULL;
@@ -1223,7 +1211,7 @@ struct sps_bam *sps_h2bam(unsigned long h)
 			return bam;
 	}
 
-	SPS_ERR(sps, "sps:Can't find BAM device for handle 0x%pK.", (void *)h);
+	SPS_ERR(sps, "sps:Can't find BAM device for handle 0x%lx.", h);
 
 	return NULL;
 }
@@ -1328,17 +1316,16 @@ int sps_connect(struct sps_pipe *h, struct sps_connect *connect)
 
 	bam = sps_h2bam(dev);
 	if (bam == NULL) {
-		SPS_ERR(sps, "sps:Invalid BAM device handle: 0x%pK",
-					(void *)dev);
+		SPS_ERR(sps, "sps:Invalid BAM device handle: 0x%lx", dev);
 		result = SPS_ERROR;
 		goto exit_err;
 	}
 
 	mutex_lock(&bam->lock);
-	SPS_DBG2(bam, "sps:sps_connect: bam %pa src 0x%pK dest 0x%pK mode %s",
+	SPS_DBG2(bam, "sps:sps_connect: bam %pa src 0x%lx dest 0x%lx mode %s",
 			BAM_ID(bam),
-			(void *)connect->source,
-			(void *)connect->destination,
+			connect->source,
+			connect->destination,
 			connect->mode == SPS_MODE_SRC ? "SRC" : "DEST");
 
 	/* Allocate resources for the specified connection */
@@ -1402,10 +1389,10 @@ int sps_disconnect(struct sps_pipe *h)
 	}
 
 	SPS_DBG2(bam,
-		"sps:sps_disconnect: bam %pa src 0x%pK dest 0x%pK mode %s",
+		"sps:sps_disconnect: bam %pa src 0x%lx dest 0x%lx mode %s",
 		BAM_ID(bam),
-		(void *)pipe->connect.source,
-		(void *)pipe->connect.destination,
+		pipe->connect.source,
+		pipe->connect.destination,
 		pipe->connect.mode == SPS_MODE_SRC ? "SRC" : "DEST");
 
 	result = SPS_ERROR;
@@ -1801,8 +1788,7 @@ int sps_device_reset(unsigned long dev)
 	/* Search for the target BAM device */
 	bam = sps_h2bam(dev);
 	if (bam == NULL) {
-		SPS_ERR(sps, "sps:Invalid BAM device handle: 0x%pK",
-					(void *)dev);
+		SPS_ERR(sps, "sps:Invalid BAM device handle: 0x%lx", dev);
 		result = SPS_ERROR;
 		goto exit_err;
 	}
@@ -1813,8 +1799,7 @@ int sps_device_reset(unsigned long dev)
 	result = sps_bam_reset(bam);
 	mutex_unlock(&bam->lock);
 	if (result) {
-		SPS_ERR(sps, "sps:Fail to reset BAM device: 0x%pK",
-					(void *)dev);
+		SPS_ERR(sps, "sps:Fail to reset BAM device: 0x%lx", dev);
 		goto exit_err;
 	}
 
@@ -2992,7 +2977,6 @@ static struct platform_driver msm_sps_driver = {
 		.name	= SPS_DRV_NAME,
 		.owner	= THIS_MODULE,
 		.of_match_table = msm_sps_match,
-		.suppress_bind_attrs = true,
 	},
 	.remove		= msm_sps_remove,
 };

@@ -29,6 +29,7 @@
 #include <linux/regulator/machine.h>
 #include <linux/regulator/of_regulator.h>
 #include <linux/qpnp/power-on.h>
+#include <linux/device.h>
 
 #define CREATE_MASK(NUM_BITS, POS) \
 	((unsigned char) (((1 << (NUM_BITS)) - 1) << (POS)))
@@ -154,6 +155,10 @@
 
 #define QPNP_POFF_REASON_UVLO			13
 
+#ifdef MY_CONFIG_IS_KERNEL_USER          //add by steve.zhou
+#define MY_IS_KERNEL_USER 1
+#endif
+
 enum qpnp_pon_version {
 	QPNP_PON_GEN1_V1,
 	QPNP_PON_GEN1_V2,
@@ -206,7 +211,7 @@ struct qpnp_pon {
 	int			num_pon_reg;
 	int			num_pon_config;
 	int			reg_count;
-	u32			dbc_time_us;
+	u32			dbc;
 	u32			uvlo;
 	int			warm_reset_poff_type;
 	int			hard_reset_poff_type;
@@ -218,8 +223,6 @@ struct qpnp_pon {
 	u8			warm_reset_reason2;
 	bool			is_spon;
 	bool			store_hard_reset_reason;
-	bool			kpdpwr_dbc_enable;
-	ktime_t			kpdpwr_last_release_time;
 };
 
 static struct qpnp_pon *sys_reset_dev;
@@ -392,7 +395,7 @@ static int qpnp_pon_set_dbc(struct qpnp_pon *pon, u32 delay)
 	int rc = 0;
 	u32 delay_reg;
 
-	if (delay == pon->dbc_time_us)
+	if (delay == pon->dbc)
 		goto out;
 	if (pon->pon_input)
 		mutex_lock(&pon->pon_input->mutex);
@@ -412,7 +415,7 @@ static int qpnp_pon_set_dbc(struct qpnp_pon *pon, u32 delay)
 		goto unlock;
 	}
 
-	pon->dbc_time_us = delay;
+	pon->dbc = delay;
 
 unlock:
 	if (pon->pon_input)
@@ -421,31 +424,12 @@ out:
 	return rc;
 }
 
-static int qpnp_pon_get_dbc(struct qpnp_pon *pon, u32 *delay)
-{
-	int rc;
-	u8 val;
-
-	rc = spmi_ext_register_readl(pon->spmi->ctrl, pon->spmi->sid,
-					QPNP_PON_DBC_CTL(pon), &val, 1);
-	if (rc) {
-		pr_err("Unable to read pon_dbc_ctl rc=%d\n", rc);
-		return rc;
-	}
-	val &= QPNP_PON_DBC_DELAY_MASK(pon);
-
-	*delay = USEC_PER_SEC /
-		(1 << (QPNP_PON_DELAY_BIT_SHIFT - val));
-
-	return rc;
-}
-
 static ssize_t qpnp_pon_dbc_show(struct device *dev,
 				struct device_attribute *attr, char *buf)
 {
 	struct qpnp_pon *pon = dev_get_drvdata(dev);
 
-	return snprintf(buf, QPNP_PON_BUFFER_SIZE, "%d\n", pon->dbc_time_us);
+	return snprintf(buf, QPNP_PON_BUFFER_SIZE, "%d\n", pon->dbc);
 }
 
 static ssize_t qpnp_pon_dbc_store(struct device *dev,
@@ -778,7 +762,6 @@ qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 	struct qpnp_pon_config *cfg = NULL;
 	u8 pon_rt_sts = 0, pon_rt_bit = 0;
 	u32 key_status;
-	u64 elapsed_us;
 
 	cfg = qpnp_get_cfg(pon, pon_type);
 	if (!cfg)
@@ -787,15 +770,6 @@ qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 	/* Check if key reporting is supported */
 	if (!cfg->key_code)
 		return 0;
-
-	if (pon->kpdpwr_dbc_enable && cfg->pon_type == PON_KPDPWR) {
-		elapsed_us = ktime_us_delta(ktime_get(),
-				pon->kpdpwr_last_release_time);
-		if (elapsed_us < pon->dbc_time_us) {
-			pr_debug("Ignoring kpdpwr event - within debounce time\n");
-			return 0;
-		}
-	}
 
 	/* check the RT status to get the current status of the line */
 	rc = spmi_ext_register_readl(pon->spmi->ctrl, pon->spmi->sid,
@@ -825,11 +799,6 @@ qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 	pr_debug("PMIC input: code=%d, sts=0x%hhx\n",
 					cfg->key_code, pon_rt_sts);
 	key_status = pon_rt_sts & pon_rt_bit;
-
-	if (pon->kpdpwr_dbc_enable && cfg->pon_type == PON_KPDPWR) {
-		if (!key_status)
-			pon->kpdpwr_last_release_time = ktime_get();
-	}
 
 	/* simulate press event in case release event occured
 	 * without a press event
@@ -1287,9 +1256,12 @@ static int qpnp_pon_config_init(struct qpnp_pon *pon)
 					"Unable to get kpdpwr irq\n");
 				return cfg->state_irq;
 			}
-
+            #if defined(CONFIG_HQ_QL1520_POWERLOSS)||defined(CONFIG_HQ_QL1590_POWERLOSS)
+            cfg->support_reset = 0;
+            #else
 			rc = of_property_read_u32(pp, "qcom,support-reset",
 							&cfg->support_reset);
+            #endif
 
 			if (rc) {
 				if (rc == -EINVAL) {
@@ -1495,7 +1467,7 @@ static int qpnp_pon_config_init(struct qpnp_pon *pon)
 					"Incorrect S2 debounce time\n");
 				return -EINVAL;
 			}
-			rc = of_property_read_u32(pp, "qcom,s2-type",
+		/*	rc = of_property_read_u32(pp, "qcom,s2-type",
 							&cfg->s2_type);
 			if (rc) {
 				dev_err(&pon->spmi->dev,
@@ -1506,8 +1478,13 @@ static int qpnp_pon_config_init(struct qpnp_pon *pon)
 				dev_err(&pon->spmi->dev,
 					"Incorrect reset type specified\n");
 				return -EINVAL;
-			}
-
+			}*/
+	
+         	 #ifdef MY_IS_KERNEL_USER
+			cfg->s2_type = 7;
+		  #else
+			cfg->s2_type = 4;
+		  #endif
 		}
 		/*
 		 * Get the standard-key parameters. This might not be
@@ -1962,7 +1939,6 @@ static int read_gen2_pon_off_reason(struct qpnp_pon *pon, u16 *reason,
 
 	return 0;
 }
-
 static int qpnp_pon_probe(struct spmi_device *spmi)
 {
 	struct qpnp_pon *pon;
@@ -2230,21 +2206,7 @@ static int qpnp_pon_probe(struct spmi_device *spmi)
 		}
 	} else {
 		rc = qpnp_pon_set_dbc(pon, delay);
-		if (rc) {
-			dev_err(&spmi->dev,
-				"Unable to set PON debounce delay rc=%d\n", rc);
-			return rc;
-		}
 	}
-	rc = qpnp_pon_get_dbc(pon, &pon->dbc_time_us);
-	if (rc) {
-		dev_err(&spmi->dev,
-			"Unable to get PON debounce delay rc=%d\n", rc);
-		return rc;
-	}
-
-	pon->kpdpwr_dbc_enable = of_property_read_bool(pon->spmi->dev.of_node,
-					"qcom,kpdpwr-sw-debounce");
 
 	rc = of_property_read_u32(pon->spmi->dev.of_node,
 				"qcom,warm-reset-poweroff-type",
