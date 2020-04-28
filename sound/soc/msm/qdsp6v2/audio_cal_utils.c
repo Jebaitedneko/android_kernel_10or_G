@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -637,9 +637,7 @@ done:
 	return cal_block;
 err:
 	kfree(cal_block->cal_info);
-	cal_block->cal_info = NULL;
 	kfree(cal_block->client_info);
-	cal_block->client_info = NULL;
 	kfree(cal_block);
 	cal_block = NULL;
 	return cal_block;
