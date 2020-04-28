@@ -3815,6 +3815,30 @@ out:
 	return snprintf(buf, PAGE_SIZE, "%s\n", state);
 }
 
+/* Added by luochuan for usb serial number 20170511 begin */
+static ssize_t iSerial_show(struct device *pdev, struct device_attribute *attr,
+			   char *buf)
+{
+    return snprintf(buf, PAGE_SIZE, "%s", serial_string);
+}
+
+static ssize_t iSerial_store(struct device *pdev, struct device_attribute *attr,
+            const char *buf, size_t size)
+{
+#ifdef CONFIG_HQ_USB_OVERRIDE_SERIALNO
+    /* serial num is overwritten to  "0123456789ABCDEF" */
+    strlcpy(serial_string, "0123456789ABCDEF", sizeof(serial_string) - 1);
+#else
+    if (size >= sizeof(serial_string))
+        return -EINVAL;
+    strlcpy(serial_string, buf, sizeof(serial_string));
+    strim(serial_string);
+#endif
+
+    return size;
+}
+/* Added by luochuan for usb serial number 20170511 end */
+
 #define ANDROID_DEV_ATTR(field, format_string)				\
 static ssize_t								\
 field ## _show(struct device *pdev, struct device_attribute *attr,	\
@@ -3889,7 +3913,9 @@ DESCRIPTOR_ATTR(bDeviceSubClass, "%d\n")
 DESCRIPTOR_ATTR(bDeviceProtocol, "%d\n")
 DESCRIPTOR_STRING_ATTR(iManufacturer, manufacturer_string)
 DESCRIPTOR_STRING_ATTR(iProduct, product_string)
-DESCRIPTOR_STRING_ATTR(iSerial, serial_string)
+/* Deleted by luochuan for usb serial number 20170511 begin */
+//DESCRIPTOR_STRING_ATTR(iSerial, serial_string)
+/* Deleted by luochuan for usb serial number 20170511 begin */
 
 static DEVICE_ATTR(functions, S_IRUGO | S_IWUSR, functions_show,
 						 functions_store);
@@ -3906,6 +3932,10 @@ ANDROID_DEV_ATTR(idle_pc_rpm_no_int_secs, "%u\n");
 static DEVICE_ATTR(state, S_IRUGO, state_show, NULL);
 static DEVICE_ATTR(remote_wakeup, S_IRUGO | S_IWUSR,
 		remote_wakeup_show, remote_wakeup_store);
+/* Added by luochuan for usb serial number 20170511 begin */
+static DEVICE_ATTR(iSerial, S_IRUGO | S_IWUSR, iSerial_show, iSerial_store);
+/* Added by luochuan for usb serial number 20170511 end */
+
 
 static struct device_attribute *android_usb_attributes[] = {
 	&dev_attr_idVendor,

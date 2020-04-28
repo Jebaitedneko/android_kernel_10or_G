@@ -3166,7 +3166,6 @@ static int ep_queue(struct usb_ep *ep, struct usb_request *req,
 					__func__);
 			dev_dbg(mEp->device, "%s: Remote wakeup is not supported. ept #%d\n",
 					__func__, mEp->num);
-			mEp->multi_req = false;
 
 			retval = -EAGAIN;
 			goto done;
