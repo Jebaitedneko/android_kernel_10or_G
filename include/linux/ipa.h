@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -37,14 +37,6 @@ enum ipa_nat_en_type {
 	IPA_BYPASS_NAT,
 	IPA_SRC_NAT,
 	IPA_DST_NAT,
-};
-
-/**
- * enum ipa_ipv6ct_en_type - IPv6CT setting type in IPA end-point
- */
-enum ipa_ipv6ct_en_type {
-	IPA_BYPASS_IPV6CT,
-	IPA_ENABLE_IPV6CT,
 };
 
 /**
@@ -104,7 +96,7 @@ enum ipa_dp_evt_type {
 };
 
 /**
- * enum hdr_total_len_or_pad_type - type of value held by TOTAL_LEN_OR_PAD
+ * enum hdr_total_len_or_pad_type - type vof alue held by TOTAL_LEN_OR_PAD
  * field in header configuration register.
  * @IPA_HDR_PAD: field is used as padding length
  * @IPA_HDR_TOTAL_LEN: field is used as total length
@@ -122,19 +114,6 @@ enum hdr_total_len_or_pad_type {
  */
 struct ipa_ep_cfg_nat {
 	enum ipa_nat_en_type nat_en;
-};
-
-/**
- * struct ipa_ep_cfg_conn_track - IPv6 Connection tracking configuration in
- *	IPA end-point
- * @conn_track_en: Defines speculative conn_track action, means if specific
- *		   pipe needs to have UL/DL IPv6 Connection Tracking or Bypass
- *		   IPv6 Connection Tracking. 0: Bypass IPv6 Connection Tracking
- *					     1: IPv6 UL/DL Connection Tracking.
- *		  Valid for Input Pipes only (IPA consumer)
- */
-struct ipa_ep_cfg_conn_track {
-	enum ipa_ipv6ct_en_type conn_track_en;
 };
 
 /**
@@ -405,8 +384,7 @@ struct ipa_ep_cfg_seq {
 
 /**
  * struct ipa_ep_cfg - configuration of IPA end-point
- * @nat:		NAT parameters
- * @conn_track:		IPv6CT parameters
+ * @nat:		NAT parmeters
  * @hdr:		Header parameters
  * @hdr_ext:		Extended header parameters
  * @mode:		Mode parameters
@@ -420,7 +398,6 @@ struct ipa_ep_cfg_seq {
  */
 struct ipa_ep_cfg {
 	struct ipa_ep_cfg_nat nat;
-	struct ipa_ep_cfg_conn_track conn_track;
 	struct ipa_ep_cfg_hdr hdr;
 	struct ipa_ep_cfg_hdr_ext hdr_ext;
 	struct ipa_ep_cfg_mode mode;
@@ -452,55 +429,6 @@ struct ipa_ep_cfg_ctrl {
 #define IPA_NUM_OF_FIFO_DESC(x) (x/sizeof(struct sps_iovec))
 typedef void (*ipa_notify_cb)(void *priv, enum ipa_dp_evt_type evt,
 		       unsigned long data);
-
-/**
- * enum ipa_wdi_meter_evt_type - type of event client callback is
- * for AP+STA mode metering
- * @IPA_GET_WDI_SAP_STATS: get IPA_stats betwen SAP and STA -
- *			use ipa_get_wdi_sap_stats structure
- * @IPA_SET_WIFI_QUOTA: set quota limit on STA -
- *			use ipa_set_wifi_quota structure
- */
-enum ipa_wdi_meter_evt_type {
-	IPA_GET_WDI_SAP_STATS,
-	IPA_SET_WIFI_QUOTA,
-};
-
-struct ipa_get_wdi_sap_stats {
-	/* indicate to reset stats after query */
-	uint8_t reset_stats;
-	/* indicate valid stats from wlan-fw */
-	uint8_t stats_valid;
-	/* Tx: SAP->STA */
-	uint64_t ipv4_tx_packets;
-	uint64_t ipv4_tx_bytes;
-	/* Rx: STA->SAP */
-	uint64_t ipv4_rx_packets;
-	uint64_t ipv4_rx_bytes;
-	uint64_t ipv6_tx_packets;
-	uint64_t ipv6_tx_bytes;
-	uint64_t ipv6_rx_packets;
-	uint64_t ipv6_rx_bytes;
-};
-
-/**
- * struct ipa_set_wifi_quota - structure used for
- *                                   IPA_SET_WIFI_QUOTA.
- *
- * @quota_bytes:    Quota (in bytes) for the STA interface.
- * @set_quota:       Indicate whether to set the quota (use 1) or
- *                   unset the quota.
- *
- */
-struct ipa_set_wifi_quota {
-	uint64_t quota_bytes;
-	uint8_t  set_quota;
-	/* indicate valid quota set from wlan-fw */
-	uint8_t set_valid;
-};
-
-typedef void (*ipa_wdi_meter_notifier_cb)(enum ipa_wdi_meter_evt_type evt,
-		       void *data);
 
 /**
  * struct ipa_connect_params - low-level client connect input parameters. Either
@@ -832,7 +760,6 @@ enum ipa_irq_type {
 	IPA_TX_SUSPEND_IRQ,
 	IPA_TX_HOLB_DROP_IRQ,
 	IPA_BAM_IDLE_IRQ,
-	IPA_BAM_GSI_IDLE_IRQ = IPA_BAM_IDLE_IRQ,
 	IPA_IRQ_MAX
 };
 
@@ -919,7 +846,6 @@ struct IpaHwRingStats_t {
  *		injected due to vdev_id change
  * @num_ic_inj_fw_desc_change : Number of times the Imm Cmd is
  *		injected due to fw_desc change
- * @num_qmb_int_handled : Number of QMB interrupts handled
 */
 struct IpaHwStatsWDIRxInfoData_t {
 	u32 max_outstanding_pkts;
@@ -933,7 +859,6 @@ struct IpaHwStatsWDIRxInfoData_t {
 	u32 num_pkts_in_dis_uninit_state;
 	u32 num_ic_inj_vdev_change;
 	u32 num_ic_inj_fw_desc_change;
-	u32 num_qmb_int_handled;
 	u32 reserved1;
 	u32 reserved2;
 } __packed;
@@ -1068,7 +993,6 @@ struct ipa_wdi_dl_params_smmu {
  * @ul_smmu: WDI_RX configuration info when WLAN uses SMMU
  * @dl_smmu: WDI_TX configuration info when WLAN uses SMMU
  * @smmu_enabled: true if WLAN uses SMMU
- * @ipa_wdi_meter_notifier_cb: Get WDI stats and quato info
  */
 struct ipa_wdi_in_params {
 	struct ipa_sys_connect_params sys;
@@ -1079,9 +1003,6 @@ struct ipa_wdi_in_params {
 		struct ipa_wdi_dl_params_smmu dl_smmu;
 	} u;
 	bool smmu_enabled;
-#ifdef IPA_WAN_MSG_IPv6_ADDR_GW_LEN
-	ipa_wdi_meter_notifier_cb wdi_notify;
-#endif
 };
 
 /**
@@ -1149,16 +1070,6 @@ struct ipa_gsi_ep_config {
 	int ipa_if_tlv;
 	int ipa_if_aos;
 	int ee;
-};
-
-/**
- * struct ipa_tz_unlock_reg_info - Used in order unlock regions of memory by TZ
- * @reg_addr - Physical address of the start of the region
- * @size - Size of the region in bytes
- */
-struct ipa_tz_unlock_reg_info {
-	u64 reg_addr;
-	u64 size;
 };
 
 #if defined CONFIG_IPA || defined CONFIG_IPA3
@@ -1344,9 +1255,6 @@ int ipa_resume_wdi_pipe(u32 clnt_hdl);
 int ipa_suspend_wdi_pipe(u32 clnt_hdl);
 int ipa_get_wdi_stats(struct IpaHwStatsWDIInfoData_t *stats);
 u16 ipa_get_smem_restr_bytes(void);
-int ipa_broadcast_wdi_quota_reach_ind(uint32_t fid,
-		uint64_t num_bytes);
-
 /*
  * To retrieve doorbell physical address of
  * wlan pipes
@@ -1492,8 +1400,7 @@ struct iommu_domain *ipa_get_smmu_domain(void);
 
 int ipa_disable_apps_wan_cons_deaggr(uint32_t agg_size, uint32_t agg_count);
 
-const struct ipa_gsi_ep_config *ipa_get_gsi_ep_info
-	(enum ipa_client_type client);
+struct ipa_gsi_ep_config *ipa_get_gsi_ep_info(int ipa_ep_idx);
 
 int ipa_stop_gsi_channel(u32 clnt_hdl);
 
@@ -1520,21 +1427,6 @@ typedef void (*ipa_ready_cb)(void *user_data);
 */
 int ipa_register_ipa_ready_cb(void (*ipa_ready_cb)(void *user_data),
 			      void *user_data);
-
-/**
- * ipa_tz_unlock_reg - Unlocks memory regions so that they become accessible
- *	from AP.
- * @reg_info - Pointer to array of memory regions to unlock
- * @num_regs - Number of elements in the array
- *
- * Converts the input array of regions to a struct that TZ understands and
- * issues an SCM call.
- * Also flushes the memory cache to DDR in order to make sure that TZ sees the
- * correct data structure.
- *
- * Returns: 0 on success, negative on failure
- */
-int ipa_tz_unlock_reg(struct ipa_tz_unlock_reg_info *reg_info, u16 num_regs);
 
 #else /* (CONFIG_IPA || CONFIG_IPA3) */
 
@@ -1934,12 +1826,6 @@ static inline int ipa_suspend_wdi_pipe(u32 clnt_hdl)
 	return -EPERM;
 }
 
-static inline int ipa_broadcast_wdi_quota_reach_ind(uint32_t fid,
-		uint64_t num_bytes)
-{
-	return -EPERM;
-}
-
 static inline int ipa_uc_wdi_get_dbpa(
 	struct ipa_wdi_db_params *out)
 {
@@ -2253,8 +2139,7 @@ static inline int ipa_disable_apps_wan_cons_deaggr(void)
 	return -EINVAL;
 }
 
-static inline const struct ipa_gsi_ep_config *ipa_get_gsi_ep_info
-	(int ipa_ep_idx)
+static inline struct ipa_gsi_ep_config *ipa_get_gsi_ep_info(int ipa_ep_idx)
 {
 	return NULL;
 }
@@ -2267,12 +2152,6 @@ static inline int ipa_stop_gsi_channel(u32 clnt_hdl)
 static inline int ipa_register_ipa_ready_cb(
 	void (*ipa_ready_cb)(void *user_data),
 	void *user_data)
-{
-	return -EPERM;
-}
-
-static inline int ipa_tz_unlock_reg(struct ipa_tz_unlock_reg_info *reg_info,
-	u16 num_regs)
 {
 	return -EPERM;
 }

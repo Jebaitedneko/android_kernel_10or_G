@@ -29,7 +29,6 @@ enum android_function_index {
 	ANDROID_DIAG,
 	ANDROID_QDSS_BAM,
 	ANDROID_SERIAL,
-	ANDROID_SERIAL_CONFIG2,
 	ANDROID_CCID,
 	ANDROID_ACM,
 	ANDROID_MTP,
@@ -75,8 +74,6 @@ static enum android_function_index name_to_func_idx(const char *name)
 		return ANDROID_QDSS_BAM;
 	if (!strncasecmp("SERIAL", name, FUNC_NAME_LEN))
 		return ANDROID_SERIAL;
-	if (!strncasecmp("SERIAL_CONFIG2", name, FUNC_NAME_LEN))
-		return ANDROID_SERIAL_CONFIG2;
 	if (!strncasecmp("CCID", name, FUNC_NAME_LEN))
 		return ANDROID_CCID;
 	if (!strncasecmp("ACM", name, FUNC_NAME_LEN))
@@ -100,7 +97,7 @@ static enum android_function_index name_to_func_idx(const char *name)
 	if (!strncasecmp("AUDIO_SOURCE", name, FUNC_NAME_LEN))
 		return ANDROID_AUDIO_SRC;
 	if (!strncasecmp("CHARGING", name, FUNC_NAME_LEN))
-		return ANDROID_CHARGER;
+		return ANDROID_AUDIO_SRC;
 	if (!strncasecmp("MIDI", name, FUNC_NAME_LEN))
 		return ANDROID_MIDI;
 	if (!strncasecmp("RNDIS_GSI", name, FUNC_NAME_LEN))

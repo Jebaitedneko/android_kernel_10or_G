@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -11,8 +11,8 @@
  * GNU General Public License for more details.
  */
 
-#ifndef __MSM_CLOCKS_9650_H
-#define __MSM_CLOCKS_9650_H
+#ifndef __MSM_CLOCKS_CALIFORNIUM_H
+#define __MSM_CLOCKS_CALIFORNIUM_H
 
 /* RPM controlled clocks */
 #define clk_xo 0xf13dfee3
@@ -150,11 +150,5 @@
 
 /* Audio External Clocks */
 #define clk_audio_lpass_mclk 0x575ec22b
-
-/* sdx20 */
-#define clk_gcc_pcie_aux_clk 0x06d8e933
-#define clk_pcie_aux_phy_clk_src 0x672e340c
-#define clk_pcie20_phy_aux_clk 0x613dfb19
-#define clk_pcie_aux_mux_clk 0x3e75325b
 
 #endif

@@ -30,7 +30,6 @@ enum iio_chan_type {
 	IIO_CCT,
 	IIO_PRESSURE,
 	IIO_HUMIDITYRELATIVE,
-	IIO_RESISTANCE,
 };
 
 enum iio_modifier {

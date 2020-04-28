@@ -18,4 +18,8 @@
 /* msm jpeg dma control ID's */
 #define V4L2_CID_JPEG_DMA_SPEED (V4L2_CID_PRIVATE_BASE)
 
+struct msm_jpeg_dma_buff {
+	int32_t fd;
+	uint32_t offset;
+};
 #endif /* __UAPI_MSM_JPEG_DMA__ */
