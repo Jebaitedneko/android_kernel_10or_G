@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -18,11 +18,19 @@
 #include <linux/regulator/rpm-smd-regulator.h>
 #include <linux/regulator/consumer.h>
 
+#ifdef CONFIG_HQ_ZQL1590_SUPPORT
+#include <linux/of_gpio.h> //Mesin added for diff main camera 5/10
+#endif
+//// add for gc5005 OTP
+#define gc5025_USE_OTP
+
+#ifdef gc5025_USE_OTP
+void gc5025_gcore_identify_otp(struct msm_sensor_ctrl_t *s_ctrl);
+#endif
+////end OTP
+
 #undef CDBG
 #define CDBG(fmt, args...) pr_debug(fmt, ##args)
-
-static struct msm_camera_i2c_fn_t msm_sensor_cci_func_tbl;
-static struct msm_camera_i2c_fn_t msm_sensor_secure_func_tbl;
 
 static void msm_sensor_adjust_mclk(struct msm_camera_power_ctrl_t *ctrl)
 {
@@ -88,7 +96,6 @@ int32_t msm_sensor_free_sensor_data(struct msm_sensor_ctrl_t *s_ctrl)
 	kfree(s_ctrl->sensordata->actuator_info);
 	kfree(s_ctrl->sensordata->power_info.gpio_conf->gpio_num_info);
 	kfree(s_ctrl->sensordata->power_info.gpio_conf->cam_gpio_req_tbl);
-	kfree(s_ctrl->sensordata->power_info.gpio_conf->cam_gpio_set_tbl);
 	kfree(s_ctrl->sensordata->power_info.gpio_conf);
 	kfree(s_ctrl->sensordata->power_info.cam_vreg);
 	kfree(s_ctrl->sensordata->power_info.power_setting);
@@ -136,11 +143,6 @@ int msm_sensor_power_down(struct msm_sensor_ctrl_t *s_ctrl)
 			__func__, __LINE__, power_info, sensor_i2c_client);
 		return -EINVAL;
 	}
-
-	/* Power down secure session if it exist*/
-	if (s_ctrl->is_secure)
-		msm_camera_tz_i2c_power_down(sensor_i2c_client);
-
 	return msm_camera_power_down(power_info, sensor_device_type,
 		sensor_i2c_client);
 }
@@ -166,8 +168,8 @@ int msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 	power_info = &s_ctrl->sensordata->power_info;
 	sensor_i2c_client = s_ctrl->sensor_i2c_client;
 	slave_info = s_ctrl->sensordata->slave_info;
-	sensor_name = s_ctrl->sensordata->sensor_name;
-
+	sensor_name = s_ctrl->sensordata->sensor_name; 
+	pr_err("%s: Mesin_sensor_id id: 0x%x \n",__func__, slave_info->sensor_id);
 	if (!power_info || !sensor_i2c_client || !slave_info ||
 		!sensor_name) {
 		pr_err("%s:%d failed: %pK %pK %pK %pK\n",
@@ -179,27 +181,7 @@ int msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 	if (s_ctrl->set_mclk_23880000)
 		msm_sensor_adjust_mclk(power_info);
 
-	CDBG("Sensor %d tagged as %s\n", s_ctrl->id,
-		(s_ctrl->is_secure)?"SECURE":"NON-SECURE");
-
 	for (retry = 0; retry < 3; retry++) {
-		if (s_ctrl->is_secure) {
-			rc = msm_camera_tz_i2c_power_up(sensor_i2c_client);
-			if (rc < 0) {
-#ifdef CONFIG_MSM_SEC_CCI_DEBUG
-				CDBG("Secure Sensor %d use cci\n", s_ctrl->id);
-				/* session is not secure */
-				s_ctrl->sensor_i2c_client->i2c_func_tbl =
-					&msm_sensor_cci_func_tbl;
-#else  /* CONFIG_MSM_SEC_CCI_DEBUG */
-				return rc;
-#endif /* CONFIG_MSM_SEC_CCI_DEBUG */
-			} else {
-				/* session is secure */
-				s_ctrl->sensor_i2c_client->i2c_func_tbl =
-					&msm_sensor_secure_func_tbl;
-			}
-		}
 		rc = msm_camera_power_up(power_info, s_ctrl->sensor_device_type,
 			sensor_i2c_client);
 		if (rc < 0)
@@ -208,7 +190,7 @@ int msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 		if (rc < 0) {
 			msm_camera_power_down(power_info,
 				s_ctrl->sensor_device_type, sensor_i2c_client);
-			msleep(20);
+			msleep(5);
 			continue;
 		} else {
 			break;
@@ -234,9 +216,14 @@ static uint16_t msm_sensor_id_by_mask(struct msm_sensor_ctrl_t *s_ctrl,
 		sensor_id_mask >>= 1;
 		sensor_id >>= 1;
 	}
+	pr_err("Mesin_msm_sensor_id_by_mask=%d\n",sensor_id);
 	return sensor_id;
 }
 
+#ifdef CONFIG_HQ_ZQL1590_SUPPORT
+static unsigned Main_rgb_camera_gpio_id_pin = (62);
+static unsigned Main_mono_camera_gpio_id_pin = (63);
+#endif
 int msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 {
 	int rc = 0;
@@ -244,7 +231,29 @@ int msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 	struct msm_camera_i2c_client *sensor_i2c_client;
 	struct msm_camera_slave_info *slave_info;
 	const char *sensor_name;
-
+#ifdef CONFIG_HQ_ZQL1590_SUPPORT   
+    int ret;
+    //Mesin add
+		ret = gpio_request(Main_rgb_camera_gpio_id_pin,"Main_rgb_camera_gpio_id_pin");
+		if (ret < 0) {
+			pr_err("Unable to Main_rgb_camera_gpio_id_pin\n");
+			gpio_free(Main_rgb_camera_gpio_id_pin);
+		}
+		else{
+			ret = gpio_direction_input(Main_rgb_camera_gpio_id_pin);
+			pr_err("[Mesin]-%s: ret = %d\n", __func__, ret);
+		}	
+ //Mesin add
+		ret = gpio_request(Main_mono_camera_gpio_id_pin,"Main_mono_camera_gpio_id_pin");
+			if (ret < 0) {
+				pr_err("Unable to Main_mono_camera_gpio_id_pin\n");
+				gpio_free(Main_mono_camera_gpio_id_pin);
+			}
+			else{
+				ret = gpio_direction_input(Main_mono_camera_gpio_id_pin);
+				pr_err("[Mesin]-%s: ret = %d\n", __func__, ret);
+			}	
+#endif
 	if (!s_ctrl) {
 		pr_err("%s:%d failed: %pK\n",
 			__func__, __LINE__, s_ctrl);
@@ -268,9 +277,31 @@ int msm_sensor_match_id(struct msm_sensor_ctrl_t *s_ctrl)
 		pr_err("%s: %s: read id failed\n", __func__, sensor_name);
 		return rc;
 	}
+//Mesin added for diff main camera 5/10
+#ifdef CONFIG_HQ_ZQL1590_SUPPORT
+   pr_err("Main_rgb_camera_gpio_id_pin=%d,Main_mono_camera_gpio_id_pin%d",gpio_get_value(Main_rgb_camera_gpio_id_pin),gpio_get_value(Main_mono_camera_gpio_id_pin));
+   pr_err("Mesin_chipid=0x%x,%s\n",chipid,sensor_name);
+   if ((0==gpio_get_value(Main_rgb_camera_gpio_id_pin))&&(0==gpio_get_value(Main_mono_camera_gpio_id_pin)))
+   	{
+   	   if(0xd855 == chipid){
+         chipid=chipid+1;
+   	   	}
+    }
+#endif
+//Mesin added for diff main camera 5/10
 
-	pr_debug("%s: read id: 0x%x expected id 0x%x:\n",
+//// add for gc5005 OTP
+#ifdef gc5025_USE_OTP
+	if(!strcmp(sensor_name,"gc5025_hq")){
+		pr_err("5025k enter gc5025otp");
+		gc5025_gcore_identify_otp(s_ctrl);
+		}
+#endif
+////end OTP
+
+	pr_err("%s: Mesin_read id: 0x%x expected id 0x%x:\n",
 			__func__, chipid, slave_info->sensor_id);
+         
 	if (msm_sensor_id_by_mask(s_ctrl, chipid) != slave_info->sensor_id) {
 		pr_err("%s chip id %x does not match %x\n",
 				__func__, chipid, slave_info->sensor_id);
@@ -1481,21 +1512,6 @@ static struct msm_camera_i2c_fn_t msm_sensor_qup_func_tbl = {
 	.i2c_write_table_sync_block = msm_camera_qup_i2c_write_table,
 };
 
-static struct msm_camera_i2c_fn_t msm_sensor_secure_func_tbl = {
-	.i2c_read = msm_camera_tz_i2c_read,
-	.i2c_read_seq = msm_camera_tz_i2c_read_seq,
-	.i2c_write = msm_camera_tz_i2c_write,
-	.i2c_write_table = msm_camera_tz_i2c_write_table,
-	.i2c_write_seq_table = msm_camera_tz_i2c_write_seq_table,
-	.i2c_write_table_w_microdelay =
-		msm_camera_tz_i2c_write_table_w_microdelay,
-	.i2c_util = msm_sensor_tz_i2c_util,
-	.i2c_write_conf_tbl = msm_camera_tz_i2c_write_conf_tbl,
-	.i2c_write_table_async = msm_camera_tz_i2c_write_table_async,
-	.i2c_write_table_sync = msm_camera_tz_i2c_write_table_sync,
-	.i2c_write_table_sync_block = msm_camera_tz_i2c_write_table_sync_block,
-};
-
 int32_t msm_sensor_init_default_params(struct msm_sensor_ctrl_t *s_ctrl)
 {
 	struct msm_camera_cci_client *cci_client = NULL;
@@ -1528,9 +1544,6 @@ int32_t msm_sensor_init_default_params(struct msm_sensor_ctrl_t *s_ctrl)
 
 		/* Get CCI subdev */
 		cci_client->cci_subdev = msm_cci_get_subdev();
-
-		if (s_ctrl->is_secure)
-			msm_camera_tz_i2c_register_sensor((void *)s_ctrl);
 
 		/* Update CCI / I2C function table */
 		if (!s_ctrl->sensor_i2c_client->i2c_func_tbl)
