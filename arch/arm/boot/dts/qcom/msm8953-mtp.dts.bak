@@ -1,13 +1,14 @@
 /dts-v1/;
 
 / {
-	#address-cells = <0x02>;
-	#size-cells = <0x02>;
+	#address-cells = <0x2>;
+	#size-cells = <0x2>;
 	model = "Qualcomm Technologies, Inc. MSM8953 + PMI8937 MTP";
 	compatible = "qcom,msm8953-mtp", "qcom,msm8953", "qcom,mtp";
-	qcom,msm-id = <0x125 0x00>;
-	interrupt-parent = <0x01>;
-	qcom,board-id = <0x1a 0x00>;
+	qcom,msm-id = <0x125 0x0>;
+	interrupt-parent = <0x1>;
+	qcom,board-id = <0x8 0x0>;
+	qcom,pmic-id = <0x10016 0x20037 0x0 0x0>;
 
 	cpus {
 		#address-cells = <0x1>;
