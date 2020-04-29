@@ -1,4 +1,5 @@
-dtb-$(CONFIG_ARCH_MSM8996) += msm8996-v2-pmi8994-cdp.dtb \
+dtb-$(CONFIG_ARCH_MSM8996) += msm8996-v2-pmi8994-mtp.dtb \
+	msm8996-v2-pmi8994-cdp.dtb \
 	msm8996-v2-pmi8994-mtp.dtb \
 	msm8996-v2-pmi8994-pmk8001-cdp.dtb \
 	msm8996-v2-pmi8994-pmk8001-mtp.dtb \
@@ -150,7 +151,8 @@ dtb-$(CONFIG_ARCH_MDM9640) += mdm9640-sim.dtb \
 	mdm9640-v2-pmk8001-mtp.dtb \
 
 
-dtb-$(CONFIG_ARCH_MDM9650) += mdm9650-sim.dtb \
+dtb-$(CONFIG_ARCH_MDM9650) += mdm9650-ttp.dtb \
+	mdm9650-sim.dtb \
 	mdm9650-rumi.dtb \
 	mdm9650-emmc-cdp.dtb \
 	mdm9650-nand-cdp.dtb \
@@ -158,6 +160,7 @@ dtb-$(CONFIG_ARCH_MDM9650) += mdm9650-sim.dtb \
 	mdm9650-nand-mtp.dtb \
 	mdm9650-ttp.dtb \
 	mdm9650-nand-dualwifi-mtp.dtb \
+	mdm9650-pcie-ep-ttp.dtb \
 	mdm9650-v1.1-emmc-cdp.dtb \
 	mdm9650-v1.1-nand-cdp.dtb \
 	mdm9650-v1.1-emmc-mtp.dtb \
@@ -253,7 +256,43 @@ dtb-$(CONFIG_ARCH_MSM8940) += msm8940-pmi8937-cdp.dtb \
 	msm8940-pmi8940-rcm.dtb \
 	msm8940-pmi8940-qrd-sku7.dtb
 
-dtb-$(CONFIG_ARCH_MSM8953) += msm8953-oxygen.dtb
+dtb-$(CONFIG_ARCH_MSM8953) += msm8953-sim.dtb \
+	msm8953-rumi.dtb \
+	msm8953-cdp.dtb \
+	msm8953-mtp.dtb \
+	msm8953-ext-codec-mtp.dtb \
+	msm8953-qrd-sku3.dtb \
+	msm8953-rcm.dtb \
+	apq8053-rcm.dtb \
+	msm8953-ext-codec-rcm.dtb \
+	apq8053-cdp.dtb \
+	apq8053-ipc.dtb \
+	msm8953-ipc.dtb \
+	apq8053-mtp.dtb \
+	apq8053-ext-audio-mtp.dtb \
+	apq8053-ext-codec-rcm.dtb \
+	apq8053-lite-dragon-v1.0.dtb \
+	apq8053-lite-dragon-v2.0.dtb \
+	apq8053-lite-ext-codec-dragon-v2.0.dtb \
+	msm8953-cdp-1200p.dtb \
+	msm8953-iot-mtp.dtb \
+	apq8053-iot-mtp.dtb \
+	msm8953-pmi8940-cdp.dtb \
+	msm8953-pmi8940-mtp.dtb \
+	msm8953-pmi8937-cdp.dtb \
+	msm8953-pmi8937-mtp.dtb \
+	msm8953-pmi8940-ext-codec-mtp.dtb \
+	msm8953-pmi8937-ext-codec-mtp.dtb
+
+dtb-$(CONFIG_ARCH_SDM450) += sdm450-rcm.dtb \
+	sdm450-cdp.dtb \
+	sdm450-mtp.dtb \
+	sdm450-qrd.dtb \
+	sdm450-pmi8940-mtp.dtb \
+	sdm450-pmi8937-mtp.dtb \
+	sdm450-iot-mtp.dtb \
+	sda450-cdp.dtb \
+	sda450-mtp.dtb
 
 dtb-$(CONFIG_ARCH_MDM9607) += mdm9607-rumi.dtb \
 	mdm9607-cdp.dtb \
@@ -278,13 +317,17 @@ dtb-$(CONFIG_ARCH_MSM8909) += msm8909-pm8916-mtp.dtb \
         msm8909-qrd-skue.dtb \
 	msm8909w-wtp.dtb \
 	apq8009w-wtp.dtb \
+	sdw2100-msm8909w-wtp.dtb \
+	sdw2100-apq8009w-wtp.dtb \
 	apq8009w-cdp.dtb \
 	msm8909w-swoctp.dtb \
+	sdw2100-msm8909w-swoctp.dtb \
 	msm8909w-swoctp-circpanel.dtb \
 	apq8009w-swoctp.dtb \
 	apq8009w-swoctp-circpanel.dtb \
 	apq8009w-nowgr-swoctp.dtb \
 	apq8009w-nowgr-swoctp-circpanel.dtb \
+	sdw2100-apq8009w-nowgr-swoctp-circpanel.dtb \
 	msm8909-pm8916-cdp.dtb \
 	msm8909w-cdp.dtb \
 	msm8909w-1gb-wtp.dtb \
@@ -301,6 +344,12 @@ dtb-$(CONFIG_ARCH_MSM8909) += msm8909-pm8916-mtp.dtb \
 	msm8909w-bg-wtp-v2.dtb \
 	apq8009w-bg-wtp-v1.dtb \
 	apq8009w-bg-wtp-v2.dtb \
+	sdw2100-msm8909w-1gb-swoctp-circpanel.dtb \
+	sdw3100-msm8909w-wtp.dtb \
+	sdw2500-msm8909w-wtp.dtb \
+	sdw3100-apq8009w-wtp.dtb \
+	sdw3100-apq8009w-alpha.dtb \
+	sdw2500-apq8009w-wtp.dtb \
 	apq8009-mtp-wcd9326.dtb \
 	msm8909-mtp-wcd9326.dtb \
 	msm8909-mtp-wcd9326-refboard.dtb \
@@ -316,13 +365,18 @@ dtb-$(CONFIG_ARCH_MSM8909) += msm8909-pm8916-mtp.dtb \
 	apq8009-cdp-wcd9326-refboard.dtb \
 	apq8009-rcm-wcd9326-refboard.dtb \
 	apq8009-robot-refboard.dtb \
+	apq8009-robot-som-refboard.dtb \
 	apq8009-robot-rome.dtb \
 	apq8009-mtp-drone.dtb \
+	apq8009-mtp-wcd9326-excelpoint-refboard.dtb \
 	msm8909-mtp.dtb \
 	msm8909-1gb-mtp.dtb \
 	msm8909-1gb-rcm.dtb \
 	msm8909-pm8916-1gb-rcm.dtb \
-        msm8909-1gb-cdp.dtb
+	msm8909-1gb-cdp.dtb \
+	msm8909-1gb-cdp.dtb \
+	apq8009-ext-codec-dragon.dtb \
+	apq8009-dragon.dtb
 
 ifeq ($(CONFIG_ARM64),y)
 always          := $(dtb-y)
