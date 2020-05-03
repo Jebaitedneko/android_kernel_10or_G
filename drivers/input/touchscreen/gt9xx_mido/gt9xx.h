@@ -57,9 +57,9 @@
 #define GTP_ICS_SLOT_REPORT   0
 
 #define CONFIG_GTP_GLOVE_MODE 1
-#define GTP_AUTO_UPDATE      1
-#define GTP_HEADER_FW_UPDATE  1
-#define GTP_AUTO_UPDATE_CFG   0
+#define GTP_AUTO_UPDATE       0
+#define GTP_HEADER_FW_UPDATE  0
+#define GTP_AUTO_UPDATE_CFG   1
 
 #define GTP_COMPATIBLE_MODE   0
 
@@ -75,6 +75,7 @@
 #define GTP_DEBUG_ARRAY_ON    0
 #define GTP_DEBUG_FUNC_ON     0
 #define GTP_CONFIG_OF 1
+
 
 #if GTP_COMPATIBLE_MODE
 typedef enum {
