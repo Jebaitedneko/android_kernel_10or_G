@@ -655,23 +655,6 @@ KBUILD_CFLAGS	+= $(call cc-option,-Oz,-Os)
 else
 ifeq ($(cc-name),clang)
 KBUILD_CFLAGS	+= -O3 -mtune=cortex-a53 -mcpu=cortex-a53 -march=armv8-a
-KBUILD_CFLAGS += \
-  -mllvm -polly \
-  -mllvm -polly-ast-use-context \
-  -mllvm -polly-vectorizer=polly \
-  -mllvm -polly-opt-fusion=max \
-  -mllvm -polly-opt-maximize-bands=yes \
-  -mllvm -polly-run-dce \
-  -mllvm -polly-dependences-computeout=0 \
-  -mllvm -polly-dependences-analysis-type=value-based \
-  -mllvm -polly-run-inliner \
-  -mllvm -polly-detect-keep-going \
-  -mllvm -polly-rtc-max-arrays-per-group=40 \
-  -mllvm -polly-vectorizer=stripmine \
-  -mllvm -polly-enable-optree \
-  -mllvm -polly-code-generation=full \
-  -mllvm -polly-enable-simplify \
-  -mllvm -polly-enable-delicm
 else
 KBUILD_CFLAGS	+= -O2 -mtune=cortex-a53 -mcpu=cortex-a53
 endif
