@@ -2560,7 +2560,7 @@ static ssize_t gt9xx_mido_disable_keys_store(struct device *dev,
 
 static DEVICE_ATTR(disable_keys, S_IWUSR | S_IRUSR, gt9xx_mido_disable_keys_show,
 		   gt9xx_mido_disable_keys_store);
-
+/*
 static ssize_t gt9xx_mido_enable_dt2w_show(struct device *dev,
         struct device_attribute *attr, char *buf)
 {
@@ -2638,7 +2638,47 @@ static int gt9xx_mido_proc_init(struct kernfs_node *sysfs_node_parent)
        kfree(double_tap_sysfs_node);
        return ret;
 }
+*/
+// REDEFINITIONS WITH DT2W REMOVED
+static struct attribute *gt9xx_mido_attrs[] = {
+    &dev_attr_disable_keys.attr,
+	NULL
+};
 
+static const struct attribute_group gt9xx_mido_attr_group = {
+       .attrs = gt9xx_mido_attrs,
+};
+
+static int gt9xx_mido_proc_init(struct kernfs_node *sysfs_node_parent)
+{
+       int ret = 0;
+       char *buf, *path = NULL;
+       char *key_disabler_sysfs_node;
+       struct proc_dir_entry *proc_entry_tp = NULL;
+       struct proc_dir_entry *proc_symlink_tmp = NULL;
+       buf = kzalloc(PATH_MAX, GFP_KERNEL);
+       if (buf)
+               path = kernfs_path(sysfs_node_parent, buf, PATH_MAX);
+
+       proc_entry_tp = proc_mkdir("touchpanel", NULL);
+       if (proc_entry_tp == NULL) {
+               pr_err("%s: Couldn't create touchpanel dir in procfs\n", __func__);
+               ret = -ENOMEM;
+       }
+
+       key_disabler_sysfs_node = kzalloc(PATH_MAX, GFP_KERNEL);
+       if (key_disabler_sysfs_node)
+               sprintf(key_disabler_sysfs_node, "/sys%s/%s", path, "disable_keys");
+       proc_symlink_tmp = proc_symlink("capacitive_keys_disable",
+                       proc_entry_tp, key_disabler_sysfs_node);
+       if (proc_symlink_tmp == NULL) {
+               pr_err("%s: Couldn't create capacitive_keys_enable symlink\n", __func__);
+               ret = -ENOMEM;
+       }
+       kfree(buf);
+       kfree(key_disabler_sysfs_node);
+       return ret;
+}
 /*******************************************************
 Function:
 	I2c probe.
@@ -2919,7 +2959,7 @@ static void goodix_ts_suspend(struct goodix_ts_data *ts)
 #if GTP_ESD_PROTECT
 	gtp_esd_switch(ts->client, SWITCH_OFF);
 #endif
-	printk("gtp_gesture_func_on: %d\n", gtp_gesture_func_on);
+//	printk("gtp_gesture_func_on: %d\n", gtp_gesture_func_on);
 #if GTP_GESTURE_WAKEUP
 	#if defined(CONFIG_GTP_GLOVE_MODE)
 	if (gtp_glove_mode_status) {

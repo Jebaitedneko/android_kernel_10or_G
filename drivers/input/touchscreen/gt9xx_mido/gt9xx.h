@@ -56,7 +56,7 @@
 #define GTP_POWER_CTRL_SLEEP  0
 #define GTP_ICS_SLOT_REPORT   0
 
-#define CONFIG_GTP_GLOVE_MODE 1
+#define CONFIG_GTP_GLOVE_MODE 0
 #define GTP_AUTO_UPDATE       0
 #define GTP_HEADER_FW_UPDATE  0
 #define GTP_AUTO_UPDATE_CFG   1
@@ -69,7 +69,7 @@
 #define GTP_WITH_PEN          0
 #define GTP_PEN_HAVE_BUTTON   0
 
-#define GTP_GESTURE_WAKEUP    1
+#define GTP_GESTURE_WAKEUP    0
 
 #define GTP_DEBUG_ON          0
 #define GTP_DEBUG_ARRAY_ON    0
