@@ -747,6 +747,7 @@ endif
 # Fix build for GCC 4.7
 ifeq ($(cc-name),clang)
 EXTRA_CFLAGS += -Wno-uninitialized -Wno-unused-function -Wno-unused-variable -Wno-enum-conversion -Wno-typedef-redefinition
+CFLAGS_wlan_qct_wdi_dts.o += -mllvm -polly-vectorizer=stripmine
 else
 EXTRA_CFLAGS += -Wno-maybe-uninitialized -Wno-unused-function -Wno-unused-variable
 endif

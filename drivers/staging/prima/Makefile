@@ -13,3 +13,7 @@ modules_install:
 clean::
 	rm -f *.o *.ko *.mod.c *.mod.o *~ .*.cmd Module.symvers
 	rm -rf .tmp_versions
+	
+ifeq ($(cc-name),clang
+CFLAGS_wlan_qct_wdi_dts.o += -mllvm -polly-vectorizer=stripmine
+endif
