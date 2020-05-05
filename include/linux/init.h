@@ -359,3 +359,4 @@ void __init parse_early_options(char *cmdline);
 #endif
 
 #endif /* _LINUX_INIT_H */
+
