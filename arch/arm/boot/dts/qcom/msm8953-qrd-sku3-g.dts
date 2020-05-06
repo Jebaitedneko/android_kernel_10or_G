@@ -2561,7 +2561,9 @@
 			interrupt-names = "kgsl_3d0_irq";
 			qcom,id = <0x0>;
 			qcom,chipid = <0x5000600>;
-			qcom,initial-pwrlevel = <0x4>;
+			qcom,initial-pwrlevel = <0x7>;
+			/* Enable gpu cooling device */
+			#cooling-cells = <2>;
 			qcom,idle-timeout = <0x50>;
 			qcom,deep-nap-timeout = <0x64>;
 			qcom,strtstp-sleepwake;
@@ -2592,6 +2594,7 @@
 			coresight-child-ports = <0x6>;
 			qcom,enable-ca-jump;
 			qcom,ca-busy-penalty = <0x2ee0>;
+			/* Context aware jump target power level */
 			qcom,ca-target-pwrlevel = <0x3>;
 
 			qcom,gpu-mempools {
@@ -9203,17 +9206,17 @@
 			reg-names = "ldo_addr", "efuse_addr";
 			regulator-name = "msm_gfx_ldo";
 			regulator-min-microvolt = <0x1>;
-			regulator-max-microvolt = <0x7>;
+			regulator-max-microvolt = <0x9>;
 			qcom,ldo-voltage-ceiling = <0x975e0 0xa6040 0xb71b0>;
 			qcom,ldo-voltage-floor = <0x7c830 0x7c830 0x927c0>;
-			qcom,num-corners = <0x7>;
+			qcom,num-corners = <0x8>;
 			qcom,num-ldo-corners = <0x3>;
-			qcom,ldo-enable-corner-map = <0x1 0x1 0x1 0x0 0x0 0x0 0x0>;
+			qcom,ldo-enable-corner-map = <0x1 0x1 0x1 0x0 0x0 0x0 0x0 0x0>;
 			qcom,init-corner = <0x4>;
 			vdd-cx-supply = <0xf7>;
-			qcom,vdd-cx-corner-map = <0x40 0x40 0x80 0xc0 0x100 0x140 0x180>;
+			qcom,vdd-cx-corner-map = <0x40 0x40 0x80 0xc0 0x100 0x140 0x180 0x1C0>;
 			mem-acc-supply = <0x137>;
-			qcom,mem-acc-corner-map = <0x1 0x1 0x1 0x2 0x2 0x2 0x2>;
+			qcom,mem-acc-corner-map = <0x1 0x1 0x1 0x2 0x2 0x2 0x2 0x2>;
 			qcom,ldo-init-voltage-adjustment = <0x88b8 0x61a8 0x0>;
 			linux,phandle = <0xc8>;
 			phandle = <0xc8>;
