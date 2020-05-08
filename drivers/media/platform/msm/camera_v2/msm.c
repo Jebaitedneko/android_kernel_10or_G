@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -37,7 +37,6 @@ static struct list_head    ordered_sd_list;
 static struct mutex        ordered_sd_mtx;
 static struct mutex        v4l2_event_mtx;
 
-static atomic_t qos_add_request_done = ATOMIC_INIT(0);
 static struct pm_qos_request msm_v4l2_pm_qos_request;
 
 static struct msm_queue_head *msm_session_q;
@@ -217,11 +216,9 @@ static inline int __msm_queue_find_command_ack_q(void *d1, void *d2)
 	return (ack->stream_id == *(unsigned int *)d2) ? 1 : 0;
 }
 
-static inline void msm_pm_qos_add_request(void)
+static void msm_pm_qos_add_request(void)
 {
 	pr_info("%s: add request", __func__);
-	if (atomic_cmpxchg(&qos_add_request_done, 0, 1))
-		return;
 	pm_qos_add_request(&msm_v4l2_pm_qos_request, PM_QOS_CPU_DMA_LATENCY,
 	PM_QOS_DEFAULT_VALUE);
 }
@@ -235,7 +232,6 @@ static void msm_pm_qos_remove_request(void)
 void msm_pm_qos_update_request(int val)
 {
 	pr_info("%s: update request %d", __func__, val);
-	msm_pm_qos_add_request();
 	pm_qos_update_request(&msm_v4l2_pm_qos_request, val);
 }
 
@@ -1208,19 +1204,21 @@ long msm_copy_camera_private_ioctl_args(unsigned long arg,
 	struct msm_camera_private_ioctl_arg *k_ioctl,
 	void __user **tmp_compat_ioctl_ptr)
 {
-	struct msm_camera_private_ioctl_arg u_ioctl;
+	struct msm_camera_private_ioctl_arg up_ioctl;
 
 	if (WARN_ON(!arg || !k_ioctl || !tmp_compat_ioctl_ptr))
 		return -EIO;
 
-	if (copy_from_user(&u_ioctl, (void __user *)arg, sizeof(u_ioctl)))
+	if (copy_from_user(&up_ioctl,
+		(struct msm_camera_private_ioctl_arg *)arg,
+		sizeof(struct msm_camera_private_ioctl_arg)))
 		return -EFAULT;
 
-	k_ioctl->id = u_ioctl.id;
-	k_ioctl->size = u_ioctl.size;
-	k_ioctl->result = u_ioctl.result;
-	k_ioctl->reserved = u_ioctl.reserved;
-	*tmp_compat_ioctl_ptr = compat_ptr(u_ioctl.ioctl_ptr);
+	k_ioctl->id = up_ioctl.id;
+	k_ioctl->size = up_ioctl.size;
+	k_ioctl->result = up_ioctl.result;
+	k_ioctl->reserved = up_ioctl.reserved;
+	*tmp_compat_ioctl_ptr = compat_ptr(up_ioctl.ioctl_ptr);
 
 	return 0;
 }
@@ -1333,7 +1331,7 @@ static int msm_probe(struct platform_device *pdev)
 	if (WARN_ON(rc < 0))
 		goto media_fail;
 
-	if (WARN_ON((rc = media_entity_init(&pvdev->vdev->entity,
+	if (WARN_ON((rc == media_entity_init(&pvdev->vdev->entity,
 			0, NULL, 0)) < 0))
 		goto entity_fail;
 

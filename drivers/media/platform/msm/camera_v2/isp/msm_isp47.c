@@ -1712,26 +1712,21 @@ void msm_vfe47_cfg_axi_ub_equal_default(
 	uint32_t prop_size = 0;
 	uint32_t wm_ub_size;
 	uint64_t delta;
-	uint32_t rdi_ub_offset;
 
-	if (frame_src == VFE_PIX_0) {
-		for (i = 0; i < axi_data->hw_info->num_wm; i++) {
-			if (axi_data->free_wm[i] &&
-				SRC_TO_INTF(
-				HANDLE_TO_IDX(axi_data->free_wm[i])) ==
-				VFE_PIX_0) {
-				num_used_wms++;
-				total_image_size +=
-					axi_data->wm_image_size[i];
-			}
+	for (i = 0; i < axi_data->hw_info->num_wm; i++) {
+		if (axi_data->free_wm[i]) {
+			num_used_wms++;
+			total_image_size +=
+				axi_data->wm_image_size[i];
 		}
-		ub_offset = (axi_data->hw_info->num_rdi * 2) *
-			axi_data->hw_info->min_wm_ub;
-		prop_size = vfe_dev->hw_info->vfe_ops.axi_ops.
-			get_ub_size(vfe_dev) -
-			axi_data->hw_info->min_wm_ub * (num_used_wms +
-			axi_data->hw_info->num_rdi * 2);
 	}
+	if (!total_image_size) {
+		pr_err("%s: Error total_image_size is 0\n", __func__);
+		return;
+	}
+	prop_size = vfe_dev->hw_info->vfe_ops.axi_ops.
+		get_ub_size(vfe_dev) -
+		axi_data->hw_info->min_wm_ub * num_used_wms;
 	for (i = 0; i < axi_data->hw_info->num_wm; i++) {
 		if (!axi_data->free_wm[i]) {
 			msm_camera_io_w(0,
@@ -1739,34 +1734,23 @@ void msm_vfe47_cfg_axi_ub_equal_default(
 				vfe_dev->hw_info->vfe_ops.axi_ops.
 					ub_reg_offset(vfe_dev, i));
 		}
-		if (!axi_data->free_wm[i] || frame_src != SRC_TO_INTF(
-				HANDLE_TO_IDX(axi_data->free_wm[i])))
+		if (!axi_data->free_wm[i])
 			continue;
 
-		if (frame_src == VFE_PIX_0) {
-			delta = (uint64_t)axi_data->wm_image_size[i] *
-				(uint64_t)prop_size;
-				do_div(delta, total_image_size);
-				wm_ub_size = axi_data->hw_info->min_wm_ub +
-					(uint32_t)delta;
-			msm_camera_io_w(ub_offset << 16 | (wm_ub_size - 1),
-				vfe_dev->vfe_base +
-				vfe_dev->hw_info->vfe_ops.axi_ops.
-					ub_reg_offset(vfe_dev, i));
-			ub_offset += wm_ub_size;
-		} else {
-
-			rdi_ub_offset = (SRC_TO_INTF(
-					HANDLE_TO_IDX(axi_data->free_wm[i])) -
-					VFE_RAW_0) * 2 *
-					axi_data->hw_info->min_wm_ub;
-			wm_ub_size = axi_data->hw_info->min_wm_ub * 2;
-			msm_camera_io_w((rdi_ub_offset << 16 |
-				(wm_ub_size - 1)),
-				vfe_dev->vfe_base +
-				vfe_dev->hw_info->vfe_ops.axi_ops.
-						ub_reg_offset(vfe_dev, i));
+		delta = (uint64_t)axi_data->wm_image_size[i] *
+			(uint64_t)prop_size;
+			do_div(delta, total_image_size);
+		if (frame_src != VFE_PIX_0) {
+			if (delta <= axi_data->hw_info->min_wm_ub)
+				delta = axi_data->hw_info->min_wm_ub;
 		}
+		wm_ub_size = axi_data->hw_info->min_wm_ub +
+			(uint32_t)delta;
+		msm_camera_io_w(ub_offset << 16 | (wm_ub_size - 1),
+			vfe_dev->vfe_base +
+			vfe_dev->hw_info->vfe_ops.axi_ops.
+				ub_reg_offset(vfe_dev, i));
+		ub_offset += wm_ub_size;
 	}
 }
 
@@ -2134,7 +2118,7 @@ void msm_vfe47_stats_cfg_wm_reg(
 	uint32_t stats_base = VFE47_STATS_BASE(stats_idx);
 
 	/* WR_ADDR_CFG */
-	msm_camera_io_w((stream_info->framedrop_period - 1) << 2,
+	msm_camera_io_w(stream_info->framedrop_period << 2,
 		vfe_dev->vfe_base + stats_base + 0x10);
 	/* WR_IRQ_FRAMEDROP_PATTERN */
 	msm_camera_io_w(stream_info->framedrop_pattern,
@@ -2602,10 +2586,8 @@ int msm_vfe47_enable_regulators(struct vfe_device *vfe_dev, int enable)
 int msm_vfe47_get_platform_data(struct vfe_device *vfe_dev)
 {
 	int rc = 0;
-#ifndef CONFIG_MACH_XIAOMI_MIDO
 	void __iomem *vfe_fuse_base;
 	uint32_t vfe_fuse_base_size;
-#endif
 
 	vfe_dev->vfe_base = msm_camera_get_reg_base(vfe_dev->pdev, "vfe", 0);
 	if (!vfe_dev->vfe_base)
@@ -2630,7 +2612,6 @@ int msm_vfe47_get_platform_data(struct vfe_device *vfe_dev)
 		rc = -ENOMEM;
 		goto get_res_fail;
 	}
-#ifndef CONFIG_MACH_XIAOMI_MIDO
 	vfe_dev->vfe_hw_limit = 0;
 	vfe_fuse_base = msm_camera_get_reg_base(vfe_dev->pdev,
 					"vfe_fuse", 0);
@@ -2643,7 +2624,6 @@ int msm_vfe47_get_platform_data(struct vfe_device *vfe_dev)
 		msm_camera_put_reg_base(vfe_dev->pdev, vfe_fuse_base,
 				"vfe_fuse", 0);
 	}
-#endif
 	rc = vfe_dev->hw_info->vfe_ops.platform_ops.get_regulators(vfe_dev);
 	if (rc)
 		goto get_regulator_fail;

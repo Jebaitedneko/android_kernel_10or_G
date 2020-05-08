@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2018, 2020 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -889,14 +889,12 @@ static long msm_isp_ioctl_unlocked(struct v4l2_subdev *sd,
 		rc = msm_isp_cfg_axi_stream(vfe_dev, arg);
 		mutex_unlock(&vfe_dev->core_mutex);
 		break;
-#ifndef CONFIG_MACH_XIAOMI_MIDO
 	case VIDIOC_MSM_ISP_CFG_HW_STATE:
 		mutex_lock(&vfe_dev->core_mutex);
 		rc = msm_isp_update_stream_bandwidth(vfe_dev,
 			*(enum msm_vfe_hw_state *)arg);
 		mutex_unlock(&vfe_dev->core_mutex);
 		break;
-#endif
 	case VIDIOC_MSM_ISP_AXI_HALT:
 		mutex_lock(&vfe_dev->core_mutex);
 		rc = msm_isp_axi_halt(vfe_dev, arg);
@@ -1027,7 +1025,10 @@ static long msm_isp_ioctl_unlocked(struct v4l2_subdev *sd,
 		vfe_dev->isp_raw2_debug = 0;
 		break;
 	case MSM_SD_UNNOTIFY_FREEZE:
+		break;
 	case MSM_SD_SHUTDOWN:
+		while (vfe_dev->vfe_open_cnt != 0)
+			msm_isp_close_node(sd, NULL);
 		break;
 
 	default:
@@ -1426,7 +1427,6 @@ static int msm_isp_send_hw_cmd(struct vfe_device *vfe_dev,
 		vfe_dev->vfe_ub_policy = *cfg_data;
 		break;
 	}
-#ifndef CONFIG_MACH_XIAOMI_MIDO
 	case GET_VFE_HW_LIMIT: {
 		uint32_t *hw_limit = NULL;
 
@@ -1441,7 +1441,6 @@ static int msm_isp_send_hw_cmd(struct vfe_device *vfe_dev,
 		*hw_limit = vfe_dev->vfe_hw_limit;
 		break;
 	}
-#endif
 	}
 	return 0;
 }
@@ -1449,8 +1448,6 @@ static int msm_isp_send_hw_cmd(struct vfe_device *vfe_dev,
 int msm_isp_proc_cmd(struct vfe_device *vfe_dev, void *arg)
 {
 	int rc = 0, i;
-	uint32_t cfg_data_onstack[SZ_4K / sizeof(uint32_t)];
-	struct msm_vfe_reg_cfg_cmd cfg_cmd_onstack[20];
 	struct msm_vfe_cfg_cmd2 *proc_cmd = arg;
 	struct msm_vfe_reg_cfg_cmd *reg_cfg_cmd;
 	uint32_t *cfg_data = NULL;
@@ -1460,16 +1457,12 @@ int msm_isp_proc_cmd(struct vfe_device *vfe_dev, void *arg)
 		return -EINVAL;
 	}
 
-	if (proc_cmd->num_cfg <= ARRAY_SIZE(cfg_cmd_onstack)) {
-		reg_cfg_cmd = cfg_cmd_onstack;
-	} else {
-		reg_cfg_cmd = kmalloc(sizeof(struct msm_vfe_reg_cfg_cmd)*
-			proc_cmd->num_cfg, GFP_KERNEL);
-		if (!reg_cfg_cmd) {
-			pr_err("%s: reg_cfg alloc failed\n", __func__);
-			rc = -ENOMEM;
-			goto reg_cfg_failed;
-		}
+	reg_cfg_cmd = kzalloc(sizeof(struct msm_vfe_reg_cfg_cmd)*
+		proc_cmd->num_cfg, GFP_KERNEL);
+	if (!reg_cfg_cmd) {
+		pr_err("%s: reg_cfg alloc failed\n", __func__);
+		rc = -ENOMEM;
+		goto reg_cfg_failed;
 	}
 
 	if (copy_from_user(reg_cfg_cmd,
@@ -1480,15 +1473,11 @@ int msm_isp_proc_cmd(struct vfe_device *vfe_dev, void *arg)
 	}
 
 	if (proc_cmd->cmd_len > 0) {
-		if (proc_cmd->cmd_len <= sizeof(cfg_data_onstack)) {
-			cfg_data = cfg_data_onstack;
-		} else {
-			cfg_data = kmalloc(proc_cmd->cmd_len, GFP_KERNEL);
-			if (!cfg_data) {
-				pr_err("%s: cfg_data alloc failed\n", __func__);
-				rc = -ENOMEM;
-				goto cfg_data_failed;
-			}
+		cfg_data = kzalloc(proc_cmd->cmd_len, GFP_KERNEL);
+		if (!cfg_data) {
+			pr_err("%s: cfg_data alloc failed\n", __func__);
+			rc = -ENOMEM;
+			goto cfg_data_failed;
 		}
 
 		if (copy_from_user(cfg_data,
@@ -1510,11 +1499,9 @@ int msm_isp_proc_cmd(struct vfe_device *vfe_dev, void *arg)
 	}
 
 copy_cmd_failed:
-	if (cfg_data != cfg_data_onstack)
-		kfree(cfg_data);
+	kfree(cfg_data);
 cfg_data_failed:
-	if (reg_cfg_cmd != cfg_cmd_onstack)
-		kfree(reg_cfg_cmd);
+	kfree(reg_cfg_cmd);
 reg_cfg_failed:
 	return rc;
 }

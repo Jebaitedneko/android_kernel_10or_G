@@ -13,7 +13,6 @@
 #define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
 
 #include <linux/module.h>
-#include <linux/cpu_input_boost.h>
 #include "msm_sd.h"
 #include "msm_actuator.h"
 #include "msm_cci.h"
@@ -31,11 +30,6 @@ DEFINE_MSM_MUTEX(msm_actuator_mutex);
 #define PARK_LENS_MID_STEP 5
 #define PARK_LENS_SMALL_STEP 3
 #define MAX_QVALUE 4096
-#ifdef CONFIG_MACH_XIAOMI_MIDO
-#define PARK_LENS_QUIET_UPPER_CODE 400
-#define PARK_LENS_QUIET_LOWER_CODE 200
-#define PARK_LENS_QUIET_STEP 25
-#endif
 
 static struct v4l2_file_operations msm_actuator_v4l2_subdev_fops;
 static int32_t msm_actuator_power_up(struct msm_actuator_ctrl_t *a_ctrl);
@@ -594,8 +588,6 @@ static int32_t msm_actuator_move_focus(
 
 	CDBG("called, dir %d, num_steps %d\n", dir, num_steps);
 
-	cpu_input_boost_kick_max(250);
-
 	if (dest_step_pos == a_ctrl->curr_step_pos)
 		return rc;
 
@@ -844,16 +836,6 @@ static int32_t msm_actuator_park_lens(struct msm_actuator_ctrl_t *a_ctrl)
 	next_lens_pos = a_ctrl->step_position_table[a_ctrl->curr_step_pos];
 	while (next_lens_pos) {
 		/* conditions which help to reduce park lens time */
-#ifdef CONFIG_MACH_XIAOMI_MIDO
-		if (next_lens_pos > PARK_LENS_QUIET_UPPER_CODE)
-			next_lens_pos = PARK_LENS_QUIET_UPPER_CODE;
-		else {
-			if (next_lens_pos > PARK_LENS_QUIET_LOWER_CODE)
-				next_lens_pos -= PARK_LENS_QUIET_STEP;
-			else
-				next_lens_pos = 0;
-  		}
-#else
 		if (next_lens_pos > (a_ctrl->park_lens.max_step *
 			PARK_LENS_LONG_STEP)) {
 			next_lens_pos = next_lens_pos -
@@ -875,8 +857,6 @@ static int32_t msm_actuator_park_lens(struct msm_actuator_ctrl_t *a_ctrl)
 				(next_lens_pos - a_ctrl->park_lens.
 				max_step) : 0;
 		}
-#endif
-
 		a_ctrl->func_tbl->actuator_parse_i2c_params(a_ctrl,
 			next_lens_pos, a_ctrl->park_lens.hw_params,
 			a_ctrl->park_lens.damping_delay);
@@ -1129,16 +1109,14 @@ static int32_t msm_actuator_power_down(struct msm_actuator_ctrl_t *a_ctrl)
 
 	CDBG("Enter\n");
 	if (a_ctrl->actuator_state != ACT_DISABLE_STATE) {
-		#ifdef CONFIG_HQ_ZQL1590_ACTUATOR
-				CDBG("no actuator_park_lens\n");			
-		#else 
+
 		if (a_ctrl->func_tbl && a_ctrl->func_tbl->actuator_park_lens) {
 			rc = a_ctrl->func_tbl->actuator_park_lens(a_ctrl);
 			if (rc < 0)
 				pr_err("%s:%d Lens park failed.\n",
 					__func__, __LINE__);
 		}
-		#endif
+
 		rc = msm_actuator_vreg_control(a_ctrl, 0);
 		if (rc < 0) {
 			pr_err("%s failed %d\n", __func__, __LINE__);

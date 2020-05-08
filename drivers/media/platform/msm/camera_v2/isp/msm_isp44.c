@@ -523,7 +523,7 @@ static void msm_vfe44_process_epoch_irq(struct vfe_device *vfe_dev,
 			msm_isp_notify(vfe_dev, ISP_EVENT_SOF, VFE_PIX_0, ts);
 			if (vfe_dev->axi_data.stream_update[VFE_PIX_0])
 				msm_isp_axi_stream_update(vfe_dev, VFE_PIX_0);
-			vfe_dev->hw_info->vfe_ops.core_ops.reg_update(
+				vfe_dev->hw_info->vfe_ops.core_ops.reg_update(
 				   vfe_dev, VFE_PIX_0);
 		}
 	}
@@ -1530,7 +1530,7 @@ static void msm_vfe44_stats_cfg_wm_reg(
 	if (stats_idx == STATS_IDX_BF_SCALE)
 		return;
 	/*WR_ADDR_CFG*/
-	msm_camera_io_w((stream_info->framedrop_period - 1) << 2,
+	msm_camera_io_w(stream_info->framedrop_period << 2,
 		vfe_dev->vfe_base + stats_base + 0x8);
 	/*WR_IRQ_FRAMEDROP_PATTERN*/
 	msm_camera_io_w(stream_info->framedrop_pattern,

@@ -1,8 +1,20 @@
-#ifndef __LINUX_MSM_CAM_SENSOR_H
-#define __LINUX_MSM_CAM_SENSOR_H
+/* Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
 
-#include <uapi/media/msm_cam_sensor.h>
-#include <uapi/media/msm_camsensor_sdk.h>
+#ifndef __LINUX_MSM_AIS_SENSOR_H
+#define __LINUX_MSM_AIS_SENSOR_H
+
+#include <uapi/media/ais/msm_ais_sensor.h>
+#include <uapi/media/ais/msm_ais_sensor_sdk.h>
 
 #include <linux/compat.h>
 
@@ -41,7 +53,6 @@ struct msm_camera_sensor_slave_info32 {
 	uint8_t  is_init_params_valid;
 	struct msm_sensor_init_params sensor_init_params;
 	enum msm_sensor_output_format_t output_format;
-	uint8_t bypass_video_node_creation;
 };
 
 struct msm_camera_csid_lut_params32 {
@@ -71,6 +82,7 @@ struct csid_cfg_data32 {
 		uint32_t csid_version;
 		compat_uptr_t csid_params;
 		compat_uptr_t csid_testmode_params;
+		uint32_t csid_cidmask;
 	} cfg;
 };
 
@@ -278,5 +290,5 @@ struct msm_flash_cfg_data_t32 {
 	_IOWR('V', BASE_VIDIOC_PRIVATE + 15, struct msm_ir_cut_cfg_data_t32)
 #endif
 
-#endif
+#endif /* __LINUX_MSM_AIS_SENSOR_H */
 

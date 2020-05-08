@@ -1,5 +1,5 @@
-#ifndef __UAPI_LINUX_MSM_CAMSENSOR_SDK_H
-#define __UAPI_LINUX_MSM_CAMSENSOR_SDK_H
+#ifndef __UAPI_LINUX_MSM_AIS_SENSOR_SDK_H
+#define __UAPI_LINUX_MSM_AIS_SENSOR_SDK_H
 
 #include <linux/videodev2.h>
 
@@ -47,8 +47,6 @@
 
 #define MSM_EEPROM_MEMORY_MAP_MAX_SIZE  80
 #define MSM_EEPROM_MAX_MEM_MAP_CNT      8
-
-#define MSM_SENSOR_BYPASS_VIDEO_NODE    1
 
 enum msm_sensor_camera_id_t {
 	CAMERA_0,
@@ -287,6 +285,11 @@ struct msm_sensor_id_info_t {
 	unsigned short sensor_id_mask;
 };
 
+struct msm_camera_sensor_gpio_intr_config {
+	int gpio_num;
+	uint32_t gpio_trigger;
+};
+
 struct msm_camera_sensor_slave_info {
 	char sensor_name[32];
 	char eeprom_name[32];
@@ -302,7 +305,9 @@ struct msm_camera_sensor_slave_info {
 	unsigned char  is_init_params_valid;
 	struct msm_sensor_init_params sensor_init_params;
 	enum msm_sensor_output_format_t output_format;
-	uint8_t bypass_video_node_creation;
+	struct msm_camera_sensor_gpio_intr_config
+				gpio_intr_config;
+	unsigned int camera_sensor_device_id;
 };
 
 struct msm_camera_i2c_reg_array {
@@ -417,4 +422,4 @@ struct msm_camera_i2c_reg_setting_array {
 	unsigned short delay;
 };
 
-#endif
+#endif /* __UAPI_LINUX_MSM_AIS_SENSOR_SDK_H */
