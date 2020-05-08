@@ -47,7 +47,6 @@
 
 #define ISPIF_TIMEOUT_SLEEP_US                1000
 #define ISPIF_TIMEOUT_ALL_US               1000000
-#define ISPIF_SOF_DEBUG_COUNT                    0
 
 #undef CDBG
 #ifdef CONFIG_MSM_AIS_DEBUG
@@ -431,14 +430,9 @@ static int msm_ispif_reset_hw(struct ispif_device *ispif)
 
 	ispif->clk_idx = 0;
 
-	/* Turn ON VFE regulators before enabling the vfe clocks */
-	rc = msm_ispif_set_regulators(ispif->vfe_vdd, ispif->vfe_vdd_count, 1);
-	if (rc < 0)
-		return rc;
-
-	rc = msm_camera_clk_enable(&ispif->pdev->dev,
-		ispif->clk_info, ispif->clks,
-		ispif->num_clk, 1);
+	rc = msm_cam_clk_enable(&ispif->pdev->dev,
+		ispif_8974_reset_clk_info, reset_clk,
+		ARRAY_SIZE(ispif_8974_reset_clk_info), 1);
 	if (rc < 0) {
 		pr_err("%s: cannot enable clock, error = %d\n",
 			__func__, rc);
@@ -1444,9 +1438,7 @@ static int msm_ispif_init(struct ispif_device *ispif,
 		return rc;
 	}
 
-	rc = msm_ispif_reset_hw(ispif);
-	if (rc)
-		goto error_ahb;
+	msm_ispif_reset_hw(ispif);
 
 	rc = msm_ispif_reset(ispif);
 	if (rc)

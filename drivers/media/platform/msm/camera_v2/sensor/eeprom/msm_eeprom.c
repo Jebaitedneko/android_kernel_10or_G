@@ -1,5 +1,4 @@
 /* Copyright (c) 2011-2016, The Linux Foundation. All rights reserved.
- * Copyright (C) 2017 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1125,7 +1124,7 @@ static int msm_eeprom_get_dt_data(struct msm_eeprom_ctrl_t *e_ctrl)
 	if (rc < 0)
 		return rc;
 
-	if (e_ctrl->userspace_probe == 0 || (e_ctrl->userspace_probe == 2)) {
+	if (e_ctrl->userspace_probe == 0) {
 		rc = msm_camera_get_dt_power_setting_data(of_node,
 			power_info->cam_vreg, power_info->num_vreg,
 			power_info);

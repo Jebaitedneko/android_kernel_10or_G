@@ -1544,6 +1544,13 @@ static int msm_isp_update_deliver_count(struct vfe_device *vfe_dev,
 			goto done;
 		}
 		temp_stream_info->sw_ping_pong_bit ^= 1;
+		if (temp_stream_info->undelivered_request_cnt == 0) {
+			temp_stream_info->current_framedrop_period =
+				MSM_VFE_STREAM_STOP_PERIOD;
+			temp_stream_info->activated_framedrop_period =
+				MSM_VFE_STREAM_STOP_PERIOD;
+			msm_isp_cfg_framedrop_reg(vfe_dev, temp_stream_info);
+		}
 	}
 done:
 	return rc;
@@ -1787,7 +1794,7 @@ static int msm_isp_cfg_ping_pong_address(struct vfe_device *vfe_dev,
 	uint32_t stream_idx = HANDLE_TO_IDX(stream_info->stream_handle);
 	uint32_t buffer_size_byte = 0;
 	int32_t word_per_line = 0;
-	dma_addr_t paddr = 0;
+	dma_addr_t paddr;
 	struct dual_vfe_resource *dual_vfe_res = NULL;
 	uint32_t vfe_id = 0;
 	unsigned long flags;
@@ -1856,9 +1863,7 @@ static int msm_isp_cfg_ping_pong_address(struct vfe_device *vfe_dev,
 
 		if (dual_vfe_res) {
 			for (vfe_id = 0; vfe_id < MAX_VFE; vfe_id++) {
-				bool lock = vfe_id != vfe_dev->pdev->id;
-
-				if (lock)
+				if (vfe_id != vfe_dev->pdev->id)
 					spin_lock_irqsave(
 						&vfe_dev->common_data->
 						common_dev_axi_lock, flags);
@@ -1888,7 +1893,7 @@ static int msm_isp_cfg_ping_pong_address(struct vfe_device *vfe_dev,
 						buf[!pingpong_bit] =
 						buf;
 				}
-				if (lock)
+				if (vfe_id != vfe_dev->pdev->id)
 					spin_unlock_irqrestore(
 						&vfe_dev->common_data->
 						common_dev_axi_lock, flags);
@@ -2862,6 +2867,7 @@ static int msm_isp_start_axi_stream(struct vfe_device *vfe_dev,
 			}
 		}
 	}
+	mutex_unlock(&vfe_dev->buf_mgr->lock);
 	msm_isp_update_stream_bandwidth(vfe_dev, stream_cfg_cmd->hw_state);
 	vfe_dev->hw_info->vfe_ops.axi_ops.reload_wm(vfe_dev,
 		vfe_dev->vfe_base, wm_reload_mask);
