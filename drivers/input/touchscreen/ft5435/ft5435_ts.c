@@ -52,9 +52,12 @@
 #define FTS_VENDOR_1	0x3b
 #define FTS_VENDOR_2	0x51
 static unsigned char firmware_data_vendor1[] = {
+	#include "HQ_AL1512_C6_FT5435_Biel0x3b_Ver0a_20170119_app.i"
 };
 
 static unsigned char firmware_data_vendor2[] = {
+
+	#include "HQ_AL1512_C6_FT5435_Ofilm0x51_Ver0a_20170119_app.i"
 };
 #endif
 #define TCT_KEY_BACK  158
@@ -1587,9 +1590,7 @@ static int fb_notifier_callback(struct notifier_block *self,
 	if (evdata && evdata->data && event == FB_EVENT_BLANK &&
 			ft5435_data && ft5435_data->client) {
 		blank = evdata->data;
-		if (*blank == FB_BLANK_UNBLANK
-				|| *blank == FB_BLANK_NORMAL
-				|| *blank == FB_BLANK_VSYNC_SUSPEND)
+		if (*blank == FB_BLANK_UNBLANK)
 			ft5435_ts_resume(&ft5435_data->client->dev);
 		else if (*blank == FB_BLANK_POWERDOWN)
 			ft5435_ts_suspend(&ft5435_data->client->dev);
