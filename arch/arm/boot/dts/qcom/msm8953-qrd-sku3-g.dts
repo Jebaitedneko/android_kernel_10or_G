@@ -2561,9 +2561,7 @@
 			interrupt-names = "kgsl_3d0_irq";
 			qcom,id = <0x0>;
 			qcom,chipid = <0x5000600>;
-			qcom,initial-pwrlevel = <0x7>;
-			/* Enable gpu cooling device */
-			#cooling-cells = <2>;
+			qcom,initial-pwrlevel = <0x4>;
 			qcom,idle-timeout = <0x50>;
 			qcom,deep-nap-timeout = <0x64>;
 			qcom,strtstp-sleepwake;
@@ -2594,7 +2592,6 @@
 			coresight-child-ports = <0x6>;
 			qcom,enable-ca-jump;
 			qcom,ca-busy-penalty = <0x2ee0>;
-			/* Context aware jump target power level */
 			qcom,ca-target-pwrlevel = <0x3>;
 
 			qcom,gpu-mempools {
@@ -2619,64 +2616,57 @@
 				#size-cells = <0x0>;
 				compatible = "qcom,gpu-pwrlevels";
 
-				/* TURBO LD0 */
 				qcom,gpu-pwrlevel@0 {
 					reg = <0x0>;
-					qcom,gpu-freq = <0x2B369F40>;
+					qcom,gpu-freq = <0x26be3680>;
 					qcom,bus-freq = <0xa>;
 					qcom,bus-min = <0xa>;
 					qcom,bus-max = <0xa>;
 				};
 
-				/* TURBO */
 				qcom,gpu-pwrlevel@1 {
 					reg = <0x1>;
-					qcom,gpu-freq = <0x26BE3680>;
-					qcom,bus-freq = <0xa>;
-					qcom,bus-min = <0xa>;
-					qcom,bus-max = <0xa>;
-				};
-
-				/* NOM+ */
-				qcom,gpu-pwrlevel@2 {
-					reg = <0x2>;
-					qcom,gpu-freq = <0x2160EC00>;
+					qcom,gpu-freq = <0x2160ec00>;
 					qcom,bus-freq = <0xa>;
 					qcom,bus-min = <0x8>;
 					qcom,bus-max = <0xa>;
 				};
 
-				/* NOM */
-				qcom,gpu-pwrlevel@3 {
-					reg = <0x3>;
-					qcom,gpu-freq = <0x1E65FB80>;
+				qcom,gpu-pwrlevel@2 {
+					reg = <0x2>;
+					qcom,gpu-freq = <0x1e65fb80>;
 					qcom,bus-freq = <0x9>;
 					qcom,bus-min = <0x6>;
 					qcom,bus-max = <0xa>;
 				};
 
-				/* SVS+ */
-				qcom,gpu-pwrlevel@4 {
-					reg = <0x4>;
-					qcom,gpu-freq = <0x17D78400>;
+				qcom,gpu-pwrlevel@3 {
+					reg = <0x3>;
+					qcom,gpu-freq = <0x17d78400>;
 					qcom,bus-freq = <0x7>;
 					qcom,bus-min = <0x5>;
 					qcom,bus-max = <0x8>;
 				};
 
-				/* SVS */
-				qcom,gpu-pwrlevel@5 {
-					reg = <0x5>;
-					qcom,gpu-freq = <0x1312D000>;
+				qcom,gpu-pwrlevel@4 {
+					reg = <0x4>;
+					qcom,gpu-freq = <0x1312d000>;
 					qcom,bus-freq = <0x4>;
 					qcom,bus-min = <0x2>;
 					qcom,bus-max = <0x6>;
 				};
 
-				/* Low SVS */
+				qcom,gpu-pwrlevel@5 {
+					reg = <0x5>;
+					qcom,gpu-freq = <0xcdfe600>;
+					qcom,bus-freq = <0x1>;
+					qcom,bus-min = <0x1>;
+					qcom,bus-max = <0x4>;
+				};
+
 				qcom,gpu-pwrlevel@6 {
 					reg = <0x6>;
-					qcom,gpu-freq = <0xCDFE600>;
+					qcom,gpu-freq = <0x7f1ff20>;
 					qcom,bus-freq = <0x1>;
 					qcom,bus-min = <0x1>;
 					qcom,bus-max = <0x4>;
@@ -2684,15 +2674,7 @@
 
 				qcom,gpu-pwrlevel@7 {
 					reg = <0x7>;
-					qcom,gpu-freq = <0x7F1FF20>;
-					qcom,bus-freq = <0x1>;
-					qcom,bus-min = <0x1>;
-					qcom,bus-max = <0x4>;
-				};
-				/* XO */
-				qcom,gpu-pwrlevel@8 {
-					reg = <0x8>;
-					qcom,gpu-freq = <0x124F800>;
+					qcom,gpu-freq = <0x124f800>;
 					qcom,bus-freq = <0x0>;
 					qcom,bus-min = <0x0>;
 					qcom,bus-max = <0x0>;
@@ -6571,7 +6553,7 @@
 			reg = <0x1800000 0x80000>;
 			reg-names = "cc_base";
 			vdd_gfx-supply = <0xc8>;
-			qcom,gfxfreq-corner = <0x0 0x0 0x7F1FF20 0x1 0xCDFE600 0x2 0x1312D000 0x3 0x17D78400 0x4 0x1E65FB80 0x5 0x2160EC00 0x6 0x26BE3680 0x7 0x2B369F40 0x8>;
+			qcom,gfxfreq-corner = <0x0 0x0 0x7f27450 0x1 0xcdfe600 0x2 0x1312d000 0x3 0x17d78400 0x4 0x1e65fb80 0x5 0x2160ec00 0x6 0x26be3680 0x7>;
 			#clock-cells = <0x1>;
 			linux,phandle = <0x38>;
 			phandle = <0x38>;
@@ -9206,17 +9188,17 @@
 			reg-names = "ldo_addr", "efuse_addr";
 			regulator-name = "msm_gfx_ldo";
 			regulator-min-microvolt = <0x1>;
-			regulator-max-microvolt = <0x9>;
+			regulator-max-microvolt = <0x7>;
 			qcom,ldo-voltage-ceiling = <0x975e0 0xa6040 0xb71b0>;
 			qcom,ldo-voltage-floor = <0x7c830 0x7c830 0x927c0>;
-			qcom,num-corners = <0x8>;
+			qcom,num-corners = <0x7>;
 			qcom,num-ldo-corners = <0x3>;
-			qcom,ldo-enable-corner-map = <0x1 0x1 0x1 0x0 0x0 0x0 0x0 0x0>;
+			qcom,ldo-enable-corner-map = <0x1 0x1 0x1 0x0 0x0 0x0 0x0>;
 			qcom,init-corner = <0x4>;
 			vdd-cx-supply = <0xf7>;
-			qcom,vdd-cx-corner-map = <0x40 0x40 0x80 0xc0 0x100 0x140 0x180 0x1C0>;
+			qcom,vdd-cx-corner-map = <0x40 0x40 0x80 0xc0 0x100 0x140 0x180>;
 			mem-acc-supply = <0x137>;
-			qcom,mem-acc-corner-map = <0x1 0x1 0x1 0x2 0x2 0x2 0x2 0x2>;
+			qcom,mem-acc-corner-map = <0x1 0x1 0x1 0x2 0x2 0x2 0x2>;
 			qcom,ldo-init-voltage-adjustment = <0x88b8 0x61a8 0x0>;
 			linux,phandle = <0xc8>;
 			phandle = <0xc8>;
