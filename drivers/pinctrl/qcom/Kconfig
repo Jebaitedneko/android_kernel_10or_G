@@ -30,6 +30,14 @@ config PINCTRL_MDM9640
 	help
 	  This is the pinctrl, pinmux, pinconf and gpiolib driver for the
 	  Qualcomm TLMM block found in the Qualcomm 9640 platform.
+	  
+config PINCTRL_MDMCALIFORNIUM
+	tristate "Qualcomm MDM9640 pin controller driver"
+	depends on GPIOLIB && OF
+	select PINCTRL_MSM
+	help
+	  This is the pinctrl, pinmux, pinconf and gpiolib driver for the
+	  Qualcomm TLMM block found in the Qualcomm mdmcalifornium platform.
 
 config PINCTRL_MDM9650
 	tristate "Qualcomm MDM9640 pin controller driver"
