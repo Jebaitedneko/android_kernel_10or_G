@@ -53,7 +53,7 @@
 #define MSM89XX_VDD_SPKDRV_NAME "cdc-vdd-spkdrv"
 
 #define DEFAULT_MULTIPLIER 800
-#define DEFAULT_GAIN 10
+#define DEFAULT_GAIN 9
 #define DEFAULT_OFFSET 100
 
 extern const u8 msm8x16_wcd_reg_readable[MSM8X16_WCD_CACHE_SIZE];
@@ -73,14 +73,14 @@ enum codec_versions {
 
 /* Support different hph modes */
 enum {
-	HD2_MODE = 0,
-	NORMAL_MODE,
+	NORMAL_MODE = 0,
+	HD2_MODE,
 };
 
 /* Codec supports 1 compander */
 enum {
-	COMPANDER_1 = 0, /* HPHL/R */
-	COMPANDER_NONE,
+	COMPANDER_NONE = 0,
+	COMPANDER_1, /* HPHL/R */
 	COMPANDER_MAX,
 };
 
@@ -93,10 +93,10 @@ enum wcd_curr_ref {
 };
 
 enum wcd_mbhc_imp_det_pin {
-	WCD_MBHC_DET_BOTH = 0,
+	WCD_MBHC_DET_NONE = 0,
 	WCD_MBHC_DET_HPHL,
 	WCD_MBHC_DET_HPHR,
-	WCD_MBHC_DET_NONE,
+	WCD_MBHC_DET_BOTH,
 };
 
 
@@ -228,6 +228,7 @@ struct msm8916_asoc_mach_data {
 	int ext_pa;
 	int us_euro_gpio;
 	int spk_ext_pa_gpio;
+	int spk_ext_pa1_gpio;
 	int mclk_freq;
 	int lb_mode;
 	int afe_clk_ver;
@@ -305,6 +306,8 @@ struct msm8x16_wcd_priv {
 	u32 comp_enabled[MSM8X16_WCD_RX_MAX];
 	bool spk_boost_set;
 	bool ear_pa_boost_set;
+	bool ear_2in1_ctrl_set;
+	bool free_call_ctrl_set;
 	bool ext_spk_boost_set;
 	bool dec_active[NUM_DECIMATORS];
 	struct on_demand_supply on_demand_list[ON_DEMAND_SUPPLIES_MAX];

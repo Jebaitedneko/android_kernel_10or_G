@@ -46,11 +46,10 @@
 #include "msm8x16_wcd_registers.h"
 
 #define MSM8X16_WCD_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
-			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_96000)
+			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000)
 #define MSM8X16_WCD_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
 		SNDRV_PCM_FMTBIT_S24_LE |\
-		SNDRV_PCM_FMTBIT_S24_3LE |\
-		SNDRV_PCM_FMTBIT_S32_LE)
+		SNDRV_PCM_FMTBIT_S24_3LE)
 
 #define NUM_INTERPOLATORS	3
 #define BITS_PER_REG		8
@@ -101,15 +100,15 @@ enum {
 
 #define MICBIAS_DEFAULT_VAL 1800000
 #define MICBIAS_MIN_VAL 1600000
-#define MICBIAS_STEP_SIZE 15000
+#define MICBIAS_STEP_SIZE 50000
 
-#define DEFAULT_BOOST_VOLTAGE 5400
-#define MIN_BOOST_VOLTAGE 4700
+#define DEFAULT_BOOST_VOLTAGE 5000
+#define MIN_BOOST_VOLTAGE 4000
 #define MAX_BOOST_VOLTAGE 5550
-#define BOOST_VOLTAGE_STEP 15
+#define BOOST_VOLTAGE_STEP 50
 
-#define MSM8X16_WCD_MBHC_BTN_COARSE_ADJ  50 /* in mV */
-#define MSM8X16_WCD_MBHC_BTN_FINE_ADJ 10 /* in mV */
+#define MSM8X16_WCD_MBHC_BTN_COARSE_ADJ  100 /* in mV */
+#define MSM8X16_WCD_MBHC_BTN_FINE_ADJ 12 /* in mV */
 
 #define VOLTAGE_CONVERTER(value, min_value, step_size)\
 	((value - min_value)/step_size)
@@ -1012,7 +1011,7 @@ static const struct wcd_mbhc_cb mbhc_cb = {
 
 static const uint32_t wcd_imped_val[] = {4, 8, 12, 13, 16,
 					20, 24, 28, 32,
-					36, 40, 44, 48, 56, 64, 72, 88, 96, 100};
+					36, 40, 44, 48};
 
 void msm8x16_notifier_call(struct snd_soc_codec *codec,
 				  const enum wcd_notify_event event)
@@ -1860,9 +1859,10 @@ static int msm8x16_wcd_codec_enable_on_demand_supply(
 		}
 		if (atomic_dec_return(&supply->ref) == 0)
 			ret = regulator_disable(supply->supply);
-		if (ret)
-			dev_err(codec->dev, "%s: Failed to disable %s\n",
-				__func__, on_demand_supply_name[w->shift]);
+			if (ret)
+				dev_err(codec->dev, "%s: Failed to disable %s\n",
+					__func__,
+					on_demand_supply_name[w->shift]);
 		break;
 	default:
 		break;
@@ -2018,7 +2018,136 @@ static int msm8x16_wcd_pa_gain_get(struct snd_kcontrol *kcontrol,
 	dev_dbg(codec->dev, "%s: ear_pa_gain = 0x%x\n", __func__, ear_pa_gain);
 	return 0;
 }
+static int msm8x16_wcd_ear_2in1_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct msm8x16_wcd_priv *msm8x16_wcd = snd_soc_codec_get_drvdata(codec);
 
+	ucontrol->value.integer.value[0] =
+		(msm8x16_wcd->ear_2in1_ctrl_set ? 1 : 0);
+	dev_dbg(codec->dev, "%s: msm8x16_wcd->ear_2in1_ctrl_set = %d\n",
+			__func__, msm8x16_wcd->ear_2in1_ctrl_set);
+	return 0;
+}
+
+static int msm8x16_wcd_ear_2in1_set(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct msm8x16_wcd_priv *msm8x16_wcd = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_card *card = codec->component.card;
+	struct msm8916_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
+
+	dev_dbg(codec->dev, "%s: ucontrol->value.integer.value[0] = %ld\n",
+		__func__, ucontrol->value.integer.value[0]);
+
+	msm8x16_wcd->ear_2in1_ctrl_set =
+		(ucontrol->value.integer.value[0] ? true : false);
+
+	if (msm8x16_wcd->ear_2in1_ctrl_set) {
+		if (!gpio_is_valid(pdata->spk_ext_pa_gpio)) {
+			pr_err("%s: Invalid gpio: %d\n", __func__, pdata->spk_ext_pa_gpio);
+			return false;
+		}
+		//aw87318 mode8
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 1);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 0);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 1);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 0);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 1);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 0);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 1);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 0);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 1);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 0);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 1);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 0);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 1);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 0);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 1);
+
+		pr_debug("%s enable\n", __func__);
+	} else {
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 0);
+		pr_debug("%s disable\n", __func__);
+	}
+	return 0;
+}
+
+// add wenchao
+static int msm8x16_wcd_free_call_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct msm8x16_wcd_priv *msm8x16_wcd = snd_soc_codec_get_drvdata(codec);
+
+	ucontrol->value.integer.value[0] =
+		(msm8x16_wcd->free_call_ctrl_set ? 1 : 0);
+	dev_dbg(codec->dev, "%s: msm8x16_wcd->free_call_ctrl_set = %d\n",
+			__func__, msm8x16_wcd->free_call_ctrl_set);
+	return 0;
+}
+
+static int msm8x16_wcd_free_call_set(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct msm8x16_wcd_priv *msm8x16_wcd = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_card *card = codec->component.card;
+	struct msm8916_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
+
+	dev_dbg(codec->dev, "%s: ucontrol->value.integer.value[0] = %ld\n",
+		__func__, ucontrol->value.integer.value[0]);
+
+	msm8x16_wcd->free_call_ctrl_set =
+		(ucontrol->value.integer.value[0] ? true : false);
+
+	if (msm8x16_wcd->free_call_ctrl_set) {
+		if (!gpio_is_valid(pdata->spk_ext_pa1_gpio)) {
+			pr_err("%s: Invalid gpio: %d\n", __func__, pdata->spk_ext_pa1_gpio);
+			return false;
+		}
+		//aw87318 mode5
+			gpio_direction_output(pdata->spk_ext_pa1_gpio, 1);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 0);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 1);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 0);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 1);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 0);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 1);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 0);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 1);
+
+		pr_debug("%s enable\n", __func__);
+	} else {
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 0);
+		pr_debug("%s disable\n", __func__);
+	}
+	return 0;
+}
 static int msm8x16_wcd_loopback_mode_get(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
@@ -2088,7 +2217,7 @@ static int msm8x16_wcd_hph_mode_get(struct snd_kcontrol *kcontrol,
 	struct msm8x16_wcd_priv *msm8x16_wcd = snd_soc_codec_get_drvdata(codec);
 
 	if (msm8x16_wcd->hph_mode == NORMAL_MODE) {
-		ucontrol->value.integer.value[0] = 1;
+		ucontrol->value.integer.value[0] = 0;
 	} else if (msm8x16_wcd->hph_mode == HD2_MODE) {
 		ucontrol->value.integer.value[0] = 1;
 	} else  {
@@ -2112,14 +2241,14 @@ static int msm8x16_wcd_hph_mode_set(struct snd_kcontrol *kcontrol,
 
 	switch (ucontrol->value.integer.value[0]) {
 	case 0:
-		msm8x16_wcd->hph_mode = HD2_MODE;
+		msm8x16_wcd->hph_mode = NORMAL_MODE;
 		break;
 	case 1:
 		if (get_codec_version(msm8x16_wcd) >= DIANGU)
 			msm8x16_wcd->hph_mode = HD2_MODE;
 		break;
 	default:
-		msm8x16_wcd->hph_mode = HD2_MODE;
+		msm8x16_wcd->hph_mode = NORMAL_MODE;
 		break;
 	}
 	dev_dbg(codec->dev, "%s: msm8x16_wcd->hph_mode_set = %d\n",
@@ -2534,7 +2663,17 @@ static const char * const msm8x16_wcd_ear_pa_gain_text[] = {
 static const struct soc_enum msm8x16_wcd_ear_pa_gain_enum[] = {
 		SOC_ENUM_SINGLE_EXT(2, msm8x16_wcd_ear_pa_gain_text),
 };
+static const char * const msm8x16_wcd_ear_2in1_ctrl_text[] = {
+		"DISABLE", "ENABLE"};
+static const struct soc_enum msm8x16_wcd_ear_2in1_ctrl_enum[] = {
+		SOC_ENUM_SINGLE_EXT(2, msm8x16_wcd_ear_2in1_ctrl_text),
+};
 
+static const char * const msm8x16_wcd_free_call_ctrl_text[] = {
+		"DISABLE", "ENABLE"};
+static const struct soc_enum msm8x16_wcd_free_call_ctrl_enum[] = {
+		SOC_ENUM_SINGLE_EXT(2, msm8x16_wcd_free_call_ctrl_text),
+};
 static const char * const msm8x16_wcd_boost_option_ctrl_text[] = {
 		"BOOST_SWITCH", "BOOST_ALWAYS", "BYPASS_ALWAYS",
 		"BOOST_ON_FOREVER"};
@@ -2593,7 +2732,10 @@ static const struct snd_kcontrol_new msm8x16_wcd_snd_controls[] = {
 
 	SOC_ENUM_EXT("EAR PA Gain", msm8x16_wcd_ear_pa_gain_enum[0],
 		msm8x16_wcd_pa_gain_get, msm8x16_wcd_pa_gain_put),
-
+	SOC_ENUM_EXT("EAR 2IN1 Ctrl", msm8x16_wcd_ear_2in1_ctrl_enum[0],
+		msm8x16_wcd_ear_2in1_get, msm8x16_wcd_ear_2in1_set),
+	SOC_ENUM_EXT("FREE CALL Ctrl", msm8x16_wcd_free_call_ctrl_enum[0],
+		msm8x16_wcd_free_call_get, msm8x16_wcd_free_call_set),
 	SOC_ENUM_EXT("Speaker Boost", msm8x16_wcd_spk_boost_ctl_enum[0],
 		msm8x16_wcd_spk_boost_get, msm8x16_wcd_spk_boost_set),
 
@@ -4231,7 +4373,6 @@ static int msm8x16_wcd_lo_dac_event(struct snd_soc_dapm_widget *w,
 			MSM8X16_WCD_A_ANALOG_RX_LO_DAC_CTL, 0x08, 0x08);
 		snd_soc_update_bits(codec,
 			MSM8X16_WCD_A_ANALOG_RX_LO_DAC_CTL, 0x40, 0x40);
-		msleep(5);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		snd_soc_update_bits(codec,
@@ -4457,7 +4598,10 @@ static const struct snd_soc_dapm_route audio_map[] = {
 	{"LINEOUT PA", NULL, "LINE_OUT"},
 	{"LINE_OUT", "Switch", "LINEOUT DAC"},
 	{"LINEOUT DAC", NULL, "RX3 CHAIN"},
-	{ "Ext Spk", NULL, "LINEOUT PA"},
+        {"Ext Spk", NULL, "Ext Spk Switch"},                                     
+	{"Ext Spk Switch", "On", "HPHL PA"},                                     
+	{"Ext Spk Switch", "On", "HPHR PA"},  
+
 	/* lineout to WSA */
 	{"WSA_SPK OUT", NULL, "LINEOUT PA"},
 
@@ -4745,24 +4889,13 @@ static int msm8x16_wcd_hw_params(struct snd_pcm_substream *substream,
 	}
 	switch (params_format(params)) {
 	case SNDRV_PCM_FORMAT_S16_LE:
-		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-			snd_soc_update_bits(dai->codec,
+		snd_soc_update_bits(dai->codec,
 				MSM8X16_WCD_A_CDC_CLK_RX_I2S_CTL, 0x20, 0x20);
-		} else if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
-			snd_soc_update_bits(dai->codec,
-				MSM8X16_WCD_A_CDC_CLK_TX_I2S_CTL, 0x20, 0x20);
-		}
 		break;
 	case SNDRV_PCM_FORMAT_S24_LE:
 	case SNDRV_PCM_FORMAT_S24_3LE:
-	case SNDRV_PCM_FORMAT_S32_LE:
-		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-			snd_soc_update_bits(dai->codec,
+		snd_soc_update_bits(dai->codec,
 				MSM8X16_WCD_A_CDC_CLK_RX_I2S_CTL, 0x20, 0x00);
-		} else if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
-			snd_soc_update_bits(dai->codec,
-				MSM8X16_WCD_A_CDC_CLK_TX_I2S_CTL, 0x20, 0x00);
-		}
 		break;
 	default:
 		dev_err(dai->codec->dev, "%s: wrong format selected\n",
@@ -4877,7 +5010,7 @@ static struct snd_soc_dai_driver msm8x16_wcd_i2s_dai[] = {
 			.stream_name = "VIfeed",
 			.rates = MSM8X16_WCD_RATES,
 			.formats = MSM8X16_WCD_FORMATS,
-			.rate_max = 96000,
+			.rate_max = 48000,
 			.rate_min = 48000,
 			.channels_min = 2,
 			.channels_max = 2,
@@ -5536,7 +5669,7 @@ static int msm8x16_wcd_device_down(struct snd_soc_codec *codec)
 		}
 	}
 	msm8x16_wcd_boost_off(codec);
-	msm8x16_wcd_priv->hph_mode = HD2_MODE;
+	msm8x16_wcd_priv->hph_mode = NORMAL_MODE;
 	for (i = 0; i < MSM8X16_WCD_RX_MAX; i++)
 		msm8x16_wcd_priv->comp_enabled[i] = COMPANDER_NONE;
 
@@ -5927,7 +6060,7 @@ static int msm8x16_wcd_codec_probe(struct snd_soc_codec *codec)
 	 * it to BOOST_ALWAYS or BOOST_BYPASS based on solution chosen.
 	 */
 	msm8x16_wcd_priv->boost_option = BOOST_SWITCH;
-	msm8x16_wcd_priv->hph_mode = HD2_MODE;
+	msm8x16_wcd_priv->hph_mode = NORMAL_MODE;
 
 	for (i = 0; i < MSM8X16_WCD_RX_MAX; i++)
 		msm8x16_wcd_priv->comp_enabled[i] = COMPANDER_NONE;
@@ -6284,8 +6417,7 @@ static int msm8x16_wcd_spmi_probe(struct spmi_device *spmi)
 
 	dev_dbg(&spmi->dev, "%s(%d):slave ID = 0x%x\n",
 		__func__, __LINE__,  spmi->sid);
-	printk("%s(%d):slave ID = 0x%x\n",
-		__func__, __LINE__,  spmi->sid);
+
 	adsp_state = apr_get_subsys_state();
 	if (adsp_state != APR_SUBSYS_LOADED) {
 		dev_dbg(&spmi->dev, "Adsp is not loaded yet %d\n",
@@ -6510,3 +6642,4 @@ module_exit(msm8x16_wcd_codec_exit);
 MODULE_DESCRIPTION("MSM8x16 Audio codec driver");
 MODULE_LICENSE("GPL v2");
 MODULE_DEVICE_TABLE(of, msm8x16_wcd_spmi_id_table);
+
