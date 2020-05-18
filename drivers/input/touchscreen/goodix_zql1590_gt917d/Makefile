@@ -1,9 +1,9 @@
-#
-# Makefile for the input core drivers.
-#
+#gt915 touchpanel driver
 
-obj-$(CONFIG_TOUCHSCREEN_GT917D_ZQL1590) += goodix_ts.o
+EXTRA_CFLAGS +=-Wno-error=date-time
+EXTRA_CFLAGS +=-Wno-error=unused-function
+EXTRA_CFLAGS +=-Wno-date-time
 
-goodix_ts-objs := gt9xx.o
-goodix_ts-objs += gt9xx_update.o
-goodix_ts-objs += goodix_tool.o
+obj-$(CONFIG_TOUCHSCREEN_GT917D_ZQL1590)	+= gt9xx.o
+obj-$(CONFIG_TOUCHSCREEN_GT917D_ZQL1590)	+= gt9xx_update.o
+obj-$(CONFIG_TOUCHSCREEN_GT917D_ZQL1590)	+= goodix_tool.o

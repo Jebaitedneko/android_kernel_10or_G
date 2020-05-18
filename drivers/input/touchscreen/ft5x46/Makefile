@@ -1,7 +1,8 @@
-#
-# Makefile for the FT5X46 touchscreen driver.
-#
+obj-$(CONFIG_TOUCHSCREEN_FT5435) += ft5435_ts.o
+ccflags-$(CONFIG_TOUCHSCREEN_FT5435) += $(call cc-option,-funroll-loops,)
+# for focaltech tp firmware power on upgrade
+	#EXTRA_CFLAGS += -DFOCALTECH_PWRON_UPGRADE
+	#EXTRA_CFLAGS += -DFOCALTECH_TP_GESTURE
+	#EXTRA_CFLAGS += -DFOCALTECH_FAE_MOD
+	#EXTRA_CFLAGS += -DFOCALTECH_FW_COMPAT
 
-obj-$(CONFIG_TOUCHSCREEN_FT5X46)	+= ft5x46_ts.o focaltech_test.o focaltech_test_ft5x46.o
-obj-$(CONFIG_TOUCHSCREEN_FT5X46_I2C)	+= ft5x46_ts_i2c.o
-obj-$(CONFIG_TOUCHSCREEN_FT5X46_SPI)	+= ft5x46_ts_spi.o

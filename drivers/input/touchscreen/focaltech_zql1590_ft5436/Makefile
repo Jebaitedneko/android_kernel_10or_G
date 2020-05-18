@@ -1,5 +1,5 @@
 obj-$(CONFIG_TOUCHSCREEN_FT5436_ZQL1590) += ft5435_ts.o
-obj-$(CONFIG_TOUCHSCREEN_FT5436_ZQL1590) += lib/
+ccflags-$(CONFIG_TOUCHSCREEN_FT5436_ZQL1590) += $(call cc-option,-funroll-loops,)
 # for focaltech tp firmware power on upgrade
 	#EXTRA_CFLAGS += -DFOCALTECH_PWRON_UPGRADE
 	#EXTRA_CFLAGS += -DFOCALTECH_TP_GESTURE
