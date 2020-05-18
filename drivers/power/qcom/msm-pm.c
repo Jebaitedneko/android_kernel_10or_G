@@ -51,7 +51,7 @@
 
 #define MAX_BUF_SIZE  1024
 
-static int msm_pm_debug_mask = 1;
+static int msm_pm_debug_mask = 0;
 module_param_named(
 	debug_mask, msm_pm_debug_mask, int, S_IRUGO | S_IWUSR | S_IWGRP
 );
@@ -418,7 +418,7 @@ bool msm_cpu_pm_enter_sleep(enum msm_pm_sleep_mode mode, bool from_idle)
 
 	if ((!from_idle  && cpu_online(cpu))
 			|| (MSM_PM_DEBUG_IDLE & msm_pm_debug_mask))
-		pr_info("CPU%u:%s mode:%d during %s\n", cpu, __func__,
+		pr_debug("CPU%u:%s mode:%d during %s\n", cpu, __func__,
 				mode, from_idle ? "idle" : "suspend");
 
 	if (execute[mode])
@@ -463,7 +463,7 @@ int msm_pm_wait_cpu_shutdown(unsigned int cpu)
 		 */
 		if (++timeout == 20) {
 			msm_spm_dump_regs(cpu);
-			__WARN_printf("CPU%u didn't collapse in 2ms, sleep status: 0x%x\n",
+			pr_warn("CPU%u didn't collapse in 2ms, sleep status: 0x%x\n",
 					cpu, acc_sts);
 		}
 	}
@@ -550,7 +550,7 @@ static int msm_cpu_status_probe(struct platform_device *pdev)
 	u32 cpu;
 	int rc;
 
-	if (!pdev | !pdev->dev.of_node)
+	if (!pdev || !pdev->dev.of_node)
 		return -EFAULT;
 
 	msm_pm_slp_sts = devm_kzalloc(&pdev->dev,
@@ -568,7 +568,9 @@ static int msm_cpu_status_probe(struct platform_device *pdev)
 		cpun = of_get_cpu_node(cpu, NULL);
 
 		if (!cpun) {
+#ifdef CONFIG_BUG
 			__WARN();
+#endif
 			continue;
 		}
 
