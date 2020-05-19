@@ -61,5 +61,7 @@ config INPUT_FINGERPRINT_GSL6153_ZQL1590
 
 source "drivers/input/fingerprint/goodix_ta/Kconfig"
 source "drivers/input/fingerprint/fpc_tee/Kconfig"
+source "drivers/input/fingerprint/fpc1020/Kconfig"
+source "drivers/input/fingerprint/gf3258/Kconfig"
 
 endif
