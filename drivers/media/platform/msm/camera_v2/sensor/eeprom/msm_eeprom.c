@@ -314,7 +314,59 @@ ERROR:
 	memset(data, 0, sizeof(*data));
 	return rc;
 }
+#ifdef CONFIG_HQ_HI553_OTP
+/**
+  * hynix_sensor_init_for_otp - Hynix sensor read OTP data need init sensor earlyer
+  * sensor_name:            hi553       hi843
+  * sensor_id_reg_addr:   0x0F16     0x0F16
+  * sensor_id:                 0x0553     0x4308
+  */
+static int hynix_otp_readmode_initial(struct msm_eeprom_ctrl_t *e_ctrl, uint8_t *memptr)
+{
+	int rc = 0;
+	uint32_t snsid_addr = 0x0f16;
+	uint16_t sensor_id;
+	int i;
+	pr_err("%s enter\n", __func__);
+	e_ctrl->i2c_client.addr_type = MSM_CAMERA_I2C_WORD_ADDR;
+	if (e_ctrl->i2c_client.cci_client) {
+			e_ctrl->i2c_client.cci_client->sid = 0x28;
+	} else if (e_ctrl->i2c_client.client) {
+			e_ctrl->i2c_client.client->addr = 0x28;
+	}
 
+	rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_read(&(e_ctrl->i2c_client),
+			snsid_addr, &sensor_id, 2);
+	if (rc < 0) {
+		pr_err("<3>""%s: otp sensor id read failed\n", __func__);
+		//return rc;
+	}
+	msleep(20);
+	pr_err("%s: sensor_id = 0x%x \n", __func__, sensor_id);
+	if (sensor_id == 0x0553) {
+		pr_err("%s:%d hi553 sensor otp", __func__, __LINE__);
+		rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_write_table(&(e_ctrl->i2c_client), &hi553_otp_read_init_setting);
+		rc = e_ctrl->i2c_client.i2c_func_tbl->i2c_write_table(&(e_ctrl->i2c_client), &hi553_otp_read_init_setting_start);
+	}
+	else {
+		pr_err("%s:%d other sensor otp", __func__, __LINE__);
+		return -1;
+	}
+	if (rc < 0) {
+		CDBG("<3>""%s: otp read mode initial setting failed\n", __func__);
+		return rc;
+	}
+
+	for(i = 0; i< 0x90; i++){
+		e_ctrl->i2c_client.i2c_func_tbl->i2c_read_seq(&(e_ctrl->i2c_client),
+			0x108, memptr, 1);
+		//pr_err("[%2x]=%2x\n", i, *memptr);
+		memptr++;
+	}
+	pr_err("%s read success\n", __func__);
+	return 0x553;
+}
+#endif
 /**
   * eeprom_parse_memory_map - Parse mem map
   * @e_ctrl:	ctrl structure
@@ -341,7 +393,15 @@ static int eeprom_parse_memory_map(struct msm_eeprom_ctrl_t *e_ctrl,
 		kzalloc(e_ctrl->cal_data.num_data, GFP_KERNEL);
 	if (!e_ctrl->cal_data.mapdata)
 		return -ENOMEM;
-
+#ifdef CONFIG_HQ_HI553_OTP
+	/* MODIFY: check sensor id,  20161104 start */
+	rc = hynix_otp_readmode_initial(e_ctrl, e_ctrl->cal_data.mapdata);
+	if (rc  == 0x553){
+		rc = 0;
+		goto success;
+	}
+	/* MODIFY: check sensor id,  20161104 end */
+#endif
 	memptr = e_ctrl->cal_data.mapdata;
 	for (j = 0; j < eeprom_map_array->msm_size_of_max_mappings; j++) {
 		eeprom_map = &(eeprom_map_array->memory_map[j]);
@@ -416,6 +476,9 @@ static int eeprom_parse_memory_map(struct msm_eeprom_ctrl_t *e_ctrl,
 	memptr = e_ctrl->cal_data.mapdata;
 	for (i = 0; i < e_ctrl->cal_data.num_data; i++)
 		CDBG("memory_data[%d] = 0x%X\n", i, memptr[i]);
+#ifdef CONFIG_HQ_HI553_OTP
+success:
+#endif
 	return rc;
 
 clean_up:
