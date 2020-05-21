@@ -59,7 +59,7 @@
 #define CONFIG_GTP_GLOVE_MODE 0
 #define GTP_AUTO_UPDATE       0
 #define GTP_HEADER_FW_UPDATE  0
-#define GTP_AUTO_UPDATE_CFG   1
+#define GTP_AUTO_UPDATE_CFG   0
 
 #define GTP_COMPATIBLE_MODE   0
 
