@@ -255,6 +255,7 @@ int is_ext_spk_gpio_support(struct platform_device *pdev,
 			struct msm8916_asoc_mach_data *pdata)
 {
 	const char *spk_ext_pa = "qcom,msm-spk-ext-pa";
+	const char *spk_ext_pa1 = "qcom,msm-spk-ext-pa1";
 
 	pr_debug("%s:Enter\n", __func__);
 
@@ -270,9 +271,31 @@ int is_ext_spk_gpio_support(struct platform_device *pdev,
 				__func__, pdata->spk_ext_pa_gpio);
 			return -EINVAL;
 		}
+		else
+		{
+			pr_err("%s: enable speaker 1 gpio: %d",
+				__func__, pdata->spk_ext_pa_gpio);
+		}
+	}
+	pdata->spk_ext_pa1_gpio = of_get_named_gpio(pdev->dev.of_node,
+				spk_ext_pa1, 0);
+	if (pdata->spk_ext_pa1_gpio < 0) {
+		dev_dbg(&pdev->dev,"%s: missing %s in dt node\n", __func__, spk_ext_pa1);
+	} else {
+		if (!gpio_is_valid(pdata->spk_ext_pa1_gpio)) {
+			pr_err("%s: Invalid external speaker 1 gpio: %d",
+				__func__, pdata->spk_ext_pa1_gpio);
+			return -EINVAL;
+		}
+		else
+		{
+			pr_err("%s: enable speaker pa2 gpio: %d",
+				__func__, pdata->spk_ext_pa1_gpio);
+		}
 	}
 #ifdef CONFIG_MACH_XIAOMI_C6
 	gpio_direction_output(pdata->spk_ext_pa_gpio, 0);
+	gpio_direction_output(pdata->spk_ext_pa1_gpio, 0);
 #endif
 
 	return 0;
@@ -293,6 +316,11 @@ static int enable_spk_ext_pa(struct snd_soc_codec *codec, int enable)
 			pdata->spk_ext_pa_gpio);
 		return false;
 	}
+	if (!gpio_is_valid(pdata->spk_ext_pa1_gpio)) {
+		pr_err("%s: Invalid gpio1: %d\n", __func__,
+			pdata->spk_ext_pa1_gpio);
+		return false;
+	}
 
 	pr_debug("%s: %s external speaker PA\n", __func__,
 		enable ? "Enable" : "Disable");
@@ -303,6 +331,10 @@ static int enable_spk_ext_pa(struct snd_soc_codec *codec, int enable)
 			gpio_set_value_cansleep(pdata->spk_ext_pa_gpio, 0);
 			udelay(2);
 			gpio_set_value_cansleep(pdata->spk_ext_pa_gpio, enable);
+			udelay(2);
+			gpio_set_value_cansleep(pdata->spk_ext_pa1_gpio, 0);
+			udelay(2);
+			gpio_set_value_cansleep(pdata->spk_ext_pa1_gpio, enable);
 			udelay(2);
 			pa_mode--;
 		}
@@ -317,6 +349,7 @@ static int enable_spk_ext_pa(struct snd_soc_codec *codec, int enable)
 #endif
 	} else {
 		gpio_set_value_cansleep(pdata->spk_ext_pa_gpio, enable);
+		gpio_set_value_cansleep(pdata->spk_ext_pa1_gpio, enable);
 #ifndef CONFIG_MACH_XIAOMI_C6
 		ret = msm_gpioset_suspend(CLIENT_WCD_INT, "ext_spk_gpio");
 		if (ret) {
