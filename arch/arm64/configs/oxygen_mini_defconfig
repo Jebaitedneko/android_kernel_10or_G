@@ -1326,8 +1326,6 @@ CONFIG_OF_IOMMU=y
 CONFIG_MSM_IOMMU=y
 CONFIG_MSM_IOMMU_V1=y
 CONFIG_ARM_SMMU=y
-CONFIG_IOMMU_DEBUG=y
-CONFIG_IOMMU_TESTS=y
 # Remoteproc drivers
 # Rpmsg drivers
 # SOC (System On Chip) specific Drivers
