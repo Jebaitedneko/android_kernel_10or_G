@@ -2529,7 +2529,7 @@ rel_fw:
 #if defined(FOCALTECH_LOCK_DOWN_INFO)
 #define CTP_PROC_LOCKDOWN_FILE "tp_lockdown_info"
 static struct proc_dir_entry *ctp_lockdown_status_proc;
-static char tp_lockdown_info[128];
+static char tp_lockdown_info[32];
 
 static int ctp_lockdown_proc_show(struct seq_file *file, void *data)
 {
@@ -3974,7 +3974,7 @@ INIT_WORK(&data->work_vr, ft5435_change_vr_switch);
 	while (retry--) {
 		err = ft5435_i2c_read(client, &reg_addr, 1, &reg_value, 1);
 		if (!(err < 0)) {
-#ifdef CONFIG_MACH_XIAOMI_C6
+#ifdef CONFIG_MACH_XIAOMI_MIDO
 			set_usb_charge_mode_par = 2;
 #endif
 			dev_info(&client->dev, "Device ID = 0x%x\n", reg_value);

@@ -48,7 +48,7 @@ u8 glove1_config1[GTP_CONFIG_MAX_LENGTH + GTP_ADDR_LENGTH]
 u8 glove1_config2[GTP_CONFIG_MAX_LENGTH + GTP_ADDR_LENGTH]
 				= {GTP_REG_CONFIG_DATA >> 8, GTP_REG_CONFIG_DATA & 0xff};
 
-static char tp_lockdown_info[128];
+static char tp_lockdown_info[32];
 static char tp_fw_version[10];
 
 static char tp_info_summary[80] = "";
@@ -277,7 +277,7 @@ s32 gtp_i2c_write(struct i2c_client *client, u8 *buf, s32 len)
 {
 	struct i2c_msg msg;
 	s32 ret = -1;
-	s32 retries = 0;
+	//s32 retries = 0;
 
 	GTP_DEBUG_FUNC();
 
@@ -287,33 +287,11 @@ s32 gtp_i2c_write(struct i2c_client *client, u8 *buf, s32 len)
 	msg.buf   = buf;
 
 
-	while (retries < 5) {
-		ret = i2c_transfer(client->adapter, &msg, 1);
-		if (ret == 1)
-			break;
-		retries++;
-	}
-	if ((retries >= 5)) {
-	#if GTP_COMPATIBLE_MODE
-		struct goodix_ts_data *ts = i2c_get_clientdata(client);
-	#endif
+	ret = i2c_transfer(client->adapter, &msg, 1);
+    if (ret != 1)
+    {return -EINVAL;}
 
-	#if GTP_GESTURE_WAKEUP
-		if (DOZE_ENABLED == doze_status) {
-			return ret;
-		}
-	#endif
-		GTP_ERROR("I2C Write: 0x%04X, %d bytes failed, errcode: %d! Process reset.", (((u16)(buf[0] << 8)) | buf[1]), len-2, ret);
-	#if GTP_COMPATIBLE_MODE
-		if (CHIP_TYPE_GT9F == ts->chip_type) {
-			gtp_recovery_reset(client);
-		} else
-	#endif
-		{
-			gtp_reset_guitar(client, 10);
-		}
-	}
-	return ret;
+	   return ret;
 }
 
 /*******************************************************
@@ -1903,11 +1881,11 @@ static s8 gtp_request_irq(struct goodix_ts_data *ts)
 	GTP_DEBUG_FUNC();
 	GTP_DEBUG("INT trigger type:%x", ts->int_trigger_type);
 
-	ret  = request_irq(ts->client->irq,
-					   goodix_ts_irq_handler,
-					   irq_table[ts->int_trigger_type],
-					   ts->client->name,
-					   ts);
+	ret  = request_threaded_irq(ts->client->irq, NULL,
+									goodix_ts_irq_handler,
+									irq_table[ts->int_trigger_type],
+									ts->client->name,
+									ts);
 	if (ret) {
 		GTP_ERROR("Request IRQ failed!ERRNO:%d.", ret);
 		GTP_GPIO_AS_INPUT(gtp_int_gpio);
@@ -2582,7 +2560,7 @@ static ssize_t gt9xx_mido_disable_keys_store(struct device *dev,
 
 static DEVICE_ATTR(disable_keys, S_IWUSR | S_IRUSR, gt9xx_mido_disable_keys_show,
 		   gt9xx_mido_disable_keys_store);
-
+/*
 static ssize_t gt9xx_mido_enable_dt2w_show(struct device *dev,
         struct device_attribute *attr, char *buf)
 {
@@ -2660,7 +2638,47 @@ static int gt9xx_mido_proc_init(struct kernfs_node *sysfs_node_parent)
        kfree(double_tap_sysfs_node);
        return ret;
 }
+*/
+// REDEFINITIONS WITH DT2W REMOVED
+static struct attribute *gt9xx_mido_attrs[] = {
+    &dev_attr_disable_keys.attr,
+	NULL
+};
 
+static const struct attribute_group gt9xx_mido_attr_group = {
+       .attrs = gt9xx_mido_attrs,
+};
+
+static int gt9xx_mido_proc_init(struct kernfs_node *sysfs_node_parent)
+{
+       int ret = 0;
+       char *buf, *path = NULL;
+       char *key_disabler_sysfs_node;
+       struct proc_dir_entry *proc_entry_tp = NULL;
+       struct proc_dir_entry *proc_symlink_tmp = NULL;
+       buf = kzalloc(PATH_MAX, GFP_KERNEL);
+       if (buf)
+               path = kernfs_path(sysfs_node_parent, buf, PATH_MAX);
+
+       proc_entry_tp = proc_mkdir("touchpanel", NULL);
+       if (proc_entry_tp == NULL) {
+               pr_err("%s: Couldn't create touchpanel dir in procfs\n", __func__);
+               ret = -ENOMEM;
+       }
+
+       key_disabler_sysfs_node = kzalloc(PATH_MAX, GFP_KERNEL);
+       if (key_disabler_sysfs_node)
+               sprintf(key_disabler_sysfs_node, "/sys%s/%s", path, "disable_keys");
+       proc_symlink_tmp = proc_symlink("capacitive_keys_disable",
+                       proc_entry_tp, key_disabler_sysfs_node);
+       if (proc_symlink_tmp == NULL) {
+               pr_err("%s: Couldn't create capacitive_keys_enable symlink\n", __func__);
+               ret = -ENOMEM;
+       }
+       kfree(buf);
+       kfree(key_disabler_sysfs_node);
+       return ret;
+}
 /*******************************************************
 Function:
 	I2c probe.
@@ -2941,7 +2959,7 @@ static void goodix_ts_suspend(struct goodix_ts_data *ts)
 #if GTP_ESD_PROTECT
 	gtp_esd_switch(ts->client, SWITCH_OFF);
 #endif
-	printk("gtp_gesture_func_on: %d\n", gtp_gesture_func_on);
+//	printk("gtp_gesture_func_on: %d\n", gtp_gesture_func_on);
 #if GTP_GESTURE_WAKEUP
 	#if defined(CONFIG_GTP_GLOVE_MODE)
 	if (gtp_glove_mode_status) {
@@ -3033,7 +3051,9 @@ static int gtp_fb_notifier_callback(struct notifier_block *noti, unsigned long e
 
 	if (ev_data && ev_data->data && event == FB_EVENT_BLANK && ts) {
 		blank = ev_data->data;
-		if (*blank == FB_BLANK_UNBLANK) {
+		if (*blank == FB_BLANK_UNBLANK
+				|| *blank == FB_BLANK_NORMAL
+				|| *blank == FB_BLANK_VSYNC_SUSPEND) {
 			GTP_DEBUG("Resume by fb notifier.");
 			goodix_ts_resume(ts);
 
