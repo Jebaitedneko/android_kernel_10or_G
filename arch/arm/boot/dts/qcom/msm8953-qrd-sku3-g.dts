@@ -2561,7 +2561,7 @@
 			interrupt-names = "kgsl_3d0_irq";
 			qcom,id = <0x0>;
 			qcom,chipid = <0x5000600>;
-			qcom,initial-pwrlevel = <0x8>;
+			qcom,initial-pwrlevel = <0x7>;
 			#cooling-cells = <2>;
 			qcom,idle-timeout = <0x50>;
 			qcom,deep-nap-timeout = <0x64>;
@@ -2593,7 +2593,7 @@
 			coresight-child-ports = <0x6>;
 			qcom,enable-ca-jump;
 			qcom,ca-busy-penalty = <0x2ee0>;
-			qcom,ca-target-pwrlevel = <0x4>;
+			qcom,ca-target-pwrlevel = <0x5>;
 
 			qcom,gpu-mempools {
 				#address-cells = <0x1>;
@@ -2619,7 +2619,7 @@
 
 				qcom,gpu-pwrlevel@0 {
 					reg = <0>;
-					qcom,gpu-freq = <0x4D7C6D00>;
+					qcom,gpu-freq = <0x59682F00>;
 					qcom,bus-freq = <0xa>;
 					qcom,bus-min = <0xa>;
 					qcom,bus-max = <0xa>;
@@ -2627,7 +2627,7 @@
 
 				qcom,gpu-pwrlevel@1 {
 					reg = <1>;
-					qcom,gpu-freq = <0x3A1D51C0>;
+					qcom,gpu-freq = <0x4F64B500>;
 					qcom,bus-freq = <0xa>;
 					qcom,bus-min = <0xa>;
 					qcom,bus-max = <0xa>;
@@ -2635,7 +2635,7 @@
 
 				qcom,gpu-pwrlevel@2 {
 					reg = <2>;
-					qcom,gpu-freq = <0x26BE3680>;
+					qcom,gpu-freq = <0x45613B00>;
 					qcom,bus-freq = <0xa>;
 					qcom,bus-min = <0xa>;
 					qcom,bus-max = <0xa>;
@@ -2643,7 +2643,7 @@
 
 				qcom,gpu-pwrlevel@3 {
 					reg = <3>;
-					qcom,gpu-freq = <0x2160EC00>;
+					qcom,gpu-freq = <0x3B5DC100>;
 					qcom,bus-freq = <0xa>;
 					qcom,bus-min = <0x8>;
 					qcom,bus-max = <0xa>;
@@ -2651,7 +2651,7 @@
 
 				qcom,gpu-pwrlevel@4 {
 					reg = <4>;
-					qcom,gpu-freq = <0x1E65FB80>;
+					qcom,gpu-freq = <0x315A4700>;
 					qcom,bus-freq = <0x9>;
 					qcom,bus-min = <0x6>;
 					qcom,bus-max = <0xa>;
@@ -2659,7 +2659,7 @@
 
 				qcom,gpu-pwrlevel@5 {
 					reg = <5>;
-					qcom,gpu-freq = <0x17D78400>;
+					qcom,gpu-freq = <0x2756CD00>;
 					qcom,bus-freq = <0x7>;
 					qcom,bus-min = <0x5>;
 					qcom,bus-max = <0x8>;
@@ -2667,7 +2667,7 @@
 
 				qcom,gpu-pwrlevel@6 {
 					reg = <6>;
-					qcom,gpu-freq = <0x1312D000>;
+					qcom,gpu-freq = <0x1D535300>;
 					qcom,bus-freq = <0x4>;
 					qcom,bus-min = <0x2>;
 					qcom,bus-max = <0x6>;
@@ -2675,7 +2675,7 @@
 
 				qcom,gpu-pwrlevel@7 {
 					reg = <7>;
-					qcom,gpu-freq = <0xCDFE600>;
+					qcom,gpu-freq = <0x94C5F00>;
 					qcom,bus-freq = <0x1>;
 					qcom,bus-min = <0x1>;
 					qcom,bus-max = <0x4>;
@@ -2683,20 +2683,11 @@
 
 				qcom,gpu-pwrlevel@8 {
 					reg = <8>;
-					qcom,gpu-freq = <0x7F1FF20>;
+					qcom,gpu-freq = <0x134FD900>;
 					qcom,bus-freq = <0x1>;
 					qcom,bus-min = <0x1>;
 					qcom,bus-max = <0x4>;
 				};
-
-				qcom,gpu-pwrlevel@9 {
-					reg = <9>;
-					qcom,gpu-freq = <0x124F800>;
-					qcom,bus-freq = <0x0>;
-					qcom,bus-min = <0x0>;
-					qcom,bus-max = <0x0>;
-				};
-
 			};
 		};
 
@@ -6573,7 +6564,7 @@
 			vdd_gfx-supply = <0xc8>;
 			clocks = <0x37 0x23f5649f>;
 			clock-names = "xo";
-			qcom,gfxfreq-corner = <0x0 0x0 0x7f27450 0x1 0xcdfe600 0x2 0x1312d000 0x3 0x17d78400 0x4 0x1e65fb80 0x5 0x2160ec00 0x6 0x26be3680 0x7 0x3A1D51C0 0x8 0x4D7C6D00 0x9>;
+			qcom,gfxfreq-corner = <0x0 0x0 0x94C5F00 0x1 0x134FD900 0x2 0x1D535300 0x3 0x2756CD00 0x4 0x315A4700 0x5 0x3B5DC100 0x6 0x45613B00 0x7 0x4F64B500 0x8 0x59682F00 0x9>;
 			#clock-cells = <0x1>;
 			linux,phandle = <0x38>;
 			phandle = <0x38>;
