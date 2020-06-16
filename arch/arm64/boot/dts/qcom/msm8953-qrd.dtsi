@@ -172,7 +172,7 @@
 	pinctrl-0 = <&typec_ssmux_config>;
 };
 */
-&pmi8950_charger {
+&qpnp_smbcharger {
 	qcom,battery-data = <&qrd_batterydata>;
     qcom,float-voltage-mv-ntc = <4100>;
 	qcom,float-voltage-mv = <4400>;

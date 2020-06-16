@@ -17,23 +17,11 @@
 #include <dt-bindings/gpio/gpio.h>
 
 / {
-	model = "Qualcomm Technologies, Inc. MSM 8953";
-	compatible = "qcom,msm8953";
-	qcom,msm-id = <293 0x0>;
-	interrupt-parent = <&intc>;
-
-	chosen {
-		bootargs = "sched_enable_hmp=1 sched_enable_power_aware=1";
-	};
-	
-	&firmware {
-	
+	firmware: firmware {
 		android {
 			compatible = "android,firmware";
-			
 			fstab {
 				compatible = "android,fstab";
-
 				vendor {
 					compatible = "android,vendor";
 					dev = "/dev/block/platform/soc/7824900.sdhci/by-name/vendor";
@@ -42,7 +30,6 @@
 					fsmgr_flags = "wait";
 					status = "ok";
 				};
-
 				system {
 					compatible = "android,system";
 					dev = "/dev/block/platform/soc/7824900.sdhci/by-name/system";
@@ -53,6 +40,17 @@
 				};
 			};
 		};
+	};
+};
+
+/ {
+	model = "Qualcomm Technologies, Inc. MSM 8953";
+	compatible = "qcom,msm8953";
+	qcom,msm-id = <293 0x0>;
+	interrupt-parent = <&intc>;
+
+	chosen {
+		bootargs = "sched_enable_hmp=1 sched_enable_power_aware=1";
 	};
 
 	reserved-memory {
