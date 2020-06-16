@@ -325,6 +325,8 @@
 		qcom,valid-status-check;
 	};
 
+	thermal_zones: thermal-zones {};
+
 	qcom,sensor-information {
 		compatible = "qcom,sensor-information";
 		sensor_information0: qcom,sensor-information-0 {
