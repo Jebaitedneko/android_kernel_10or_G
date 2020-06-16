@@ -170,7 +170,6 @@
 #include "msm-arm-smmu-8953.dtsi"
 #include "msm8953-coresight.dtsi"
 #include "msm8953-bus.dtsi"
-#include "msm8953-iommu-domains.dtsi"
 #include "msm8953-vidc.dtsi"
 #include "msm8953-pm.dtsi"
 
