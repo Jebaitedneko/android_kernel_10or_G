@@ -1,5 +1,4 @@
-/*
- * Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -10,17 +9,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+#ifndef __DT_BINDINGS_SPMI_H
+#define __DT_BINDINGS_SPMI_H
 
-/dts-v1/;
+#define SPMI_USID	0
+#define SPMI_GSID	1
 
-#include "msm8953.dtsi"
-#include "msm8953-qrd-sku3.dtsi"
-#include "msm8953-pmi8950.dtsi"
-
-/ {
-	model = "Qualcomm Technologies, Inc. MSM8953 QRD SKU3";
-	compatible = "qcom,msm8953-qrd-sku3",
-		   "qcom,msm8953-qrd", "qcom,msm8953", "qcom,qrd";
-	qcom,board-id= <0x2000b 0>;
-};
-
+#endif

@@ -2396,6 +2396,7 @@
 #include "msm-audio-lpass.dtsi"
 #include "msm8953-audio.dtsi"
 #include "msm-gdsc-8916.dtsi"
+#include "msm8953-thermal.dtsi"
 #include "msm8953-camera.dtsi"
 #include "msm8953-mdss.dtsi"
 #include "msm8953-mdss-pll.dtsi"
