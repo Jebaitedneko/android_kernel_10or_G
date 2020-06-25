@@ -75,14 +75,8 @@
 #include <linux/uprobes.h>
 #include <linux/aio.h>
 #include <linux/compiler.h>
-<<<<<<< HEAD
 #include <linux/cpufreq.h>
-=======
-#include <linux/sysctl.h>
-#include <linux/kcov.h>
-#include <linux/cpufreq_times.h>
 #include <linux/simple_lmk.h>
->>>>>>> 16f8ac04a316... simple_lmk: Introduce Simple Low Memory Killer for Android
 
 #include <asm/pgtable.h>
 #include <asm/pgalloc.h>
