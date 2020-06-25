@@ -283,7 +283,7 @@ void simple_lmk_mm_freed(struct mm_struct *mm)
 			continue;
 
 		victims[i].mm = NULL;
-		if (atomic_inc_return_relaxed(&nr_killed) == victims_to_kill)
+		if (atomic_inc_return(&nr_killed) == victims_to_kill)
 			complete(&reclaim_done);
 		break;
 	}
