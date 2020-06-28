@@ -97,9 +97,9 @@ static struct wcd_mbhc_config mbhc_cfg = {
 	.swap_gnd_mic = NULL,
 	.hs_ext_micbias = false,
 	.key_code[0] = KEY_MEDIA,
-	.key_code[1] = KEY_VOICECOMMAND,
-	.key_code[2] = KEY_VOLUMEUP,
-	.key_code[3] = KEY_VOLUMEDOWN,
+	.key_code[1] = KEY_VOLUMEUP,
+	.key_code[2] = KEY_VOLUMEDOWN,
+	.key_code[3] = 0,
 	.key_code[4] = 0,
 	.key_code[5] = 0,
 	.key_code[6] = 0,
@@ -245,6 +245,7 @@ int is_ext_spk_gpio_support(struct platform_device *pdev,
 			struct msm8916_asoc_mach_data *pdata)
 {
 	const char *spk_ext_pa = "qcom,msm-spk-ext-pa";
+	const char *spk_ext_pa1 = "qcom,msm-spk-ext-pa1";
 
 	pr_debug("%s:Enter\n", __func__);
 
@@ -260,7 +261,29 @@ int is_ext_spk_gpio_support(struct platform_device *pdev,
 				__func__, pdata->spk_ext_pa_gpio);
 			return -EINVAL;
 		}
+		else
+		{
+			pr_err("%s: enable speaker 1 gpio: %d",
+				__func__, pdata->spk_ext_pa_gpio);
+		}
 	}
+	pdata->spk_ext_pa1_gpio = of_get_named_gpio(pdev->dev.of_node,
+				spk_ext_pa1, 0);
+	if (pdata->spk_ext_pa1_gpio < 0) {
+		dev_dbg(&pdev->dev,"%s: missing %s in dt node\n", __func__, spk_ext_pa1);
+	} else {
+		if (!gpio_is_valid(pdata->spk_ext_pa1_gpio)) {
+			pr_err("%s: Invalid external speaker 1 gpio: %d",
+				__func__, pdata->spk_ext_pa1_gpio);
+			return -EINVAL;
+		}
+		else
+		{
+			pr_err("%s: enable ext speaker pa1 gpio: %d",
+				__func__, pdata->spk_ext_pa1_gpio);
+		}
+	}
+	pr_err("%s:exit\n", __func__);
 	return 0;
 }
 
@@ -268,33 +291,53 @@ static int enable_spk_ext_pa(struct snd_soc_codec *codec, int enable)
 {
 	struct snd_soc_card *card = codec->component.card;
 	struct msm8916_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
-	int ret;
 
 	if (!gpio_is_valid(pdata->spk_ext_pa_gpio)) {
 		pr_err("%s: Invalid gpio: %d\n", __func__,
 			pdata->spk_ext_pa_gpio);
 		return false;
 	}
-
+	if (!gpio_is_valid(pdata->spk_ext_pa1_gpio)) {
+		pr_err("%s: Invalid gpio1: %d\n", __func__,
+			pdata->spk_ext_pa1_gpio);
+		return false;
+	}
 	pr_debug("%s: %s external speaker PA\n", __func__,
+		enable ? "Enable" : "Disable");
+	pr_debug("elfen %s: %s external speaker PA\n", __func__,
 		enable ? "Enable" : "Disable");
 
 	if (enable) {
-		ret = msm_gpioset_activate(CLIENT_WCD_INT, "ext_spk_gpio");
-		if (ret) {
-			pr_err("%s: gpio set cannot be de-activated %s\n",
-					__func__, "ext_spk_gpio");
-			return ret;
-		}
-		gpio_set_value_cansleep(pdata->spk_ext_pa_gpio, enable);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 1);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 0);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 1);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 0);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 1);
+
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 1);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 0);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 1);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 0);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 1);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 0);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 1);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 0);
+		udelay(2);
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 1);
 	} else {
-		gpio_set_value_cansleep(pdata->spk_ext_pa_gpio, enable);
-		ret = msm_gpioset_suspend(CLIENT_WCD_INT, "ext_spk_gpio");
-		if (ret) {
-			pr_err("%s: gpio set cannot be de-activated %s\n",
-					__func__, "ext_spk_gpio");
-			return ret;
-		}
+		gpio_direction_output(pdata->spk_ext_pa_gpio, 0);
+		gpio_direction_output(pdata->spk_ext_pa1_gpio, 0);
 	}
 	return 0;
 }
@@ -1610,7 +1653,7 @@ static void *def_msm8952_wcd_mbhc_cal(void)
 		return NULL;
 
 #define S(X, Y) ((WCD_MBHC_CAL_PLUG_TYPE_PTR(msm8952_wcd_cal)->X) = (Y))
-	S(v_hs_max, 1500);
+	S(v_hs_max, 1700);
 #undef S
 #define S(X, Y) ((WCD_MBHC_CAL_BTN_DET_PTR(msm8952_wcd_cal)->X) = (Y))
 	S(num_btn, WCD_MBHC_DEF_BUTTONS);
@@ -1635,14 +1678,14 @@ static void *def_msm8952_wcd_mbhc_cal(void)
 	 */
 	btn_low[0] = 75;
 	btn_high[0] = 75;
-	btn_low[1] = 150;
-	btn_high[1] = 150;
-	btn_low[2] = 225;
-	btn_high[2] = 225;
-	btn_low[3] = 450;
-	btn_high[3] = 450;
-	btn_low[4] = 500;
-	btn_high[4] = 500;
+	btn_low[1] = 200;
+	btn_high[1] = 190;
+	btn_low[2] = 325;
+	btn_high[2] = 420;
+	btn_low[3] = 325;
+	btn_high[3] = 420;
+	btn_low[4] = 325;
+	btn_high[4] = 420;
 
 	return msm8952_wcd_cal;
 }
