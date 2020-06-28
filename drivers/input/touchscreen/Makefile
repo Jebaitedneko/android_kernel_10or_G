@@ -103,3 +103,5 @@ else
 obj-$(CONFIG_TOUCHSCREEN_FTS)		+= focaltech_touch/
 endif
 obj-$(CONFIG_TOUCHSCREEN_TD4310)	+= td4310/
+obj-$(CONFIG_TOUCHSCREEN_FT5436_ZQL1590)  += focaltech_zql1590_ft5436/
+obj-$(CONFIG_TOUCHSCREEN_GT917D_ZQL1590)  += goodix_zql1590_gt917d/
