@@ -770,7 +770,7 @@ struct vfe_device {
 	uint32_t is_split;
 	uint32_t dual_vfe_enable;
 	unsigned long page_fault_addr;
-#ifndef CONFIG_MACH_XIAOMI_MIDO
+#ifndef CONFIG_MACH_XIAOMI_MIDO_UNUSED
 	uint32_t vfe_hw_limit;
 #endif
 
