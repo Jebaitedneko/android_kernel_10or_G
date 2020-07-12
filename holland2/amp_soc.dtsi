@@ -1,0 +1,437 @@
+// "soc {}"
+
+&soc {
+
+	tlmm: pinctrl@1000000 {
+
+		cam_sensor_rear_default: cam_sensor_rear_default {
+			/* RESET, STANDBY */
+			mux {
+				pins = "gpio129", "gpio130";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio129","gpio130";
+				bias-disable; /* No PULL */
+				drive-strength = <2>; /* 2 MA */
+			};
+		};
+
+		cam_sensor_rear_sleep: cam_sensor_rear_sleep {
+			/* RESET, STANDBY */
+			mux {
+				pins = "gpio129","gpio130";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio129","gpio130";
+				bias-disable; /* No PULL */
+				drive-strength = <2>; /* 2 MA */
+			};
+		};
+
+		cam_sensor_rear_avdd_default: cam_sensor_rear_avdd_default {
+			/* AVDD */
+			mux {
+				pins = "gpio46";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio46";
+				bias-disable; /* No PULL */
+				drive-strength = <2>; /* 2 MA */
+				output-low;
+			};
+		};
+
+		cam_sensor_rear_avdd_sleep: cam_sensor_rear_avdd_sleep {
+			/* AVDD */
+			mux {
+				pins = "gpio46";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio46";
+				bias-disable; /* No PULL */
+				drive-strength = <2>; /* 2 MA */
+			};
+		};
+
+		cam_sensor_rear_mono_default: cam_sensor_rear_mono_default {
+			/* RESET, STANDBY */
+			mux {
+				pins = "gpio40", "gpio39";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio40","gpio39";
+				bias-disable; /* No PULL */
+				drive-strength = <2>; /* 2 MA */
+			};
+		};
+
+		cam_sensor_rear_mono_sleep: cam_sensor_rear_mono_sleep {
+			/* RESET, STANDBY */
+			mux {
+				pins = "gpio40","gpio39";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio40","gpio39";
+				bias-disable; /* No PULL */
+				drive-strength = <2>; /* 2 MA */
+			};
+		};
+
+		cam_sensor_rear_mono_id_default: cam_sensor_rear_mono_id {
+			mux {
+				pins = "gpio62";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio62";
+				drive-strength = <2>; /* 2 mA */
+				bias-pull-down; /* pull down */
+				input-enable;
+			};
+		};
+
+		pmx_mdss: pmx_mdss {
+			mdss_dsi_active: mdss_dsi_active {
+				mux {
+					pins = "gpio61";
+					function = "gpio";
+				};
+
+				config {
+					pins = "gpio61";
+					drive-strength = <8>; /* 8 mA */
+					bias-disable = <0>; /* no pull */
+					output-high;
+				};
+			};
+
+			mdss_dsi_suspend: mdss_dsi_suspend {
+				mux {
+					pins = "gpio61";
+					function = "gpio";
+				};
+
+				config {
+					pins = "gpio61";
+					drive-strength = <2>; /* 2 mA */
+					bias-pull-down; /* pull down */
+				};
+			};
+		};
+
+		pmx_mdss_te {
+			mdss_te_active: mdss_te_active {
+				mux {
+					pins = "gpio24";
+					function = "gpio";  //mdp_vsync
+				};
+				config {
+					pins = "gpio24";
+					drive-strength = <2>; /* 8 mA */
+					bias-pull-down; /* pull down*/
+				};
+			};
+
+			mdss_te_suspend: mdss_te_suspend {
+				mux {
+					pins = "gpio24";
+					function = "gpio";  //mdp_vsync
+				};
+				config {
+					pins = "gpio24";
+					drive-strength = <2>; /* 2 mA */
+					bias-pull-down; /* pull down */
+				};
+			};
+		};
+
+		spi7 {
+			spi7_default: spi7_default {
+				/* active state */
+				mux {
+					/* MOSI, MISO, CLK */
+					pins = "gpio137", "gpio138", "gpio135";
+					function = "blsp_spi7";
+				};
+
+				config {
+					pins = "gpio137", "gpio138", "gpio135";
+					drive-strength = <12>; /* 12 MA */
+					bias-disable = <0>; /* No PULL */
+				};
+			};
+
+			spi7_sleep: spi7_sleep {
+				/* suspended state */
+				mux {
+					/* MOSI, MISO, CLK */
+					pins = "gpio137", "gpio138", "gpio135";
+					function = "gpio";
+				};
+
+				config {
+					pins = "gpio137", "gpio138", "gpio135";
+					drive-strength = <2>; /* 2 MA */
+					bias-pull-down; /* PULL Down */
+				};
+			};
+
+			spi7_cs0_active: cs1_active {
+				/* CS */
+				mux {
+					pins = "gpio136";
+					function = "blsp_spi7";
+				};
+
+				config {
+					pins = "gpio136";
+					drive-strength = <2>;
+					bias-disable = <0>;
+				};
+			};
+
+			spi7_cs0_sleep: cs1_sleep {
+				/* CS */
+				mux {
+					pins = "gpio136";
+					function = "gpio";
+				};
+
+				config {
+					pins = "gpio136";
+					drive-strength = <2>;
+					bias-disable = <0>;
+				};
+			};
+		};
+		sileadfp {
+		    fp_shutdown_active:active {
+				/* shutdown */
+				mux {
+					pins = "gpio140";
+					function = "gpio";
+				};
+
+				config {
+					pins = "gpio140";
+					drive-strength = <12>;
+					//bias-disable = <0>;
+					bias-pull-up;
+					output-high;
+				};
+			};
+
+			fp_shutdown_suspend:suspend {
+				/* CS */
+				mux {
+					pins = "gpio140";
+					function = "gpio";
+				};
+
+				config {
+					pins = "gpio140";
+					drive-strength = <2>;
+					bias-pull-down;
+					output-low;
+				};
+			};					
+
+			silead_irq_active:irq_active {
+				/* CS */
+				mux {
+					pins = "gpio48";
+					function = "gpio";
+				};
+
+				config {
+					pins = "gpio48";
+					drive-strength = <2>;
+					bias-pull-down;
+					//input-enable;
+				};
+			};
+		};
+	};
+
+	i2c@78b7000 { /* BLSP1 QUP3 */
+
+		/delete-node/ synaptics@4b;
+
+		focaltech@38 {
+			compatible = "focaltech,5435";
+			reg = <0x38>;
+			interrupt-parent = <&tlmm>;
+			interrupts = <65 0x2>;
+			vdd-supply = <&pm8953_l10>;
+			vcc_i2c-supply = <&pm8953_l6>;
+			/* pins used by touchscreen */
+			pinctrl-names = "pmx_ts_active",
+						"pmx_ts_suspend",
+						"pmx_ts_release";
+			pinctrl-0 = <&ts_int_active &ts_reset_active>;
+			pinctrl-1 = <&ts_int_suspend &ts_reset_suspend>;
+			pinctrl-2 = <&ts_release>;
+			focaltech,name = "ft5435";
+			focaltech,family-id = <0x54>;
+			focaltech,reset-gpio = <&tlmm 64 0x0>;
+			focaltech,irq-gpio = <&tlmm 65 0x2008>;
+			focaltech,display-coords = <0 0 1080 1920>;
+			focaltech,panel-coords = <0 0 1080 1920>;
+			focaltech,button-map= <139 172 158>;
+			focaltech,no-force-update;
+			focaltech,i2c-pull-up;
+			focaltech,group-id = <1>;
+			focaltech,hard-reset-delay-ms = <200>;
+			focaltech,soft-reset-delay-ms = <200>;
+			focaltech,num-max-touches = <10>;
+			focaltech,fw-delay-aa-ms = <2>;
+			focaltech,fw-delay-55-ms = <2>;
+			focaltech,fw-upgrade-id1 = <0x54>;
+			focaltech,fw-upgrade-id2 = <0x2c>;
+			focaltech,fw-delay-readid-ms = <10>;
+			focaltech,fw-delay-era-flsh-ms = <2000>;
+			focaltech,fw-auto-cal;
+			focaltech,fw-vkey-support;
+			focaltech,resume-in-workqueue;
+			focaltech,num-virtual-key = <3>;
+			focal,virtual_key_1 = <172 500 2040>;/*home*/
+			focal,virtual_key_2 = <139 200 2040>;/*menu*/
+			focal,virtual_key_3 = <158 800 2040>;/*back*/
+			/* Underlying clocks used by secure touch */
+			clock-names = "iface_clk", "core_clk";
+			clocks = <&clock_gcc clk_gcc_blsp1_ahb_clk>,
+				<&clock_gcc clk_gcc_blsp1_qup3_i2c_apps_clk>;
+		};
+
+		goodix_ts@5d {
+			compatible = "goodix,gt9xx";
+			reg = <0x5d>;
+			interrupt-parent = <&tlmm>;
+			interrupts = <65 0x2008>;
+			vdd_ana-supply = <&pm8953_l10>;
+			vcc_i2c-supply = <&pm8953_l6>;
+			goodix,rst-gpio = <&tlmm 64 0x00>;
+			goodix,irq-gpio = <&tlmm 65 0x00>;
+			pinctrl-names = "pmx_ts_active",
+						"pmx_ts_suspend",
+						"pmx_ts_release";
+			pinctrl-0 = <&ts_int_active &ts_reset_active>;
+			pinctrl-1 = <&ts_int_suspend &ts_reset_suspend>;
+			pinctrl-2 = <&ts_release>;
+			goodix,cfg-group0 = [
+                        45 38 04 80 07 0A 3C 80 02 C8 28 
+                        05 50 37 03 05 00 00 00 00 11 11 
+                        05 16 19 1E 14 87 27 CC 56 58 D3 
+                        07 00 00 02 D2 02 11 00 00 00 00 
+                        00 03 40 14 14 00 00 3C 64 8F D0 
+                        52 08 19 00 04 9F 3F 00 93 46 00 
+                        89 4D 00 89 55 00 78 5F 00 78 00 
+                        00 00 00 00 00 00 00 00 00 00 00 
+                        00 00 00 00 00 00 00 00 00 00 00 
+                        00 00 00 00 00 00 00 00 00 00 00 
+                        00 00 01 02 03 04 05 06 07 08 0B 
+                        0A 09 00 17 16 15 14 13 12 11 10 
+                        0F 0E 0D 0C FF FF FF FF FF FF 1E 
+                        1F 20 22 24 28 29 0A 08 06 05 04 
+                        02 00 FF FF FF 00 00 00 00 00 00 
+                        00 00 00 23 32 41 00 00 00 00 00 
+                        00 00 00 00 00 5A 00 00 00 00 00 
+                        00 00 00 28 5A 00 00 00 00 00 00 
+                        00 00 00 00 00 00 00 00 00 00 00 
+                        00 00 00 00 00 00 00 00 00 00 00 
+                        00 00 00 00 00 00 0C 01];
+		};
+	 };
+
+	/delete-node/ vdd_vreg;
+
+	gen-vkeys {
+		compatible = "qcom,gen-vkeys";
+		label = "ft5x06_ts";
+		qcom,disp-maxx = <1080>;
+		qcom,disp-maxy = <1920>;
+		qcom,panel-maxx = <1080>;
+		qcom,panel-maxy = <1920>;
+		qcom,key-codes = <139 172 158>;
+		qcom,y-offset = <0>;
+	};
+
+	spi_7: spi@7AF7000 { /* BLSP 2 QUP 3*/
+                compatible = "qcom,spi-qup-v2";
+                #address-cells = <1>;
+                #size-cells = <0>;
+                reg-names = "spi_physical", "spi_bam_physical";
+                reg = <0x7af7000 0x600>,
+                        <0x7ac4000 0x1f000>;
+                interrupt-names = "spi_irq", "spi_bam_irq";
+                interrupts = <0 301 0>, <0 239 0>;
+                spi-max-frequency = <19200000>;
+                pinctrl-names = "spi_default", "spi_sleep";
+                pinctrl-0 = <&spi7_default &spi7_cs0_active>;
+                pinctrl-1 = <&spi7_sleep &spi7_cs0_sleep>;
+                clocks = <&clock_gcc clk_gcc_blsp2_ahb_clk>,
+                        <&clock_gcc clk_gcc_blsp2_qup3_spi_apps_clk>;
+                clock-names = "iface_clk", "core_clk";
+                qcom,infinite-mode = <0>;
+                qcom,use-bam;
+                qcom,use-pinctrl;
+                qcom,ver-reg-exists;
+                qcom,bam-consumer-pipe-index = <8>;
+                qcom,bam-producer-pipe-index = <9>;
+                qcom,master-id = <84>;
+                status = "ok";
+        };
+
+        fp_id: fp_id {
+		status = "ok";
+		compatible = "fp_id,fp_id";
+		interrupt-parent = <&tlmm>;
+		silead,gpio_fp_id = <&tlmm 38 0x0>;
+		//silead,gpio_pwr_id = <&tlmm 47 0x0>;
+		
+	};
+
+	goodix_fp {
+		compatible = "goodix,fingerprint";
+		interrupt-parent = <&tlmm>;
+		interrupts = <48 0x0>;
+		spi-max-frequency = <5000000>;
+		vdd-supply = <&pm8953_l10>;
+		goodix,gpio_reset = <&tlmm 140 0>;//reset gpio
+		goodix,gpio_irq    = <&tlmm 48 0>;//irq gpio
+		//goodix,gpio_pwr  = <&tlmm 47 0>;//power gpio
+		//goodix,gpio_id   = <&tlmm 38 0>;//compatible gpio		
+		status = "ok";
+	};
+
+	silead {
+		compatible = "silead,silead_fp";
+		interrupt-parent = <&tlmm>;
+		interrupts = <48 0x0>;
+		spi-max-frequency = <5000000>;
+		pinctrl-names = "active", "suspend", "irq_active";	
+		pinctrl-0 = <&fp_shutdown_active>;
+		pinctrl-1 = <&fp_shutdown_suspend>;
+		pinctrl-2 = <&silead_irq_active>;
+		vdd-supply = <&pm8953_l10>;
+		silead,shutdown_gpio = <&tlmm 140 0>;
+		silead,gpio_int    = <&tlmm 48 0>;
+		//silead,gpio_pwr  = <&tlmm 47 0>;
+		//silead,gpio_id   = <&tlmm 90 0>;		
+		interrupt-names = "sl_wake_up";
+		status = "ok";
+	};
+};

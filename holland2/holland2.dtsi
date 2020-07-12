@@ -1,0 +1,5 @@
+// imports
+
+#include "slash_brace.dtsi"
+#include "amp_soc.dtsi"
+#include "amp_others.dtsi"

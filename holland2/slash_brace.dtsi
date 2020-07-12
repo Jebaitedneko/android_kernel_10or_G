@@ -1,0 +1,46 @@
+// "/ {}"
+
+/ {
+	firmware: firmware {
+		android {
+			fstab {
+				vendor {
+					dev = "/dev/block/platform/soc/7824900.sdhci/by-name/vendor";
+					type = "ext4";
+					mnt_flags = "ro,barrier=1,discard";
+					fsmgr_flags = "wait";
+				};
+				system {
+					compatible = "android,system";
+					dev = "/dev/block/platform/soc/7824900.sdhci/by-name/system";
+					type = "ext4";
+					mnt_flags = "ro,barrier=1,discard";
+					fsmgr_flags = "wait";
+					status = "ok";
+				};
+			};
+		};
+	};
+
+	reserved-memory {
+
+		other_ext_mem: other_ext_region@0 {
+			compatible = "removed-dma-pool";
+			no-map;
+			reg = <0x0 0x84A00000 0x0 0x1E00000>;
+		};
+	};
+
+	board_gpios:board_gpios@0 {
+			compatible = "pcb-gpio";
+			stage-gpio = <106 81 17 3>;
+	};
+
+	aliases {
+		spi7 = &spi_7;
+	};
+
+	qrd_batterydata: qcom,battery-data {
+		#include "batterydata_Amazon_4V4_4000mAh.dtsi"
+	};
+};
