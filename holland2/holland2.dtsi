@@ -1,5 +1,8 @@
 // imports
 
-#include "slash_brace.dtsi"
-#include "amp_soc.dtsi"
-#include "amp_others.dtsi"
+#include "holland2-audio.dtsi"
+#include "holland2-general.dtsi"
+#include "holland2-mdss.dtsi"
+#include "holland2-misc.dtsi"
+#include "holland2-misc-ext.dtsi"
+#include "holland2-pinctrl.dtsi"

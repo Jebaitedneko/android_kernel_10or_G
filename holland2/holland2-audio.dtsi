@@ -1,0 +1,54 @@
+// "&blabla_bla {}"
+
+&int_codec {
+	status = "ok";
+	qcom,msm-ext-pa = "primary";
+	/delete-property/ qcom,cdc-us-euro-gpios;
+	qcom,msm-spk-ext-pa = <&tlmm 20 0>;
+	qcom,msm-spk-ext-pa1 = <&tlmm 21 0>;
+	qcom,msm-mbhc-hphl-swh = <1>;
+	/delete-property/ qcom,msm-micbias1-ext-cap;
+	qcom,msm-mclk-freq = <9600000>;
+	qcom,audio-routing =
+			"RX_BIAS", "MCLK",
+			"SPK_RX_BIAS", "MCLK",
+			"INT_LDO_H", "MCLK",
+			"MIC BIAS External", "Handset Mic",
+			"MIC BIAS Internal2", "Headset Mic",
+			"MIC BIAS External", "Secondary Mic",
+			"AMIC1", "MIC BIAS External",
+			"AMIC2", "MIC BIAS Internal2",
+			"AMIC3", "MIC BIAS External";
+};
+
+&msm_digital_codec {
+	status = "ok";
+};
+
+&pmic_analog_codec {
+	status = "ok";
+};
+
+&ext_codec {
+	status = "disabled";
+};
+
+&slim_msm {
+	status = "disabled";
+};
+
+&dai_slim {
+	status = "disabled";
+};
+
+&clock_audio {
+	status = "disabled";
+};
+
+&wcd9335 {
+	status = "disabled";
+};
+
+&wcd_rst_gpio {
+	status = "disabled";
+};
