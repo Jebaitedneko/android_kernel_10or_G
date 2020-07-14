@@ -9,6 +9,9 @@
 #
 # Normal rules
 #
+out/
+modules/
+build*.sh
 .*
 *.o
 *.o.*
@@ -18,7 +21,6 @@
 *.so
 *.so.dbg
 *.mod.c
-*.i
 *.lst
 *.symtypes
 *.order
