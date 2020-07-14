@@ -9,7 +9,8 @@
 #
 # Normal rules
 #
-out*
+modules/
+out/
 build*.sh
 .*
 *.o
