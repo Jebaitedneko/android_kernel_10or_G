@@ -81,7 +81,3 @@
 &i2c_3 {
 	status = "ok";
 };
-
-// /delete-node/ &flash_led;
-
-// /delete-node/ &led_flash0;

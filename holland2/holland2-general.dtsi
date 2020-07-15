@@ -170,4 +170,19 @@
 		interrupt-names = "sl_wake_up";
 		status = "ok";
 	};
+
+	led_flash0: qcom,camera-flash {
+		qcom,flash-source = <&pmi8950_flash0 &pmi8950_flash1>;
+		qcom,torch-source = <&pmi8950_torch0 &pmi8950_torch1>;
+	};
+
+	led_flash2: qcom,camera-frontflash {
+		cell-index = <2>;
+		compatible = "qcom,camera-frontflash";
+		qcom,flash-type = <1>;
+		gpios = <&tlmm 2 0>;
+		qcom,gpio-req-tbl-num = <0>;
+		qcom,gpio-req-tbl-flags = <1>;
+		qcom,gpio-req-tbl-label = "FRONT_FLASH";
+	};
 };
