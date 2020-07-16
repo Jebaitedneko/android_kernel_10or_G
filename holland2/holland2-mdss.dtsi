@@ -1,3 +1,10 @@
+//panel stuff
+
+&mdss_mdp {
+	qcom,mdss-rot-downscale-min = <0x2>;
+	qcom,mdss-rot-downscale-max = <0x10>;
+};
+
 #include "dsi-panel-hx8399c-auo-53-1080p-video.dtsi"
 #include "dsi-panel-ili7807d-djn-53-1080p-video.dtsi"
 #include "dsi-panel-ili7807d-djn-auo-53-1080p-video.dtsi"

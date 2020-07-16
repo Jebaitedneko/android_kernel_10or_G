@@ -136,7 +136,7 @@
 			mdss_te_active: mdss_te_active {
 				mux {
 					pins = "gpio24";
-					function = "gpio";  //mdp_vsync
+					function = "mdp_vsync";  //mdp_vsync
 				};
 				config {
 					pins = "gpio24";
@@ -148,7 +148,7 @@
 			mdss_te_suspend: mdss_te_suspend {
 				mux {
 					pins = "gpio24";
-					function = "gpio";  //mdp_vsync
+					function = "mdp_vsync";  //mdp_vsync
 				};
 				config {
 					pins = "gpio24";
@@ -217,6 +217,7 @@
 				};
 			};
 		};
+
 		sileadfp {
 		    fp_shutdown_active:active {
 				/* shutdown */

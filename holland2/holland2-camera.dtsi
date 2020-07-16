@@ -1,6 +1,38 @@
 // camera
 
+&flash_led {
+	pmi8950_flash1: qcom,flash_1 {
+		label = "flash";
+		qcom,led-name = "led:flash_1";
+		qcom,default-led-trigger =
+				"flash1_trigger";
+		qcom,max-current = <1000>;
+		qcom,duration = <1280>;
+		qcom,id = <1>;
+		qcom,current = <625>;
+	};
+	pmi8950_torch1: qcom,torch_1 {
+		label = "torch";
+		qcom,led-name = "led:torch_1";
+		qcom,default-led-trigger =
+				"torch1_trigger";
+		qcom,max-current = <200>;
+		qcom,id = <1>;
+		qcom,current = <120>;
+	};
+};
+
 &cci {
+
+	led_flash2: qcom,camera-frontflash {
+		cell-index = <2>;
+		compatible = "qcom,camera-flash-front";
+		qcom,flash-type = <1>;
+		gpios = <&tlmm 2 0>;
+		qcom,gpio-req-tbl-num = <0>;
+		qcom,gpio-req-tbl-flags = <1>;
+		qcom,gpio-req-tbl-label = "FRONT_FLASH";
+	};
 
 	actuator1: qcom,actuator@1 {
 		cell-index = <1>;
@@ -65,9 +97,10 @@
 		qcom,cam-vreg-min-voltage = <1000000 1200000 0 2800000>;
 		qcom,cam-vreg-max-voltage = <1000000 1200000 0 2800000>;
 		qcom,cam-vreg-op-mode = <1000000 105000 0 80000>;
-		pinctrl-0 = <&cam_sensor_mclk1_default
-						&cam_sensor_front_default>;
-		pinctrl-1 = <&cam_sensor_mclk1_sleep &cam_sensor_front_sleep>;
+		pinctrl-0 = <&cam_sensor_mclk1_default 
+				&cam_sensor_front_default>;
+		pinctrl-1 = <&cam_sensor_mclk1_sleep
+				&cam_sensor_front_sleep>;
 		gpios = <&tlmm 27 0>,
 			<&tlmm 131 0>,
 			<&tlmm 132 0>;

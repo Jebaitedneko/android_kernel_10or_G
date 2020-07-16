@@ -7,7 +7,6 @@
 	qcom,msm-spk-ext-pa = <&tlmm 20 0>;
 	qcom,msm-spk-ext-pa1 = <&tlmm 21 0>;
 	qcom,msm-mbhc-hphl-swh = <1>;
-	/delete-property/ qcom,msm-micbias1-ext-cap;
 	qcom,msm-mclk-freq = <9600000>;
 	qcom,audio-routing =
 			"RX_BIAS", "MCLK",
@@ -26,11 +25,11 @@
 	/delete-property/ qcom,msm-vdd-wsa-switch-current;
 };
 
-&msm_digital_codec {
+&pm8953_diangu_dig {
 	status = "ok";
 };
 
-&pmic_analog_codec {
+&pm8953_diangu_analog {
 	status = "ok";
 };
 
@@ -43,6 +42,10 @@
 };
 
 &dai_slim {
+	status = "disabled";
+};
+
+&wcd9xxx_intc {
 	status = "disabled";
 };
 

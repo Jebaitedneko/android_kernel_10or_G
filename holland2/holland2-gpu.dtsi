@@ -1,0 +1,28 @@
+// kgsl stuff
+
+&kgsl_smmu {
+	qcom,deferred-regulator-disable-delay = <0x50>;
+};
+
+&apps_iommu {
+	#iommu-cells = <0x1>;
+};
+
+&msm_gpu {
+	qcom,gpu-quirk-lmloadkill-disable;
+	qcom,gpu-mempools {
+		#address-cells = <0x1>;
+		#size-cells = <0x0>;
+		compatible = "qcom,gpu-mempools";
+		qcom,mempool-max-pages = <0x8000>;
+		qcom,gpu-mempool@0 {
+			reg = <0x0>;
+			qcom,mempool-page-size = <0x1000>;
+		};
+
+		qcom,gpu-mempool@1 {
+			reg = <0x1>;
+			qcom,mempool-page-size = <0x10000>;
+		};
+	};
+};
