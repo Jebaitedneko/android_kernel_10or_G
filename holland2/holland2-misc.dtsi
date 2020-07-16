@@ -27,7 +27,6 @@
 		pm8953_gpios: gpios {
 
 			gpio@c700 {
-				/delete-property/ status;
 				qcom,master-en = <0>;
 			};
 		};
