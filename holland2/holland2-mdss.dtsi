@@ -21,6 +21,8 @@
 #include "dsi-panel-ili7807d-djn-auo-53-1080p-video.dtsi"
 
 &dsi_hx8399c_auo_53_1080p_video {
+	qcom,esd-check-enabled;
+	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
 	qcom,mdss-dsi-panel-timings-phy-v2  = [25 1F 09 0a 06 03 04 a0
 		25 1F 09 0a 06 03 04 a0
 		25 1F 09 0a 06 03 04 a0
@@ -29,6 +31,8 @@
 };
 
 &dsi_ili7807d_djn_53_1080p_video {
+	qcom,esd-check-enabled;
+	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
 	qcom,mdss-dsi-panel-timings-phy-v2  = [25 20 09 0A 06 03 04 a0
 		25 20 09 0A 06 03 04 a0
 		25 20 09 0A 06 03 04 a0
@@ -48,16 +52,18 @@
 	qcom,dsi-pref-prim-pan = <&dsi_hx8399c_auo_53_1080p_video>;
 };
 
-&dsi_hx8399c_auo_53_1080p_video {
-	qcom,esd-check-enabled;
-	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
-};
-
-&dsi_ili7807d_djn_53_1080p_video {
-	qcom,esd-check-enabled;
-	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
-};
-
+/delete-node/ &dsi_adv7533_1080p;
+/delete-node/ &dsi_boyi_hx83100a_800p_video;
+/delete-node/ &dsi_dual_sim_cmd;
+/delete-node/ &dsi_dual_sim_vid;
+/delete-node/ &dsi_lgd_incell_sw49106_fhd_video;
+/delete-node/ &dsi_lt8912_1080_vid;
+/delete-node/ &dsi_lt8912_480_vid;
 /delete-node/ &dsi_r69006_1080p_cmd;
-
 /delete-node/ &dsi_r69006_1080p_video;
+/delete-node/ &dsi_sim_cmd;
+/delete-node/ &dsi_sim_vid;
+/delete-node/ &dsi_truly_1080_cmd;
+/delete-node/ &dsi_truly_1080_vid;
+/delete-node/ &dsi_truly_wuxga_vid;
+/delete-node/ &dsi_adv7533_720p;
