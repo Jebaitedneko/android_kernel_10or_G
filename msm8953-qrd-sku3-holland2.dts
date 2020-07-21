@@ -17,6 +17,7 @@
 #include "msm-pmi8950.dtsi"
 
 / {
+
 	model = "Qualcomm Technologies, Inc. MSM8953 + PMI8950 QRD SKU3";
 	compatible = "qcom,msm8953-qrd-sku3",
 		   "qcom,msm8953-qrd", "qcom,msm8953", "qcom,qrd";
@@ -24,7 +25,9 @@
 };
 
 &soc {
+
 	led_flash0: qcom,camera-flash {
+
 		cell-index = <0>;
 		compatible = "qcom,camera-flash";
 		qcom,flash-type = <1>;
