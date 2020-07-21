@@ -39,18 +39,17 @@
 			};
 		};
 	};
+};
 
-	reserved-memory {
+&other_ext_mem {
+	reg = <0x0 0x84A00000 0x0 0x1E00000>;
+};
 
-		other_ext_mem: other_ext_region@0 {
+&modem_mem {
+	no-map;
+	/delete-property/ no-map-fixup;
+};
 
-			compatible = "removed-dma-pool";
-			no-map;
-			reg = <0x0 0x84A00000 0x0 0x1E00000>;
-		};
-	};
-
-	qrd_batterydata: qcom,battery-data {
-		#include "batterydata_Amazon_4V4_4000mAh.dtsi"
-	};
+&qrd_batterydata {
+	#include "batterydata_Amazon_4V4_4000mAh.dtsi"
 };
