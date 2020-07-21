@@ -21,6 +21,10 @@
 	qcom,min-timeout-ms = <0x64>;
 };
 
+&sdhc_2 {
+	cd-gpios = <&tlmm 133 0x0>;
+};
+
 &spmi_bus {
 
 	qcom,pm8953@0 {
@@ -32,13 +36,6 @@
 				qcom,s1-timer = <6720>;
 				qcom,s2-timer = <1000>;
 				qcom,s2-type = <7>;
-			};
-		};
-
-		pm8953_gpios: gpios {
-
-			gpio@c700 {
-				qcom,master-en = <0>;
 			};
 		};
 	};
@@ -102,12 +99,4 @@
 			regulator-max-microvolt = <2850000>;
 		};
 	};
-};
-
-&sdhc_2 {
-	cd-gpios = <&tlmm 133 0x0>;
-};
-
-&i2c_3 {
-	status = "ok";
 };

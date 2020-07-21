@@ -43,11 +43,6 @@
 		};
 	};
 
-	board_gpios:board_gpios@0 {
-			compatible = "pcb-gpio";
-			stage-gpio = <106 81 17 3>;
-	};
-
 	qrd_batterydata: qcom,battery-data {
 		#include "batterydata_Amazon_4V4_4000mAh.dtsi"
 	};

@@ -12,6 +12,7 @@
 */
 
 &int_codec {
+
 	status = "ok";
 	qcom,msm-ext-pa = "primary";
 	/delete-property/ qcom,cdc-us-euro-gpios;
