@@ -153,7 +153,6 @@
 	qcom,camera@0 {
 		qcom,csiphy-sd-index = <1>;
 		qcom,csid-sd-index = <1>;
-		/delete-property/ cam_vana-supply;
 		cam_vaf-supply = <&pm8953_l17>;
 		qcom,cam-vreg-name = "cam_vdig", "cam_vio", "cam_vana",
 							"cam_vaf";
@@ -179,6 +178,9 @@
 			"CAM_VANA2";
 		clocks = <&clock_gcc clk_mclk2_clk_src>,
 			<&clock_gcc clk_gcc_camss_mclk2_clk>;
+
+		/delete-property/ cam_vana-supply;
+
 	};
 	qcom,camera@1 {
 		status = "ok";

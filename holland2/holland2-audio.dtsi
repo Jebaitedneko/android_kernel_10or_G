@@ -15,7 +15,6 @@
 
 	status = "ok";
 	qcom,msm-ext-pa = "primary";
-	/delete-property/ qcom,cdc-us-euro-gpios;
 	qcom,msm-spk-ext-pa = <&tlmm 20 0>;
 	qcom,msm-spk-ext-pa1 = <&tlmm 21 0>;
 	qcom,msm-mbhc-hphl-swh = <1>;
@@ -30,11 +29,14 @@
 			"AMIC1", "MIC BIAS External",
 			"AMIC2", "MIC BIAS Internal2",
 			"AMIC3", "MIC BIAS External";
+
 	/delete-property/ asoc-wsa-codec-names;
 	/delete-property/ asoc-wsa-codec-prefixes;
 	/delete-property/ msm-vdd-wsa-switch-supply;
-	/delete-property/ qcom,msm-vdd-wsa-switch-voltage;
+	/delete-property/ qcom,cdc-us-euro-gpios;
 	/delete-property/ qcom,msm-vdd-wsa-switch-current;
+	/delete-property/ qcom,msm-vdd-wsa-switch-voltage;
+
 };
 
 &pm8953_diangu_dig {
