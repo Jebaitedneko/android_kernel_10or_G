@@ -114,41 +114,6 @@
 		qcom,y-offset = <0>;
 	};
 
-	spi_7: spi@7AF7000 { /* BLSP 2 QUP 3*/
-                compatible = "qcom,spi-qup-v2";
-                #address-cells = <1>;
-                #size-cells = <0>;
-                reg-names = "spi_physical", "spi_bam_physical";
-                reg = <0x7af7000 0x600>,
-                        <0x7ac4000 0x1f000>;
-                interrupt-names = "spi_irq", "spi_bam_irq";
-                interrupts = <0 301 0>, <0 239 0>;
-                spi-max-frequency = <19200000>;
-                pinctrl-names = "spi_default", "spi_sleep";
-                pinctrl-0 = <&spi7_default &spi7_cs0_active>;
-                pinctrl-1 = <&spi7_sleep &spi7_cs0_sleep>;
-                clocks = <&clock_gcc clk_gcc_blsp2_ahb_clk>,
-                        <&clock_gcc clk_gcc_blsp2_qup3_spi_apps_clk>;
-                clock-names = "iface_clk", "core_clk";
-                qcom,infinite-mode = <0>;
-                qcom,use-bam;
-                qcom,use-pinctrl;
-                qcom,ver-reg-exists;
-                qcom,bam-consumer-pipe-index = <8>;
-                qcom,bam-producer-pipe-index = <9>;
-                qcom,master-id = <84>;
-                status = "ok";
-        };
-
-        fp_id: fp_id {
-		status = "ok";
-		compatible = "fp_id,fp_id";
-		interrupt-parent = <&tlmm>;
-		silead,gpio_fp_id = <&tlmm 38 0x0>;
-		//silead,gpio_pwr_id = <&tlmm 47 0x0>;
-		
-	};
-
 	goodix_fp {
 		compatible = "goodix,fingerprint";
 		interrupt-parent = <&tlmm>;
@@ -159,24 +124,6 @@
 		goodix,gpio_irq    = <&tlmm 48 0>;//irq gpio
 		//goodix,gpio_pwr  = <&tlmm 47 0>;//power gpio
 		//goodix,gpio_id   = <&tlmm 38 0>;//compatible gpio		
-		status = "ok";
-	};
-
-	silead {
-		compatible = "silead,silead_fp";
-		interrupt-parent = <&tlmm>;
-		interrupts = <48 0x0>;
-		spi-max-frequency = <5000000>;
-		pinctrl-names = "active", "suspend", "irq_active";	
-		pinctrl-0 = <&fp_shutdown_active>;
-		pinctrl-1 = <&fp_shutdown_suspend>;
-		pinctrl-2 = <&silead_irq_active>;
-		vdd-supply = <&pm8953_l10>;
-		silead,shutdown_gpio = <&tlmm 140 0>;
-		silead,gpio_int    = <&tlmm 48 0>;
-		//silead,gpio_pwr  = <&tlmm 47 0>;
-		//silead,gpio_id   = <&tlmm 90 0>;		
-		interrupt-names = "sl_wake_up";
 		status = "ok";
 	};
 

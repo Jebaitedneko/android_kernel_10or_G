@@ -48,10 +48,6 @@
 			stage-gpio = <106 81 17 3>;
 	};
 
-	aliases {
-		spi7 = &spi_7;
-	};
-
 	qrd_batterydata: qcom,battery-data {
 		#include "batterydata_Amazon_4V4_4000mAh.dtsi"
 	};
