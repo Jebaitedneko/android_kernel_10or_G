@@ -32,6 +32,7 @@
 		qcom,power-on@800 {
 
 			qcom,pon_1 {
+
 				qcom,support-reset = <1>;
 				qcom,s1-timer = <6720>;
 				qcom,s2-timer = <1000>;
@@ -43,6 +44,7 @@
 	qcom,pmi8950@2 {
 
 		pmi8950_charger: qcom,qpnp-smbcharger {
+
 			qcom,float-voltage-mv = <4400>;
 			qcom,float-voltage-comp = <15>;
 			qcom,fastchg-current-ma = <2000>;
@@ -61,6 +63,7 @@
 		};
 
 		pmi8950_fg: qcom,fg {
+
 			qcom,cold-bat-decidegc = <(-300)>;
 			qcom,cool-bat-decidegc = <(-200)>;
 			qcom,hot-bat-decidegc = <650>;

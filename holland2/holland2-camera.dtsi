@@ -12,7 +12,9 @@
 */
 
 &soc {
+
 	led_flash0: qcom,camera-flash {
+
 		cell-index = <0>;
 		compatible = "qcom,camera-flash";
 		qcom,flash-type = <1>;
@@ -23,7 +25,9 @@
 };
 
 &flash_led {
+
 	pmi8950_flash1: qcom,flash_1 {
+
 		label = "flash";
 		qcom,led-name = "led:flash_1";
 		qcom,default-led-trigger =
@@ -33,7 +37,9 @@
 		qcom,id = <1>;
 		qcom,current = <625>;
 	};
+
 	pmi8950_torch1: qcom,torch_1 {
+
 		label = "torch";
 		qcom,led-name = "led:torch_1";
 		qcom,default-led-trigger =
@@ -47,6 +53,7 @@
 &cci {
 
 	led_flash2: qcom,camera-frontflash {
+
 		cell-index = <2>;
 		compatible = "qcom,camera-flash-front";
 		qcom,flash-type = <1>;
@@ -57,6 +64,7 @@
 	};
 
 	actuator1: qcom,actuator@1 {
+
 		cell-index = <1>;
 		reg = <0x1>;
 		compatible = "qcom,actuator";
@@ -69,6 +77,7 @@
 	};
 
 	eeprom0: qcom,eeprom@0 {
+
 		qcom,cam-vreg-name = "cam_vdig", "cam_vio", "cam_vana",
 							"cam_vaf";
 		qcom,cam-vreg-min-voltage = <1200000 0 2800000 2850000>;
@@ -97,6 +106,9 @@
 	};
 
 	eeprom1: qcom,eeprom@1 {
+
+		status = "ok";
+
 		cell-index = <1>;
 		compatible = "qcom,eeprom";
 		qcom,cci-master = <1>;
@@ -125,7 +137,6 @@
 		qcom,gpio-req-tbl-label = "CAMIF_MCLK0",
 			"CAM_RESET0",
 			"CAM_STANDBY0";
-		status = "ok";
 		clocks = <&clock_gcc clk_mclk0_clk_src>,
 				<&clock_gcc clk_gcc_camss_mclk0_clk>;
 		clock-names = "cam_src_clk", "cam_clk";
@@ -133,6 +144,7 @@
 	};
 
 	eeprom2: qcom,eeprom@2 {
+
 		cam_v_custom1-supply = <&pm8953_l23>;
 		qcom,cam-vreg-name = "cam_v_custom1","cam_vdig", "cam_vio", "cam_vana";
 		qcom,cam-vreg-min-voltage = <1000000 1200000 0 2800000>;
@@ -151,6 +163,7 @@
 	};
 
 	qcom,camera@0 {
+
 		qcom,csiphy-sd-index = <1>;
 		qcom,csid-sd-index = <1>;
 		cam_vaf-supply = <&pm8953_l17>;
@@ -182,8 +195,11 @@
 		/delete-property/ cam_vana-supply;
 
 	};
+
 	qcom,camera@1 {
+
 		status = "ok";
+
 		qcom,csiphy-sd-index = <0>;
 		qcom,csid-sd-index = <0>;
 		qcom,mount-angle = <90>;
@@ -206,6 +222,7 @@
 	};
 
 	qcom,camera@2 {
+
 		qcom,led-flash-src = <&led_flash2>;
 		cam_v_custom1-supply = <&pm8953_l23>;
 		cam_vdig-supply = <&pm8953_l23>;
