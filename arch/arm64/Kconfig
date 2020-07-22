@@ -361,6 +361,11 @@ config ARCH_MSM8994_V1_TLBI_WA
 	  [39:38] bits of VA are tied to zero and due to which TLBI
 	  operations with VA or ASID will not work.
 
+config MACH_NONTREBLE_DTS
+	bool "Enable non-treble dts support"
+	help
+	  This enables non-treble dts support
+
 config MACH_XIAOMI
 	bool "Xiaomi devices"
 	help
