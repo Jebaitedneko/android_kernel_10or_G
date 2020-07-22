@@ -12,12 +12,15 @@
 */
 
 &mdss_dsi1 {
+
 	lab-supply = <&lab_regulator>;
 	ibb-supply = <&ibb_regulator>;
 };
 
 &dsi_panel_pwr_supply {
+
 	qcom,panel-supply-entry@2 {
+
 		reg = <2>;
 		qcom,supply-name = "lab";
 		qcom,supply-min-voltage = <4600000>;
@@ -27,6 +30,7 @@
 	};
 
 	qcom,panel-supply-entry@3 {
+
 		reg = <3>;
 		qcom,supply-name = "ibb";
 		qcom,supply-min-voltage = <4600000>;
@@ -38,6 +42,7 @@
 };
 
 &mdss_mdp {
+
 	qcom,mdss-rot-downscale-min = <0x2>;
 	qcom,mdss-rot-downscale-max = <0x10>;
 };

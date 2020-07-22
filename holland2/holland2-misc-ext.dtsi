@@ -41,7 +41,9 @@
 	};
 
 	reserved-memory {
+
 		pstore_reserve_mem: pstore_reserve_mem_region@0 {
+
 			linux,reserve-contiguous-region;
 			linux,reserve-region;
 			linux,remove-completely;
@@ -58,7 +60,9 @@
 };
 
 &modem_mem {
+
 	no-map;
+
 	/delete-property/ no-map-fixup;
 };
 

@@ -37,6 +37,7 @@
 	/delete-property/ qcom,cdc-us-euro-gpios;
 	/delete-property/ qcom,msm-vdd-wsa-switch-current;
 	/delete-property/ qcom,msm-vdd-wsa-switch-voltage;
+
 };
 
 &pm8953_diangu_dig {
