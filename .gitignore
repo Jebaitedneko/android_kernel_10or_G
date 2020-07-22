@@ -11,7 +11,8 @@
 #
 modules/
 out/
-build*.sh
+anykernel/anykernel3/
+anykernel/pronto_wlan/
 .*
 *.o
 *.o.*
