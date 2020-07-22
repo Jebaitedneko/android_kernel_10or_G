@@ -17,8 +17,6 @@
 
 		status = "ok";
 
-		/delete-node/ synaptics@4b;
-
 		focaltech@38 {
 
 			compatible = "focaltech,5435";
@@ -105,6 +103,9 @@
                         00 00 00 00 00 00 00 00 00 00 00 
                         00 00 00 00 00 00 0C 01];
 		};
+
+		/delete-node/ synaptics@4b;
+
 	 };
 
 	gen-vkeys {
@@ -121,16 +122,16 @@
 
 	goodix_fp {
 
+		status = "ok";
+
 		compatible = "goodix,fingerprint";
 		interrupt-parent = <&tlmm>;
 		interrupts = <48 0x0>;
-		spi-max-frequency = <5000000>;
 		vdd-supply = <&pm8953_l10>;
 		goodix,gpio_reset = <&tlmm 140 0>;//reset gpio
 		goodix,gpio_irq    = <&tlmm 48 0>;//irq gpio
 		//goodix,gpio_pwr  = <&tlmm 47 0>;//power gpio
-		//goodix,gpio_id   = <&tlmm 38 0>;//compatible gpio		
-		status = "ok";
+		//goodix,gpio_id   = <&tlmm 38 0>;//compatible gpio
 	};
 
 	qcom_seecom: qseecom@84A00000 {

@@ -64,6 +64,7 @@
 	no-map;
 
 	/delete-property/ no-map-fixup;
+
 };
 
 &qrd_batterydata {
