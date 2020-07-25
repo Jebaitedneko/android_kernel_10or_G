@@ -1149,6 +1149,18 @@ config TOUCHSCREEN_GT9XX
 
           If unsure, say N.
 
+config TOUCHSCREEN_GT9XX_v28
+	bool "Goodix touchpanel GT9xx_v28 series"
+	depends on I2C
+	help
+	  Say Y here if you have a Goodix GT9xx_v28 touchscreen.
+	  Gt9xx controllers are multi touch controllers which can
+	  report 5 touches at a time.
+
+          If unsure, say N.
+
+source "drivers/input/touchscreen/gt9xx_v2.8/Kconfig"
+
 config TOUCHSCREEN_MAXIM_STI
 	tristate "Maxim based STI touchscreens"
 	depends on SPI_MASTER
