@@ -54,7 +54,7 @@
 #define GTP_DRIVER_SEND_CFG   1
 #define GTP_HAVE_TOUCH_KEY    0
 #define GTP_POWER_CTRL_SLEEP  0
-#define GTP_ICS_SLOT_REPORT   0
+#define GTP_ICS_SLOT_REPORT   1
 
 #define CONFIG_GTP_GLOVE_MODE 0
 #define GTP_AUTO_UPDATE       1
