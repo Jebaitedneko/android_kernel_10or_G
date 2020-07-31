@@ -1002,6 +1002,10 @@ int gpiod_direction_input(struct gpio_desc *desc)
 }
 EXPORT_SYMBOL_GPL(gpiod_direction_input);
 
+#if defined(CONFIG_MACH_XIAOMI_C6) && defined(CONFIG_TOUCHSCREEN_GT9XX)
+extern int gt9xx_flag;
+#endif
+
 static int _gpiod_direction_output_raw(struct gpio_desc *desc, int value)
 {
 	struct gpio_chip	*chip;
@@ -1009,7 +1013,7 @@ static int _gpiod_direction_output_raw(struct gpio_desc *desc, int value)
 
 	/* GPIOs used for IRQs shall not be set as output */
 #if defined(CONFIG_MACH_XIAOMI_C6) && defined(CONFIG_TOUCHSCREEN_GT9XX)
-	if (special_irq)
+	if (special_irq && gt9xx_flag)
 		pr_debug("[GPIO]set GPIO_65 as irq output\n");
 	else {
 #endif
