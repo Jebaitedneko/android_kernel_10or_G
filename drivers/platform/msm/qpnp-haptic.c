@@ -1827,6 +1827,9 @@ static void qpnp_hap_td_enable(struct timed_output_dev *dev, int value)
 	struct qpnp_hap *hap = container_of(dev, struct qpnp_hap,
 					 timed_dev);
 
+	hap->vmax_mv = 3300;
+	qpnp_hap_vmax_config(hap);
+
 	spin_lock(&hap->td_lock);
 	hap->td_value = value;
 	spin_unlock(&hap->td_lock);
