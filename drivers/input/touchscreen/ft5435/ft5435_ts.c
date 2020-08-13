@@ -31,6 +31,7 @@
 #include <linux/firmware.h>
 #include <linux/debugfs.h>
 #include <linux/wakelock.h>
+#include <linux/pm_qos.h>
 #include "ft5435_ts.h"
 
 
@@ -298,6 +299,7 @@ struct ft5435_ts_data {
 #if defined(FOCALTECH_PWRON_UPGRADE)
 	struct delayed_work focaltech_update_work;
 #endif
+	struct pm_qos_request pm_qos_req;
 	u8 fw_vendor_id;
 #if defined(CONFIG_FB)
 	struct notifier_block fb_notif;
@@ -1202,6 +1204,12 @@ static irqreturn_t ft5435_ts_interrupt(int irq, void *dev_id)
 		input_sync(ip_dev);
 	}
 	#endif
+
+	/* prevent CPU from entering deep sleep */
+	pm_qos_update_request(&data->pm_qos_req, 100);
+
+	pm_qos_update_request(&data->pm_qos_req, PM_QOS_DEFAULT_VALUE);
+
 	return IRQ_HANDLED;
 }
 
@@ -3948,6 +3956,8 @@ INIT_WORK(&data->work_vr, ft5435_change_vr_switch);
 			goto pwr_off;
 	}
 
+	pm_qos_add_request(&data->pm_qos_req, PM_QOS_CPU_DMA_LATENCY, PM_QOS_DEFAULT_VALUE);
+
 	if (gpio_is_valid(pdata->irq_gpio)) {
 		err = gpio_request(pdata->irq_gpio, "ft5435_irq_gpio");
 		if (err) {
@@ -4353,6 +4363,9 @@ static int ft5435_ts_remove(struct i2c_client *client)
 #endif
 
 	input_unregister_device(data->input_dev);
+
+	pm_qos_remove_request(&data->pm_qos_req);
+
 	wake_lock_destroy(&ft5436_wakelock);
 
 	return 0;
