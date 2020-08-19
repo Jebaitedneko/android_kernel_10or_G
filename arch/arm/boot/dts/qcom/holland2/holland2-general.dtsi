@@ -128,10 +128,8 @@
 		interrupt-parent = <&tlmm>;
 		interrupts = <48 0x0>;
 		vdd-supply = <&pm8953_l10>;
-		goodix,gpio_reset = <&tlmm 140 0>;//reset gpio
-		goodix,gpio_irq    = <&tlmm 48 0>;//irq gpio
-		//goodix,gpio_pwr  = <&tlmm 47 0>;//power gpio
-		//goodix,gpio_id   = <&tlmm 38 0>;//compatible gpio
+		goodix,gpio_reset = <&tlmm 140 0>;
+		goodix,gpio_irq    = <&tlmm 48 0>;
 	};
 
 	qcom_seecom: qseecom@84A00000 {

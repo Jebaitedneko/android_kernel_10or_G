@@ -51,9 +51,9 @@
 
 			qcom,float-voltage-mv = <4400>;
 			qcom,float-voltage-comp = <15>;
-			qcom,fastchg-current-ma = <2000>;
+			qcom,fastchg-current-ma = <2100>;
 			qcom,skip-usb-suspend-for-fake-battery;
-			qcom,thermal-mitigation = <2000 2000 2000 2000 2000 2000 2000>;
+			qcom,thermal-mitigation = <2100 1800 1500 1200 900 600 300 0>;
 			qcom,float-voltage-mv-ntc = <4100>;
 
 			/delete-property/ qcom,external-typec;
@@ -62,7 +62,6 @@
 			/delete-property/ qcom,parallel-usb-9v-min-current-ma;
 			/delete-property/ qcom,parallel-allowed-lowering-ma;
 			/delete-property/ qcom,typec-psy-name;
-			/delete-property/ qcom,thermal-mitigation;
 
 		};
 
@@ -75,15 +74,11 @@
 			qcom,cold-hot-jeita-hysteresis = <10 10>;
 			qcom,fg-cutoff-voltage-mv = <3400>;
 			qcom,fg-use-vbat-low-empty-soc;
-            		qcom,irq-volt-empty-mv = <3400>;
+			qcom,irq-volt-empty-mv = <3400>;
 			qcom,battery-data = <&qrd_batterydata>;
 			qcom,thermal-coefficients = [DA 86 F0 50 08 3C];
 
-			/delete-property/ qcom,cold-bat-decidegc;
-			/delete-property/ qcom,cool-bat-decidegc;
 			/delete-property/ qcom,fg-therm-delay-us;
-			/delete-property/ qcom,hot-bat-decidegc;
-			/delete-property/ qcom,warm-bat-decidegc;
 
 		};
 	};
