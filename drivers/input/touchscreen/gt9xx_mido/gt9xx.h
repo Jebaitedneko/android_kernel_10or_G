@@ -36,7 +36,6 @@
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/gpio.h>
-#include <linux/pm_qos.h>
 #ifdef CONFIG_OF
 #include <linux/of_gpio.h>
 #include <linux/regulator/consumer.h>
@@ -91,7 +90,6 @@ struct goodix_ts_data {
 	struct input_dev  *input_dev;
 	struct hrtimer timer;
 	struct work_struct  work;
-	struct pm_qos_request pm_qos_req;
 	s32 irq_is_disable;
 	s32 use_irq;
 	u16 abs_x_max;
