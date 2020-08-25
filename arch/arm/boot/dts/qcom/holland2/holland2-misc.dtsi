@@ -67,17 +67,16 @@
 
 		pmi8950_fg: qcom,fg {
 
-			qcom,cold-bat-decidegc = <(-300)>;
-			qcom,cool-bat-decidegc = <(-200)>;
-			qcom,hot-bat-decidegc = <650>;
-			qcom,warm-bat-decidegc = <610>;
-			qcom,cold-hot-jeita-hysteresis = <10 10>;
 			qcom,fg-cutoff-voltage-mv = <3400>;
 			qcom,fg-use-vbat-low-empty-soc;
 			qcom,irq-volt-empty-mv = <3400>;
 			qcom,battery-data = <&qrd_batterydata>;
 			qcom,thermal-coefficients = [DA 86 F0 50 08 3C];
 
+			/delete-property/ qcom,hot-bat-decidegc;
+			/delete-property/ qcom,warm-bat-decidegc;
+			/delete-property/ qcom,cold-bat-decidegc;
+			/delete-property/ qcom,cool-bat-decidegc;
 			/delete-property/ qcom,fg-therm-delay-us;
 
 		};
