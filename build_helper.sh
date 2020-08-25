@@ -2,6 +2,8 @@
 
 configdir=$(pwd)/arch/arm64/configs
 
+CFG=g_defconfig
+
 tcdir=${HOME}/android/TOOLS/proton-clang
 
 [ -d $tcdir ] \
@@ -16,7 +18,10 @@ PATH="$tcdir/bin:${PATH}" \
 clang --version
 echo -e "\n"
 
-source ~/.bashrc && source ~/.profile
+[ -f ~/.bashrc ] && source ~/.bashrc
+[ -f ~/.bash_profile ] && source ~/.bash_profile
+[ -f ~/.profile ] && source ~/.profile
+
 export LC_ALL=C && export USE_CCACHE=1
 ccache -M 100G
 echo -e "\nStarting Build...\n"
@@ -24,11 +29,11 @@ echo -e "\nStarting Build...\n"
 [ -d out ] && rm -rf out || mkdir -p out
 
 treble() {
-cp $configdir/g_defconfig $configdir/g_treble_defconfig
+cp $configdir/$CFG $configdir/g_treble_defconfig
 }
 
 nontreble() {
-cp $configdir/g_defconfig $configdir/g_nontreble_defconfig
+cp $configdir/$CFG $configdir/g_nontreble_defconfig
 echo "CONFIG_MACH_NONTREBLE_DTS=y" >> $configdir/g_nontreble_defconfig
 echo "CONFIG_PRONTO_WLAN=m" >> $configdir/g_nontreble_defconfig
 }
@@ -60,7 +65,7 @@ make	\
 	CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
 	CONFIG_DEBUG_SECTION_MISMATCH=y \
 	CONFIG_NO_ERROR_ON_MISMATCH=y \
-	$1 $2 $3
+	$1 $2 $3 || error
 }
 
 pcmod() {
