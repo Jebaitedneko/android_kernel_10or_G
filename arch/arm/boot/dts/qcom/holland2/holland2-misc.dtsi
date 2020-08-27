@@ -47,13 +47,15 @@
 
 	qcom,pmi8950@2 {
 
+
+
 		pmi8950_charger: qcom,qpnp-smbcharger {
 
 			qcom,float-voltage-mv = <4400>;
 			qcom,float-voltage-comp = <15>;
-			qcom,fastchg-current-ma = <2200>;
+			qcom,fastchg-current-ma = <3000>;
 			qcom,skip-usb-suspend-for-fake-battery;
-			qcom,thermal-mitigation = <2200 2200 2200 2200 2200 2200 2200 2200>;
+			qcom,thermal-mitigation = <3000 3000 3000 3000 3000 3000 3000>;
 			qcom,float-voltage-mv-ntc = <4100>;
 
 			/delete-property/ qcom,external-typec;
@@ -67,18 +69,18 @@
 
 		pmi8950_fg: qcom,fg {
 
+			qcom,cold-bat-decidegc = <(-300)>;
+			qcom,cool-bat-decidegc = <(-200)>;
+			qcom,hot-bat-decidegc = <650>;
+			qcom,warm-bat-decidegc = <610>;
+			qcom,cold-hot-jeita-hysteresis = <10 10>;
 			qcom,fg-cutoff-voltage-mv = <3400>;
 			qcom,fg-use-vbat-low-empty-soc;
 			qcom,irq-volt-empty-mv = <3400>;
 			qcom,battery-data = <&qrd_batterydata>;
 			qcom,thermal-coefficients = [DA 86 F0 50 08 3C];
 
-			/delete-property/ qcom,hot-bat-decidegc;
-			/delete-property/ qcom,warm-bat-decidegc;
-			/delete-property/ qcom,cold-bat-decidegc;
-			/delete-property/ qcom,cool-bat-decidegc;
 			/delete-property/ qcom,fg-therm-delay-us;
-
 		};
 	};
 };
