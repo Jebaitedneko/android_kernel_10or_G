@@ -49,9 +49,10 @@ make	\
 	O=out \
 	ARCH=arm64 \
 	CC="ccache clang" \
-	LD=ld.lld \
 	AR=llvm-ar \
 	NM=llvm-nm \
+	LD=ld.lld \
+	HOSTLD=ld.lld \
 	STRIP=llvm-strip \
 	OBJCOPY=llvm-objcopy \
 	OBJDUMP=llvm-objdump \
@@ -60,12 +61,11 @@ make	\
 	HOSTCC=clang \
 	HOSTCXX=clang++ \
 	HOSTAR=llvm-ar \
-	HOSTLD=ld.lld \
 	CROSS_COMPILE=aarch64-linux-gnu- \
 	CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
 	CONFIG_DEBUG_SECTION_MISMATCH=y \
 	CONFIG_NO_ERROR_ON_MISMATCH=y \
-	$1 $2 $3 || error
+	$1 $2 $3 || exit
 }
 
 pcmod() {
@@ -73,5 +73,5 @@ pcmod() {
 
 pcmake INSTALL_MOD_PATH=../modules \
        INSTALL_MOD_STRIP=1 \
-       modules_install
+       modules_install || exit
 }
