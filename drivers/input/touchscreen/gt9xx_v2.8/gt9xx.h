@@ -38,6 +38,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/major.h>
 #include <linux/kdev_t.h>
+#include <linux/pm_qos.h>
 #ifdef CONFIG_OF
 #include <linux/of_gpio.h>
 #endif
@@ -164,6 +165,7 @@ struct goodix_ts_data {
 	struct goodix_fw_info fw_info;
 	bool force_update;
 	bool init_done;
+	struct pm_qos_request pm_qos_req;
 };
 
 /************************* PART2:TODO define *******************************/

@@ -656,6 +656,11 @@ static irqreturn_t gtp_irq_handler(int irq, void *dev_id)
 {
 	struct goodix_ts_data *ts = dev_id;
 
+	/* prevent CPU from entering deep sleep */
+	pm_qos_update_request(&ts->pm_qos_req, 100);
+
+	pm_qos_update_request(&ts->pm_qos_req, PM_QOS_DEFAULT_VALUE);
+
 	gtp_work_func(ts);
 	return IRQ_HANDLED;
 }
@@ -2099,6 +2104,8 @@ static int gtp_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		goto exit_deinit_power;
 	}
 
+	pm_qos_add_request(&ts->pm_qos_req, PM_QOS_CPU_DMA_LATENCY, PM_QOS_DEFAULT_VALUE);
+
 	ret = gtp_request_io_port(ts);
 	if (ret < 0) {
 		dev_err(&client->dev, "Failed request IO port\n");
@@ -2247,6 +2254,8 @@ static int gtp_drv_remove(struct i2c_client *client)
 	i2c_set_clientdata(client, NULL);
 	input_unregister_device(ts->input_dev);
 	mutex_destroy(&ts->lock);
+
+	pm_qos_remove_request(&ts->pm_qos_req);
 
 	devm_kfree(&client->dev, ts->pdata);
 	devm_kfree(&client->dev, ts);
