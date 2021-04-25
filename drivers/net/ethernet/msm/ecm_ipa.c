@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -9,6 +9,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+
 #include <linux/debugfs.h>
 #include <linux/errno.h>
 #include <linux/etherdevice.h>
@@ -105,6 +106,10 @@ enum ecm_ipa_operation {
  * struct ecm_ipa_dev - main driver context parameters
  * @net: network interface struct implemented by this driver
  * @directory: debugfs directory for various debuging switches
+ * @tx_enable: flag that enable/disable Tx path to continue to IPA
+ * @rx_enable: flag that enable/disable Rx path to continue to IPA
+ * @rm_enable: flag that enable/disable Resource manager request prior to Tx
+ * @dma_enable: flag that allow on-the-fly DMA mode for IPA
  * @eth_ipv4_hdr_hdl: saved handle for ipv4 header-insertion table
  * @eth_ipv6_hdr_hdl: saved handle for ipv6 header-insertion table
  * @usb_to_ipa_hdl: save handle for IPA pipe operations
