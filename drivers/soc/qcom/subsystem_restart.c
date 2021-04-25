@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -353,10 +353,11 @@ static struct device_attribute subsys_attrs[] = {
 	__ATTR_NULL,
 };
 
-static struct bus_type subsys_bus_type = {
+struct bus_type subsys_bus_type = {
 	.name		= "msm_subsys",
 	.dev_attrs	= subsys_attrs,
 };
+EXPORT_SYMBOL(subsys_bus_type);
 
 static DEFINE_IDA(subsys_ida);
 

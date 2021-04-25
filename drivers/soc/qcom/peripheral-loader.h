@@ -57,6 +57,7 @@ struct pil_desc {
 	bool shutdown_fail;
 	bool modem_ssr;
 	u32 subsys_vmid;
+	bool clear_fw_region;
 };
 
 /**
