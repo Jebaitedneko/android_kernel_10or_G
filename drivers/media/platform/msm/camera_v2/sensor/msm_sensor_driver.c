@@ -17,6 +17,9 @@
 #include "camera.h"
 #include "msm_cci.h"
 #include "msm_camera_dt_util.h"
+#ifdef CONFIG_HQ_SYSFS_SUPPORT
+#include <linux/hqsysfs.h>
+#endif
 
 /* Logging macro */
 #undef CDBG
@@ -953,6 +956,16 @@ CSID_TG:
 	s_ctrl->sensordata->cam_slave_info = slave_info;
 
 	msm_sensor_fill_sensor_info(s_ctrl, probed_info, entity_name);
+
+    /* added by luochuan for camera hardinfo 20170407 begin */
+#ifdef CONFIG_HQ_SYSFS_SUPPORT
+	if(0 == s_ctrl->id){
+		hq_regiser_hw_info(HWID_MAIN_CAM, (char *)(slave_info->sensor_name));
+	}else if(2 == s_ctrl->id){
+		hq_regiser_hw_info(HWID_SUB_CAM, (char *)(slave_info->sensor_name));
+	}
+#endif
+    /* added by luochuan for camera hardinfo 20170407 end */
 
 	return rc;
 

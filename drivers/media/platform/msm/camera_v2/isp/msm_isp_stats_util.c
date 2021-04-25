@@ -686,7 +686,6 @@ static int msm_isp_start_stats_stream(struct vfe_device *vfe_dev,
 		stats_data->stream_info);
 	if (rc < 0)
 		return rc;
-
 	for (i = 0; i < stream_cfg_cmd->num_streams; i++) {
 		idx = STATS_IDX(stream_cfg_cmd->stream_handle[i]);
 

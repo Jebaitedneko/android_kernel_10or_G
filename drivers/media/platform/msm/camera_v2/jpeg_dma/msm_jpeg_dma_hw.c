@@ -1755,7 +1755,6 @@ error:
 static void msm_jpegdma_hw_detach_iommu(struct msm_jpegdma_device *dma)
 {
 	mutex_lock(&dma->lock);
-
 	if (dma->iommu_attached_cnt == 0) {
 		dev_err(dma->dev, "There is no attached device\n");
 		mutex_unlock(&dma->lock);
@@ -1766,7 +1765,6 @@ static void msm_jpegdma_hw_detach_iommu(struct msm_jpegdma_device *dma)
 		cam_smmu_ops(dma->iommu_hndl, CAM_SMMU_DETACH);
 		cam_smmu_destroy_handle(dma->iommu_hndl);
 	}
-
 	mutex_unlock(&dma->lock);
 }
 
