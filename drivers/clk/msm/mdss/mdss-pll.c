@@ -25,6 +25,7 @@
 #include "mdss-dsi-pll.h"
 #include "mdss-hdmi-pll.h"
 
+static int mdss_panel_cfg = -1;
 int mdss_pll_resource_enable(struct mdss_pll_resources *pll_res, bool enable)
 {
 	int rc = 0;
@@ -211,6 +212,21 @@ static int mdss_pll_clock_register(struct platform_device *pdev,
 	return rc;
 }
 
+static int __init mdss_pll_get_cfg(char *str)
+{
+	if (strcmp("ili7808d", str) == 0) {
+		mdss_panel_cfg = 0x00;
+	}else if(strcmp("hx8399c", str) == 0){
+		mdss_panel_cfg = 0x01;
+	}else if(strcmp("ili7808d_auo",str) == 0){
+		mdss_panel_cfg = 0x02;
+	}
+	return 0;
+}
+
+__setup("anroid.display_panel=", mdss_pll_get_cfg);
+
+
 static int mdss_pll_probe(struct platform_device *pdev)
 {
 	int rc = 0;
@@ -248,8 +264,52 @@ static int mdss_pll_probe(struct platform_device *pdev)
 		pr_err("Unable to get the cell-index rc=%d\n", rc);
 		pll_res->index = 0;
 	}
-
-	pll_res->ssc_en = of_property_read_bool(pdev->dev.of_node,
+	#ifdef CONFIG_ZQL1520_LCM_SSC
+	if(0x00 == mdss_panel_cfg)
+	{
+		pll_res->ssc_en = true;
+		pll_res->ssc_freq = 33000;
+		pll_res->ssc_ppm = 2000;
+		pll_res->ssc_center = false;
+	}else if(0x01 == mdss_panel_cfg){
+		pll_res->ssc_en = true;
+		pll_res->ssc_freq = 33000;
+		pll_res->ssc_ppm = 5000;
+		pll_res->ssc_center = false;
+	}else if(0x02 == mdss_panel_cfg){
+		pll_res->ssc_en = true;
+		pll_res->ssc_freq = 33000;
+		pll_res->ssc_ppm = 5000;
+		pll_res->ssc_center = false;
+	}else{
+		pr_err("ZQL1520 find no mdss_pll_probe\n");
+	}
+	printk("ZQL1520 lcd id is %d\n",mdss_panel_cfg);
+	#endif
+	
+	#ifdef CONFIG_ZQL1590_LCM_SSC
+	if(0x00 == mdss_panel_cfg)
+	{
+		pll_res->ssc_en = true;
+		pll_res->ssc_freq = 33000;
+		pll_res->ssc_ppm = 5000;
+		pll_res->ssc_center = false;
+	}else if(0x01 == mdss_panel_cfg){
+		pll_res->ssc_en = true;
+		pll_res->ssc_freq = 33000;
+		pll_res->ssc_ppm = 5000;
+		pll_res->ssc_center = false;
+	}else if(0x02 == mdss_panel_cfg){
+		pll_res->ssc_en = true;
+		pll_res->ssc_freq = 33000;
+		pll_res->ssc_ppm = 5000;
+		pll_res->ssc_center = false;
+	}else{
+		pr_err("ZQL1590 find no mdss_pll_probe\n");
+	}
+	printk("ZQL1590 lcd id is %d\n",mdss_panel_cfg);
+	#endif
+/*	pll_res->ssc_en = of_property_read_bool(pdev->dev.of_node,
 						"qcom,dsi-pll-ssc-en");
 
 	if (pll_res->ssc_en) {
@@ -269,7 +329,7 @@ static int mdss_pll_probe(struct platform_device *pdev)
 		if (label && !strcmp(label, "center-spread"))
 			pll_res->ssc_center = true;
 	}
-
+*/
 	pll_base_reg = platform_get_resource_byname(pdev,
 						IORESOURCE_MEM, "pll_base");
 	if (!pll_base_reg) {

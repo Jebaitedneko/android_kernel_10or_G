@@ -67,7 +67,6 @@ static const struct uvc_processing_unit_descriptor uvc_processing = {
 	.bControlSize		= 3,
 	.bmControls[0]		= 64,
 	.bmControls[1]		= 16,
-	.bmControls[2]		= 1,
 	.iProcessing		= 0,
 };
 

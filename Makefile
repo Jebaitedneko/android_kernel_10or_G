@@ -1597,6 +1597,18 @@ clean := -f $(srctree)/scripts/Makefile.clean obj
 
 endif	# skip-makefile
 
+ifneq ($(TARGET_BUILD_VARIANT),user)
+KBUILD_CFLAGS += -DHQ_CONFIG_TARGET_BUILD_DEBUG
+endif
+
+ifeq ($(TARGET_BUILD_POWER_TYPE),pwrloss)
+KBUILD_CFLAGS += -DCONFIG_TARGET_BUILD_PWRLOSS
+endif
+
+ifeq ($(TARGET_BUILD_POWER_TYPE),ntcloss)
+KBUILD_CFLAGS += -DCONFIG_TARGET_BUILD_NTCLOSS
+endif
+
 PHONY += FORCE
 FORCE:
 

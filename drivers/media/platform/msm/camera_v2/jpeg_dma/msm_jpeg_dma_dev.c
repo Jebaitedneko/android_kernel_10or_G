@@ -871,6 +871,7 @@ static int msm_jpegdma_qbuf(struct file *file, void *fh,
 	if (ret < 0)
 		dev_err(ctx->jdma_device->dev, "QBuf fail\n");
 	mutex_unlock(&ctx->lock);
+
 	return ret;
 }
 
@@ -1038,10 +1039,13 @@ static int msm_jpegdma_s_crop(struct file *file, void *fh,
 		return -EINVAL;
 
 	mutex_lock(&ctx->lock);
+
 	ctx->crop = crop->c;
 	if (atomic_read(&ctx->active))
 		ret = msm_jpegdma_update_hw_config(ctx);
+
 	mutex_unlock(&ctx->lock);
+
 	return ret;
 }
 
@@ -1084,7 +1088,7 @@ static int msm_jpegdma_s_parm(struct file *file, void *fh,
 		return -EINVAL;
 
 	if (!a->parm.output.timeperframe.numerator ||
-		!a->parm.output.timeperframe.denominator)
+	    !a->parm.output.timeperframe.denominator)
 		return -EINVAL;
 
 	/* Frame rate is not supported during streaming */
@@ -1218,7 +1222,6 @@ void msm_jpegdma_isr_processing_done(struct msm_jpegdma_device *dma)
 	struct jpegdma_ctx *ctx;
 
 	mutex_lock(&dma->lock);
-
 	ctx = v4l2_m2m_get_curr_priv(dma->m2m_dev);
 	if (ctx) {
 		mutex_lock(&ctx->lock);

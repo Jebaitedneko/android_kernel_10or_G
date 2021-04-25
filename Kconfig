@@ -7,5 +7,14 @@ mainmenu "Linux/$ARCH $KERNELVERSION Kernel Configuration"
 config SRCARCH
 	string
 	option env="SRCARCH"
+	
+config HQ_ZQL1590_SUPPORT
+        bool "HQ_ZQL1590_SUPPORT"
+	default n
 
+config HQ_QL1590_NO_OTG
+    bool "HQ QL1590 NO OTG"
+        default n
 source "arch/$SRCARCH/Kconfig"
+
+

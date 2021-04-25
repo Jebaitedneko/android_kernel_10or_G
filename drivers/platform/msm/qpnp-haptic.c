@@ -1643,11 +1643,49 @@ static int qpnp_hap_set(struct qpnp_hap *hap, int on)
 }
 
 /* enable interface from timed output class */
+#ifdef CONFIG_HQ_ZQL1520_ZQL1590_VIB
+#define DEFAULT_VOLATGE 3000
+static int set_vib_volatge(int value)
+{
+	int ret = 0;
+	switch(value) {
+		case 5:
+			ret = 2800;
+			break;
+		case 6:
+			ret = 3000;
+			break;
+		case 7:
+			ret = 3300;
+			break;
+	}
+	return ret;
+}
+#endif
 static void qpnp_hap_td_enable(struct timed_output_dev *dev, int value)
 {
 	struct qpnp_hap *hap = container_of(dev, struct qpnp_hap,
 					 timed_dev);
 
+#ifdef CONFIG_HQ_ZQL1520_ZQL1590_VIB
+	static int vib_mode_vaule = 0;
+	if(value!=0) {
+		vib_mode_vaule = value&0xF;
+		printk("zhoucong vib_mode_vaule = %d\n",vib_mode_vaule);
+		vib_mode_vaule = set_vib_volatge(vib_mode_vaule);
+		if(vib_mode_vaule >= 2800 && vib_mode_vaule <= 3300) {
+
+			hap->vmax_mv = vib_mode_vaule;
+			qpnp_hap_vmax_config(hap);
+		}
+		else
+		{
+			hap->vmax_mv = DEFAULT_VOLATGE;
+			qpnp_hap_vmax_config(hap);
+		}
+	}
+	value = value>>4;
+#endif
 	mutex_lock(&hap->lock);
 
 	if (hap->act_type == QPNP_HAP_LRA &&

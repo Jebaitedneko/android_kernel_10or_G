@@ -26,6 +26,9 @@
 #include <linux/uaccess.h>
 #include <linux/msm-bus.h>
 #include <linux/pm_qos.h>
+#ifdef CONFIG_HQ_SYSFS_SUPPORT
+#include <linux/hqsysfs.h>
+#endif
 
 #include "mdss.h"
 #include "mdss_panel.h"
@@ -2701,7 +2704,11 @@ static struct device_node *mdss_dsi_find_panel_of_node(
 {
 	int len, i = 0;
 	int ctrl_id = pdev->id - 1;
+#ifdef CONFIG_HQ_SYSFS_SUPPORT
+	static char panel_name[MDSS_MAX_PANEL_LEN] = "";
+#else
 	char panel_name[MDSS_MAX_PANEL_LEN] = "";
+#endif
 	char ctrl_id_stream[3] =  "0:";
 	char *str1 = NULL, *str2 = NULL, *override_cfg = NULL;
 	char cfg_np_name[MDSS_MAX_PANEL_LEN] = "";
@@ -2762,6 +2769,9 @@ static struct device_node *mdss_dsi_find_panel_of_node(
 		}
 		pr_info("%s: cmdline:%s panel_name:%s\n",
 			__func__, panel_cfg, panel_name);
+#ifdef	CONFIG_HQ_SYSFS_SUPPORT
+		hq_regiser_hw_info(HWID_LCM, panel_name);
+#endif
 		if (!strcmp(panel_name, NONE_PANEL))
 			goto exit;
 

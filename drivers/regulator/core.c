@@ -1356,7 +1356,6 @@ static struct regulator *_regulator_get(struct device *dev, const char *id,
 	struct regulator *regulator = ERR_PTR(-EPROBE_DEFER);
 	const char *devname = NULL;
 	int ret;
-
 	if (id == NULL) {
 		pr_err("get() with no identifier\n");
 		return ERR_PTR(-EINVAL);
@@ -1458,7 +1457,7 @@ out:
  * device pins in the datasheet.
  */
 struct regulator *regulator_get(struct device *dev, const char *id)
-{
+{	
 	return _regulator_get(dev, id, false, true);
 }
 EXPORT_SYMBOL_GPL(regulator_get);
@@ -1520,7 +1519,6 @@ EXPORT_SYMBOL_GPL(regulator_get_optional);
 static void _regulator_put(struct regulator *regulator)
 {
 	struct regulator_dev *rdev;
-
 	if (regulator == NULL || IS_ERR(regulator))
 		return;
 
