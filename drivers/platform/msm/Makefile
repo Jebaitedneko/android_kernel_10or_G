@@ -26,3 +26,12 @@ obj-$(CONFIG_MSM_AVTIMER) += avtimer.o
 obj-$(CONFIG_MSM_11AD) += msm_11ad/
 obj-$(CONFIG_MSM_MHI_DEV) += mhi_dev/
 obj-$(CONFIG_SSM) += ssm.o
+
+#add by steve.zhou
+ifeq ($(TARGET_BUILD_VARIANT),user)
+  KBUILD_CFLAGS += -DMY_CONFIG_IS_KERNEL_USER
+$(warning "MY_CONFIG_IS_KERNEL_USER =  $(TARGET_BUILD_VARIANT)")
+else
+$(warning "MY_CONFIG_IS_KERNEL_USER1 =  $(TARGET_BUILD_VARIANT)")
+endif
+#end

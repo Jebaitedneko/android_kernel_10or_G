@@ -309,6 +309,17 @@ config BW_MONITOR
 	 it by registering the bus bandwidth as a sensor in
 	 thermal core framework.
 
+config HQ_ZQL1520_ZQL1590_VIB
+        bool "HQ_ZQL1520_ZQL1590_VIB"
+	default n
+
+config HQ_QL1520_POWERLOSS
+    bool "HQ_QL1520_POWERLOSS"
+    default n
+config HQ_QL1590_POWERLOSS
+    bool "HQ_QL1590_POWERLOSS"
+    default n
+
 source "drivers/platform/msm/spmi/Kconfig"
 
 endmenu

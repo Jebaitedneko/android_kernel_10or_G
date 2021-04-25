@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -251,7 +251,6 @@ struct ipa_rt_tbl {
  * @id: header entry id
  * @is_eth2_ofst_valid: is eth2_ofst field valid?
  * @eth2_ofst: offset to start of Ethernet-II/802.3 header
- * @user_deleted: is the header deleted by the user?
  */
 struct ipa_hdr_entry {
 	struct list_head link;
@@ -333,7 +332,6 @@ struct ipa_hdr_proc_ctx_add_hdr_cmd_seq {
  * @cookie: cookie used for validity check
  * @ref_cnt: reference counter of routing table
  * @id: processing context header entry id
- * @user_deleted: is the hdr processing context deleted by the user?
  */
 struct ipa_hdr_proc_ctx_entry {
 	struct list_head link;

@@ -316,7 +316,6 @@ struct ipa3_rt_tbl {
  * @id: header entry id
  * @is_eth2_ofst_valid: is eth2_ofst field valid?
  * @eth2_ofst: offset to start of Ethernet-II/802.3 header
- * @user_deleted: is the header deleted by the user?
  */
 struct ipa3_hdr_entry {
 	struct list_head link;
@@ -374,7 +373,6 @@ struct ipa3_hdr_proc_ctx_offset_entry {
  * @cookie: cookie used for validity check
  * @ref_cnt: reference counter of routing table
  * @id: processing context header entry id
- * @user_deleted: is the hdr processing context deleted by the user?
  */
 struct ipa3_hdr_proc_ctx_entry {
 	struct list_head link;

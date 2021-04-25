@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -716,8 +716,8 @@ bail:
 }
 
 /**
- * ipa3_del_hdr_by_user() - Remove the specified headers
- * from SW and optionally commit them to IPA HW
+ * ipa3_del_hdr() - Remove the specified headers from SW and optionally commit them
+ * to IPA HW
  * @hdls:	[inout] set of headers to delete
  * @by_user:	Operation requested by user?
  *
@@ -816,7 +816,7 @@ bail:
 }
 
 /**
- * ipa3_del_hdr_proc_ctx_by_user() -
+ * ipa3_del_hdr_proc_ctx() -
  * Remove the specified processing context headers from SW and
  * optionally commit them to IPA HW.
  * @hdls:	[inout] set of processing context headers to delete
