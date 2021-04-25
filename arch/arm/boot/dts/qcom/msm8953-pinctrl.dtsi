@@ -145,12 +145,12 @@
 		cam_sensor_rear_default: cam_sensor_rear_default {
 			/* RESET, STANDBY */
 			mux {
-				pins = "gpio40", "gpio39";
+				pins = "gpio129", "gpio130";
 				function = "gpio";
 			};
 
 			config {
-				pins = "gpio40","gpio39";
+				pins = "gpio129","gpio130";
 				bias-disable; /* No PULL */
 				drive-strength = <2>; /* 2 MA */
 			};
@@ -159,12 +159,12 @@
 		cam_sensor_rear_sleep: cam_sensor_rear_sleep {
 			/* RESET, STANDBY */
 			mux {
-				pins = "gpio40","gpio39";
+				pins = "gpio129","gpio130";
 				function = "gpio";
 			};
 
 			config {
-				pins = "gpio40","gpio39";
+				pins = "gpio129","gpio130";
 				bias-disable; /* No PULL */
 				drive-strength = <2>; /* 2 MA */
 			};
@@ -198,6 +198,37 @@
 			};
 		};
 
+		/* WENDELL-20170417 added for Primary Rear AVDD */
+		cam_sensor_rear_avdd_default: cam_sensor_rear_avdd_default {
+			/* AVDD */
+			mux {
+				pins = "gpio46";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio46";
+				bias-disable; /* No PULL */
+				drive-strength = <2>; /* 2 MA */
+				output-low;
+			};
+		};
+
+		cam_sensor_rear_avdd_sleep: cam_sensor_rear_avdd_sleep {
+			/* AVDD */
+			mux {
+				pins = "gpio46";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio46";
+				bias-disable; /* No PULL */
+				drive-strength = <2>; /* 2 MA */
+			};
+		};
+
+		/* WENDELL-20170417 ended for Primary Rear AVDD */
 		cam_sensor_mclk1_default: cam_sensor_mclk1_default {
 			/* MCLK1 */
 			mux {
@@ -255,6 +286,50 @@
 				drive-strength = <2>; /* 2 MA */
 			};
 		};
+		
+		/* WENDELL-20170417 added for second Rear mono */
+		cam_sensor_rear_mono_default: cam_sensor_rear_mono_default {
+			/* RESET, STANDBY */
+			mux {
+				pins = "gpio40", "gpio39";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio40","gpio39";
+				bias-disable; /* No PULL */
+				drive-strength = <2>; /* 2 MA */
+			};
+		};
+
+		cam_sensor_rear_mono_sleep: cam_sensor_rear_mono_sleep {
+			/* RESET, STANDBY */
+			mux {
+				pins = "gpio40","gpio39";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio40","gpio39";
+				bias-disable; /* No PULL */
+				drive-strength = <2>; /* 2 MA */
+			};
+		};
+
+		cam_sensor_rear_mono_id_default: cam_sensor_rear_mono_id {
+			mux {
+				pins = "gpio62";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio62";
+				drive-strength = <2>; /* 2 mA */
+				bias-pull-down; /* pull down */
+				input-enable;
+			};
+		};
+		/* WENDELL-20170417 ended for second Rear mono */
 
 		cam_sensor_mclk2_default: cam_sensor_mclk2_default {
 			/* MCLK2 */
@@ -346,12 +421,12 @@
 		pmx_mdss: pmx_mdss {
 			mdss_dsi_active: mdss_dsi_active {
 				mux {
-					pins = "gpio61", "gpio59";
+					pins = "gpio61";
 					function = "gpio";
 				};
 
 				config {
-					pins = "gpio61", "gpio59";
+					pins = "gpio61";
 					drive-strength = <8>; /* 8 mA */
 					bias-disable = <0>; /* no pull */
 					output-high;
@@ -360,12 +435,12 @@
 
 			mdss_dsi_suspend: mdss_dsi_suspend {
 				mux {
-					pins = "gpio61", "gpio59";
+					pins = "gpio61";
 					function = "gpio";
 				};
 
 				config {
-					pins = "gpio61", "gpio59";
+					pins = "gpio61";
 					drive-strength = <2>; /* 2 mA */
 					bias-pull-down; /* pull down */
 				};
@@ -376,7 +451,7 @@
 			mdss_te_active: mdss_te_active {
 				mux {
 					pins = "gpio24";
-					function = "mdp_vsync";
+					function = "gpio";  //mdp_vsync
 				};
 				config {
 					pins = "gpio24";
@@ -388,7 +463,7 @@
 			mdss_te_suspend: mdss_te_suspend {
 				mux {
 					pins = "gpio24";
-					function = "mdp_vsync";
+					function = "gpio";  //mdp_vsync
 				};
 				config {
 					pins = "gpio24";
@@ -1144,7 +1219,112 @@
 				};
 			};
 		};
+		spi7 {
+			spi7_default: spi7_default {
+				/* active state */
+				mux {
+					/* MOSI, MISO, CLK */
+					pins = "gpio137", "gpio138", "gpio135";
+					function = "blsp_spi7";
+				};
 
+				config {
+					pins = "gpio137", "gpio138", "gpio135";
+					drive-strength = <12>; /* 12 MA */
+					bias-disable = <0>; /* No PULL */
+				};
+			};
+
+			spi7_sleep: spi7_sleep {
+				/* suspended state */
+				mux {
+					/* MOSI, MISO, CLK */
+					pins = "gpio137", "gpio138", "gpio135";
+					function = "gpio";
+				};
+
+				config {
+					pins = "gpio137", "gpio138", "gpio135";
+					drive-strength = <2>; /* 2 MA */
+					bias-pull-down; /* PULL Down */
+				};
+			};
+
+			spi7_cs0_active: cs1_active {
+				/* CS */
+				mux {
+					pins = "gpio136";
+					function = "blsp_spi7";
+				};
+
+				config {
+					pins = "gpio136";
+					drive-strength = <2>;
+					bias-disable = <0>;
+				};
+			};
+
+			spi7_cs0_sleep: cs1_sleep {
+				/* CS */
+				mux {
+					pins = "gpio136";
+					function = "gpio";
+				};
+
+				config {
+					pins = "gpio136";
+					drive-strength = <2>;
+					bias-disable = <0>;
+				};
+			};
+		};
+		sileadfp {
+		    fp_shutdown_active:active {
+				/* shutdown */
+				mux {
+					pins = "gpio140";
+					function = "gpio";
+				};
+
+				config {
+					pins = "gpio140";
+					drive-strength = <12>;
+					//bias-disable = <0>;
+					bias-pull-up;
+					output-high;
+				};
+			};
+
+			fp_shutdown_suspend:suspend {
+				/* CS */
+				mux {
+					pins = "gpio140";
+					function = "gpio";
+				};
+
+				config {
+					pins = "gpio140";
+					drive-strength = <2>;
+					bias-pull-down;
+					output-low;
+				};
+			};					
+
+			silead_irq_active:irq_active {
+				/* CS */
+				mux {
+					pins = "gpio48";
+					function = "gpio";
+				};
+
+				config {
+					pins = "gpio48";
+					drive-strength = <2>;
+					bias-pull-down;
+					//input-enable;
+				};
+			};
+		};
 		/* add pingrp for touchscreen */
 		pmx_ts_int_active {
 			ts_int_active: ts_int_active {
@@ -1157,6 +1337,7 @@
 					pins = "gpio65";
 					drive-strength = <8>;
 					bias-pull-up;
+					//bias-disable;
 				};
 			};
 		};
@@ -1172,6 +1353,7 @@
 					pins = "gpio65";
 					drive-strength = <2>;
 					bias-pull-down;
+					//bias-disable;
 				};
 			};
 		};

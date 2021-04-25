@@ -29,12 +29,13 @@
 		#address-cells = <2>;
 		#size-cells = <2>;
 		ranges;
-
+                /*modify by silead begin*/
 		other_ext_mem: other_ext_region@0 {
 			compatible = "removed-dma-pool";
 			no-map;
-			reg = <0x0 0x85b00000 0x0 0xd00000>;
+                        reg = <0x0 0x84A00000 0x0 0x1E00000>;
 		};
+                /*modify by silead end*/
 
 		modem_mem: modem_region@0 {
 			compatible = "removed-dma-pool";
@@ -87,7 +88,10 @@
 		cont_splash_mem: splash_region@83000000 {
 			reg = <0x0 0x90000000 0x0 0x1400000>;
 		};
-
+	};
+	board_gpios:board_gpios@0 {
+		compatible = "pcb-gpio";
+		stage-gpio = <12 13 98 99>;
 	};
 
 	aliases {
@@ -106,6 +110,7 @@
 		i2c2 = &i2c_2;
 		i2c5 = &i2c_5;
 		spi3 = &spi_3;
+		spi6 = &spi_6;
 		sdhc1 = &sdhc_1; /* SDC1 eMMC slot */
 		sdhc2 = &sdhc_2; /* SDC2 for SD card */
 		i2c3 = &i2c_3;
@@ -618,7 +623,70 @@
 		qcom,master-id = <86>;
 		status = "disabled";
 	};
+	
+         spi_6: spi@7af6000 { /* BLSP2 QUP2 */
+                compatible = "qcom,spi-qup-v2";
+                #address-cells = <1>;
+                #size-cells = <0>;
+                reg-names = "spi_physical", "spi_bam_physical";
+                reg = <0x7af6000 0x600>,
+                        <0x7ac4000 0x1f000>;
+                interrupt-names = "spi_irq", "spi_bam_irq";
+                interrupts = <0 300 0>, <0 239 0>;
+                spi-max-frequency = <19200000>;
+                pinctrl-names = "spi_default", "spi_sleep";
+                pinctrl-0 = <&spi6_default &spi6_cs0_active>;
+                pinctrl-1 = <&spi6_sleep &spi6_cs0_sleep>;
+                clocks = <&clock_gcc clk_gcc_blsp2_ahb_clk>,
+                        <&clock_gcc clk_gcc_blsp2_qup2_spi_apps_clk>;
+                clock-names = "iface_clk", "core_clk";
+                qcom,infinite-mode = <0>;
+                qcom,use-bam;
+                qcom,use-pinctrl;
+                qcom,ver-reg-exists;
+                qcom,bam-consumer-pipe-index = <6>;
+                qcom,bam-producer-pipe-index = <7>;
+                qcom,master-id = <84>;
+                status = "ok";
+        };
+        silead {
+		compatible = "silead,silead_fp";
+		interrupt-parent = <&tlmm>;
+		interrupts = <48 0x0>;
+		spi-max-frequency = <5000000>;
+		vio-supply   = <&pm8937_l6>;
+		pinctrl-names = "active", "suspend", "irq_active";	
+		pinctrl-0 = <&fp_shutdown_active>;
+		pinctrl-1 = <&fp_shutdown_suspend>;
+		pinctrl-2 = <&silead_irq_active>;
 
+		silead,shutdown_gpio = <&tlmm 95 0>;
+		silead,gpio_int    = <&tlmm 48 0>;
+		silead,gpio_pwr  = <&tlmm 47 0>;
+		silead,gpio_id   = <&tlmm 90 0>;		
+		interrupt-names = "sl_wake_up";
+		status = "ok";
+	};
+	fp_id: fp_id {
+		status = "ok";
+		compatible = "fp_id,fp_id";
+		interrupt-parent = <&tlmm>;
+		silead,gpio_fp_id = <&tlmm 90 0x0>;
+		silead,gpio_pwr_id = <&tlmm 47 0x0>;
+	};
+	goodix_fp {
+		compatible = "goodix,fingerprint";
+		interrupt-parent = <&tlmm>;
+		interrupts = <48 0x0>;
+		spi-max-frequency = <5000000>;
+		vio-supply   = <&pm8937_l6>;
+	
+		goodix,gpio_reset = <&tlmm 95 0>;//reset gpio
+		goodix,gpio_irq    = <&tlmm 48 0>;//irq gpio
+		goodix,gpio_pwr  = <&tlmm 47 0>;//power gpio
+		goodix,gpio_id   = <&tlmm 90 0>;//compatible gpio		
+		status = "ok";
+	};
 	clock_gcc: qcom,gcc@1800000 {
 		#address-cells = <1>;
 		#size-cells = <1>;
@@ -1108,7 +1176,7 @@
 		vbus_otg-supply = <&smbcharger_charger_otg>;
 
 		qcom,hsusb-otg-phy-type = <3>; /* SNPS Femto PHY */
-		qcom,hsusb-otg-mode = <3>; /* OTG mode */
+		qcom,hsusb-otg-mode = <3>; /* OTG mode 1 means Peripherals mode */
 		qcom,hsusb-otg-otg-control = <2>; /* PMIC */
 		qcom,dp-manual-pullup;
 		qcom,hsusb-otg-mpm-dpsehv-int = <49>;
@@ -1523,9 +1591,10 @@
 		qcom,ce-opp-freq = <100000000>;
 	};
 
-	qcom_seecom: qseecom@85b00000 {
+        /*modify by silead begin*/
+        qcom_seecom: qseecom@84A00000 {
 		compatible = "qcom,qseecom";
-		reg = <0x85b00000 0x800000>;
+                reg = <0x84A00000 0x1900000>;
 		reg-names = "secapp-region";
 		qcom,hlos-num-ce-hw-instances = <1>;
 		qcom,hlos-ce-hw-instance = <0>;
@@ -1550,6 +1619,7 @@
 				"iface_clk", "bus_clk";
 		qcom,ce-opp-freq = <100000000>;
 	};
+        /*modify by silead end*/
 
 	qcom,ipc_router {
 		compatible = "qcom,ipc_router";
