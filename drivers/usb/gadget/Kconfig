@@ -13,6 +13,10 @@
 # both kinds of controller can also support "USB On-the-Go" (CONFIG_USB_OTG).
 #
 
+config HQ_USB_OVERRIDE_SERIALNO
+        bool "HQ_USB_OVERRIDE_SERIALNO"
+	default n
+
 menuconfig USB_GADGET
 	tristate "USB Gadget Support"
 	select NLS

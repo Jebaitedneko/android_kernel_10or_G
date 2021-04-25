@@ -3202,7 +3202,9 @@ static int dwc3_otg_start_host(struct dwc3_msm *mdwc, int on)
 			return -EPROBE_DEFER;
 		}
 	}
-
+    #ifdef CONFIG_HQ_QL1590_NO_OTG
+        on = 0;
+    #endif
 	if (on) {
 		dev_dbg(mdwc->dev, "%s: turn on host\n", __func__);
 
