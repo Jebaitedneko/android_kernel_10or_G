@@ -23,10 +23,10 @@
 
 /*
  * Memory returned by kmalloc() may be used for DMA, so we must make
- * sure that all such allocations are aligned to the maximum *known*
- * cache line size on ARMv8 systems. Otherwise, unrelated code may cause
- * parts of the buffer to be read into the cache before the transfer is
- * done, causing old data to be seen by the CPU.
+ * sure that all such allocations are cache aligned. Otherwise,
+ * unrelated code may cause parts of the buffer to be read into the
+ * cache before the transfer is done, causing old data to be seen by
+ * the CPU.
  */
 #define ARCH_DMA_MINALIGN	(128)
 
