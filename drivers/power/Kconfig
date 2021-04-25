@@ -616,6 +616,13 @@ config MSM_BCL_PERIPHERAL_CTL
 	  provides routines to configure and monitor the BCL
 	  PMIC peripheral.
 
+config HQ_QL1590_NTCLOSS
+       bool "HQ_QL1590_NTCLOSS"
+       default n
+config HQ_QL1520_NTCLOSS
+       bool "HQ_QL1520_NTCLOSS"
+       default n
+
 source "drivers/power/reset/Kconfig"
 
 endif # POWER_SUPPLY
